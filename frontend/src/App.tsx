@@ -4,11 +4,13 @@ import { ToastProvider } from './components/ui/Toast'
 import { LeadsProvider } from './context/LeadsContext'
 import { BookingsProvider } from './context/BookingsContext'
 import { TeamProvider } from './context/TeamContext'
+import { BillsProvider } from './context/BillsContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
 import { LeadsPage } from './features/leads/LeadsPage'
 import { BookingsPage } from './features/bookings/BookingsPage'
 import { TeamPage } from './features/team/TeamPage'
+import { BillsPage } from './features/bills/BillsPage'
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -44,6 +46,8 @@ const AppContent: React.FC = () => {
   const handleMenuNavigation = (menuName: string) => {
     if (menuName === 'Bookings') {
       navigate('/bookings')
+    } else if (menuName === 'Bills') {
+      navigate('/bills')
     } else if (menuName === 'Team') {
       navigate('/team')
     } else {
@@ -54,6 +58,10 @@ const AppContent: React.FC = () => {
   // Authenticated CRM Routes:
   if (path === '/bookings') {
     return <BookingsPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/bills') {
+    return <BillsPage onNavigateMenu={handleMenuNavigation} />
   }
 
   if (path === '/team') {
@@ -70,9 +78,11 @@ export default function App() {
         <LeadsProvider>
           <BookingsProvider>
             <TeamProvider>
-              <ToastProvider>
-                <AppContent />
-              </ToastProvider>
+              <BillsProvider>
+                <ToastProvider>
+                  <AppContent />
+                </ToastProvider>
+              </BillsProvider>
             </TeamProvider>
           </BookingsProvider>
         </LeadsProvider>

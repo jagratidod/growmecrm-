@@ -7,6 +7,7 @@ import {
   PhoneCall,
   GitFork,
   CalendarCheck,
+  Receipt,
   Ticket,
   Map,
   Package,
@@ -41,6 +42,7 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
     { name: 'Call Log', icon: PhoneCall },
     { name: 'Bot Flows', icon: GitFork },
     { name: 'Bookings', icon: CalendarCheck },
+    { name: 'Bills', icon: Receipt },
     { name: 'Events', icon: Ticket },
     { name: 'Itineraries', icon: Map },
     { name: 'Packages', icon: Package },
@@ -62,6 +64,8 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
     if (onSelectMenu) onSelectMenu(name)
     if (name === 'Bookings') {
       navigate('/bookings')
+    } else if (name === 'Bills') {
+      navigate('/bills')
     } else if (name === 'Team') {
       navigate('/team')
     } else if (name === 'Leads' || name === 'Dashboard') {
