@@ -15,12 +15,12 @@ export const PipelineChevronBar: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const stages: PipelineStageConfig[] = [
-    { id: 'New', label: 'New', color: 'bg-blue-600', hoverColor: 'hover:bg-blue-700' },
-    { id: 'Contacted', label: 'Contacted', color: 'bg-purple-600', hoverColor: 'hover:bg-purple-700' },
-    { id: 'Qualified', label: 'Qualified', color: 'bg-rose-500', hoverColor: 'hover:bg-rose-600' },
-    { id: 'Proposal sent', label: 'Proposal sent', color: 'bg-amber-500', hoverColor: 'hover:bg-amber-600' },
+    { id: 'New', label: 'New', color: 'bg-[#453372]', hoverColor: 'hover:bg-[#382760]' },
+    { id: 'Contacted', label: 'Contacted', color: 'bg-indigo-600', hoverColor: 'hover:bg-indigo-700' },
+    { id: 'Qualified', label: 'Qualified', color: 'bg-[#ff7675]', hoverColor: 'hover:bg-rose-500' },
+    { id: 'Proposal sent', label: 'Proposal sent', color: 'bg-[#ffb800]', hoverColor: 'hover:bg-amber-600' },
     { id: 'Negotiation', label: 'Negotiation', color: 'bg-orange-600', hoverColor: 'hover:bg-orange-700' },
-    { id: 'Won', label: 'Won', color: 'bg-emerald-600', hoverColor: 'hover:bg-emerald-700' },
+    { id: 'Won', label: 'Won', color: 'bg-[#22c55e]', hoverColor: 'hover:bg-emerald-600' },
     { id: 'Lost', label: 'Lost', color: 'bg-slate-600', hoverColor: 'hover:bg-slate-700' },
   ]
 
@@ -88,7 +88,7 @@ export const PipelineChevronBar: React.FC = () => {
               className={`relative px-4 sm:px-5 py-2 text-xs font-semibold text-white transition-all shrink-0 cursor-pointer flex items-center justify-center gap-1.5 ${
                 stage.color
               } ${stage.hoverColor} ${
-                isSelected ? 'ring-2 ring-indigo-500 ring-offset-2 z-10 brightness-110 scale-[1.02]' : 'opacity-95'
+                isSelected ? 'ring-2 ring-[#453372] ring-offset-2 z-10 brightness-110 scale-[1.02]' : 'opacity-95'
               }`}
             >
               <span className="truncate">{stage.label}</span>

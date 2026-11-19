@@ -30,7 +30,7 @@ export const LeadsSearchFilter: React.FC = () => {
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
             placeholder="Search name, email, phone, destination..."
-            className="w-full bg-white border border-slate-200/90 rounded-xl pl-11 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition shadow-xs"
+            className="w-full bg-white border border-slate-200/90 rounded-2xl pl-11 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition shadow-xs"
           />
           {filters.search && (
             <button
@@ -45,16 +45,16 @@ export const LeadsSearchFilter: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsFiltersDrawerOpen(!isFiltersDrawerOpen)}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm font-semibold transition shadow-xs shrink-0 select-none ${
+          className={`inline-flex items-center gap-2 px-4 py-2.5 sm:py-3 rounded-2xl border text-xs sm:text-sm font-semibold transition shadow-xs shrink-0 select-none ${
             hasActiveFilters || isFiltersDrawerOpen
-              ? 'border-indigo-400 bg-indigo-50/70 text-indigo-700'
+              ? 'border-[#453372] bg-purple-50 text-[#453372]'
               : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
           }`}
         >
           <SlidersHorizontal className="w-4 h-4 text-current" />
           <span>Filters</span>
           {hasActiveFilters && (
-            <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+            <span className="w-2 h-2 rounded-full bg-[#453372]"></span>
           )}
         </button>
       </div>
@@ -67,7 +67,7 @@ export const LeadsSearchFilter: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={resetFilters}
-                className="text-xs text-indigo-600 hover:underline font-medium"
+                className="text-xs text-[#453372] hover:underline font-semibold"
               >
                 Reset All
               </button>

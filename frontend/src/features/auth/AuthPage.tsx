@@ -31,12 +31,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
 
       {/* RIGHT AUTH FORM PANEL */}
       <div className="w-full lg:w-1/2 relative bg-white flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 py-12 overflow-hidden">
-        {/* Decorative 3D blue sphere at bottom-right corner matching reference */}
+        {/* Decorative 3D purple sphere at bottom-right corner matching theme */}
         <div
           className="absolute -bottom-24 -right-24 sm:-bottom-28 sm:-right-28 w-60 sm:w-72 h-60 sm:h-72 rounded-full pointer-events-none z-0"
           style={{
-            background: 'radial-gradient(circle at 35% 32%, #1b73e5 0%, #0d54b8 50%, #05306e 90%)',
-            boxShadow: '0 20px 50px rgba(1, 23, 56, 0.35)',
+            background: 'radial-gradient(circle at 35% 32%, #6d4fa8 0%, #453372 50%, #231640 90%)',
+            boxShadow: '0 20px 50px rgba(25, 12, 45, 0.35)',
           }}
         />
 

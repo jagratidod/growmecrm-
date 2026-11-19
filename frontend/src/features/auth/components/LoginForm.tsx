@@ -133,7 +133,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           <button
             type="button"
             onClick={onNavigateForgotPassword}
-            className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors focus:outline-none"
+            className="text-xs font-medium text-[#453372] hover:underline transition-colors focus:outline-none"
           >
             Forgot Password?
           </button>
@@ -147,7 +147,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             size="lg"
             fullWidth
             isLoading={isLoading}
-            className="bg-[#0b54b8] hover:bg-[#09479e] py-3.5 text-sm font-semibold rounded-xl tracking-wide shadow-md shadow-blue-800/20 active:scale-[0.99]"
+            className="bg-[#453372] hover:bg-[#382760] py-3.5 text-sm font-semibold rounded-xl tracking-wide shadow-md shadow-[#453372]/20 active:scale-[0.99]"
           >
             Sign in
           </Button>
@@ -158,8 +158,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       <div className="mt-8 p-3 rounded-lg bg-slate-50 border border-slate-200 text-center">
         <p className="text-[11px] text-slate-500">
           <strong className="text-slate-700">Demo CRM Credentials:</strong> Username:{' '}
-          <code className="text-blue-600 bg-blue-50 px-1 py-0.5 rounded">admin</code> | Password:{' '}
-          <code className="text-blue-600 bg-blue-50 px-1 py-0.5 rounded">password123</code>
+          <code className="text-[#453372] bg-purple-50 px-1 py-0.5 rounded font-bold">admin</code> | Password:{' '}
+          <code className="text-[#453372] bg-purple-50 px-1 py-0.5 rounded font-bold">password123</code>
         </p>
       </div>
     </div>

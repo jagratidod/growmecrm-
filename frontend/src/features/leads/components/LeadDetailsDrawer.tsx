@@ -121,9 +121,9 @@ export const LeadDetailsDrawer: React.FC = () => {
           <div className="grid grid-cols-4 gap-2">
             <button
               onClick={handleLogCall}
-              className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-slate-700 hover:text-indigo-600 transition shadow-xs group"
+              className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 hover:border-[#453372] hover:bg-purple-50/50 text-slate-700 hover:text-[#453372] transition shadow-xs group"
             >
-              <Phone className="w-4 h-4 text-slate-500 group-hover:text-indigo-600 mb-1" />
+              <Phone className="w-4 h-4 text-slate-500 group-hover:text-[#453372] mb-1" />
               <span className="text-xs font-medium">Call</span>
             </button>
 
@@ -297,7 +297,7 @@ export const LeadDetailsDrawer: React.FC = () => {
           <div className="space-y-4 pt-2">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-indigo-600" /> Activity Timeline
+                <Clock className="w-3.5 h-3.5 text-[#453372]" /> Activity Timeline
               </h4>
               <span className="text-[10px] text-slate-400">
                 {selectedLead.activities?.length || 0} events recorded
@@ -311,12 +311,12 @@ export const LeadDetailsDrawer: React.FC = () => {
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Log a call note or follow-up update..."
-                className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
+                className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#453372]"
               />
               <button
                 type="submit"
                 disabled={!newNote.trim()}
-                className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition"
+                className="p-2 rounded-xl bg-[#453372] hover:bg-[#382760] text-white disabled:opacity-50 transition"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -326,7 +326,7 @@ export const LeadDetailsDrawer: React.FC = () => {
             <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
               {selectedLead.activities?.map((act) => (
                 <div key={act.id} className="relative group">
-                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-indigo-600 ring-4 ring-white"></div>
+                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#453372] ring-4 ring-white"></div>
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-slate-800 capitalize">

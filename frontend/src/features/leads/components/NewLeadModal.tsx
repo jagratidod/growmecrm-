@@ -410,7 +410,7 @@ export const NewLeadModal: React.FC = () => {
           <button
             type="button"
             onClick={handleSubmit}
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm shadow-indigo-600/25 transition active:scale-[0.99]"
+            className="px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#382760] text-white text-sm font-semibold shadow-sm shadow-[#453372]/25 transition active:scale-[0.99]"
           >
             Create lead
           </button>
