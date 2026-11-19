@@ -105,6 +105,8 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
       navigate('/channels')
     } else if (name === 'AI Agent') {
       navigate('/ai-agent')
+    } else if (name === 'Organization') {
+      navigate('/organization')
     } else if (name === 'Dashboard') {
       navigate('/dashboard')
     } else if (name === 'Leads') {

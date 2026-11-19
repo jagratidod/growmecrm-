@@ -23,6 +23,13 @@ export interface AiAgentSettings {
   keyFacts: string
 }
 
+export interface OrganizationSettings {
+  agencyName: string
+  logoUrl?: string
+  primaryColor: string
+  secondaryColor: string
+}
+
 interface SettingsContextType {
   profile: UserProfileSettings
   updateProfile: (updates: Partial<UserProfileSettings>) => void
@@ -31,6 +38,8 @@ interface SettingsContextType {
   updateEmailConfig: (fromAddress: string, apiKey: string) => void
   aiAgent: AiAgentSettings
   updateAiAgent: (updates: Partial<AiAgentSettings>) => void
+  organization: OrganizationSettings
+  updateOrganization: (updates: Partial<OrganizationSettings>) => void
 }
 
 const STORAGE_KEY = 'treki_crm_settings_data'
@@ -58,6 +67,13 @@ const DEFAULT_AI_AGENT: AiAgentSettings = {
     'You are the assistant for Wander & Co. Travel — always mention our 24/7 support line if asked about emergencies...',
   keyFacts:
     'We specialise in Kashmir, Ladakh and Himachal packages. Payment: 30% advance, balance before departure.',
+}
+
+const DEFAULT_ORGANIZATION: OrganizationSettings = {
+  agencyName: 'Treki Travels',
+  logoUrl: '',
+  primaryColor: '#4F46E5',
+  secondaryColor: '#0D9488',
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
@@ -117,6 +133,24 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [aiAgent])
 
+  const [organization, setOrganization] = useState<OrganizationSettings>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY + '_org')
+      if (saved) return JSON.parse(saved)
+    } catch {
+      // ignore
+    }
+    return DEFAULT_ORGANIZATION
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY + '_org', JSON.stringify(organization))
+    } catch {
+      // ignore
+    }
+  }, [organization])
+
   const updateProfile = (updates: Partial<UserProfileSettings>) => {
     setProfile((prev) => ({ ...prev, ...updates }))
   }
@@ -143,6 +177,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setAiAgent((prev) => ({ ...prev, ...updates }))
   }
 
+  const updateOrganization = (updates: Partial<OrganizationSettings>) => {
+    setOrganization((prev) => ({ ...prev, ...updates }))
+  }
+
   return (
     <SettingsContext.Provider
       value={{
@@ -153,6 +191,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateEmailConfig,
         aiAgent,
         updateAiAgent,
+        organization,
+        updateOrganization,
       }}
     >
       {children}

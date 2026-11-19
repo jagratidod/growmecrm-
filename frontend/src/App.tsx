@@ -32,6 +32,7 @@ import { CallLogPage } from './features/callLog/CallLogPage'
 import { ProfilePage } from './features/settings/ProfilePage'
 import { ChannelsPage } from './features/settings/ChannelsPage'
 import { AiAgentPage } from './features/settings/AiAgentPage'
+import { OrganizationPage } from './features/settings/OrganizationPage'
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -97,6 +98,8 @@ const AppContent: React.FC = () => {
       navigate('/channels')
     } else if (menuName === 'AI Agent') {
       navigate('/ai-agent')
+    } else if (menuName === 'Organization') {
+      navigate('/organization')
     } else {
       navigate('/leads')
     }
@@ -157,6 +160,10 @@ const AppContent: React.FC = () => {
 
   if (path === '/ai-agent') {
     return <AiAgentPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/organization') {
+    return <OrganizationPage onNavigateMenu={handleMenuNavigation} />
   }
 
   if (path === '/dashboard') {
