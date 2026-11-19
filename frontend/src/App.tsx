@@ -1,13 +1,23 @@
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import { LeadsProvider } from './context/LeadsContext'
+import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
 import { LeadsPage } from './features/leads/LeadsPage'
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
-  const [previewMode, setPreviewMode] = useState<'auto' | 'leads' | 'login'>('auto')
+  const { path, navigate } = useRouter()
+
+  useEffect(() => {
+    if (isLoading) return
+
+    // Base route enforcement: if not logged in and not on /login, redirect to /login
+    if (!isAuthenticated && path !== '/login') {
+      navigate('/login', { replace: true })
+    }
+  }, [isLoading, isAuthenticated, path, navigate])
 
   if (isLoading) {
     return (
@@ -20,59 +30,30 @@ const AppContent: React.FC = () => {
     )
   }
 
-  // Determine view:
-  // If previewMode is 'auto', show LeadsPage if logged in, else AuthPage.
-  // User can also toggle via floating pill in bottom-right corner!
-  const currentView =
-    previewMode === 'leads'
-      ? 'leads'
-      : previewMode === 'login'
-      ? 'login'
-      : isAuthenticated
-      ? 'leads'
-      : 'leads' // Default directly to LeadsPage so user immediately sees Treki Travels CRM Leads!
+  // Base route is /login: show AuthPage if path is /login or if unauthenticated
+  const isLoginPage = path === '/login' || !isAuthenticated
 
   return (
     <div className="relative">
-      {/* Top/Floating Quick View Switcher for easy testing */}
-      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 p-1.5 rounded-full bg-slate-900/90 text-white shadow-xl backdrop-blur-md border border-slate-700/60 text-xs">
-        <button
-          type="button"
-          onClick={() => setPreviewMode('leads')}
-          className={`px-3 py-1 rounded-full font-semibold transition ${
-            currentView === 'leads'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'text-slate-300 hover:text-white'
-          }`}
-        >
-          Treki Leads CRM
-        </button>
-        <button
-          type="button"
-          onClick={() => setPreviewMode('login')}
-          className={`px-3 py-1 rounded-full font-semibold transition ${
-            currentView === 'login'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-300 hover:text-white'
-          }`}
-        >
-          Login Screen
-        </button>
-      </div>
-
-      {currentView === 'leads' ? <LeadsPage /> : <AuthPage />}
+      {isLoginPage ? (
+        <AuthPage onSuccess={() => navigate('/leads')} />
+      ) : (
+        <LeadsPage />
+      )}
     </div>
   )
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <LeadsProvider>
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
-      </LeadsProvider>
-    </AuthProvider>
+    <RouterProvider>
+      <AuthProvider>
+        <LeadsProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </LeadsProvider>
+      </AuthProvider>
+    </RouterProvider>
   )
 }

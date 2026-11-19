@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
+import { useRouter } from '../../../context/RouterContext'
 
 interface LeadsSidebarProps {
   isOpen?: boolean
@@ -46,6 +47,12 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
   ]
 
   const { logout, user } = useAuth()
+  const { navigate } = useRouter()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login')
+  }
 
   return (
     <>
@@ -133,7 +140,7 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
 
             <button
               type="button"
-              onClick={() => logout()}
+              onClick={handleLogout}
               title="Sign out to Login Page"
               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
             >

@@ -3,7 +3,11 @@ import { AuthHeroPanel } from './components/AuthHeroPanel'
 import { LoginForm } from './components/LoginForm'
 import { useToast } from '../../components/ui/Toast'
 
-export const AuthPage: React.FC = () => {
+interface AuthPageProps {
+  onSuccess?: () => void
+}
+
+export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
   const { toast } = useToast()
 
   const handleForgotPassword = () => {
@@ -38,7 +42,7 @@ export const AuthPage: React.FC = () => {
 
         {/* Main interactive form */}
         <div className="w-full relative z-10">
-          <LoginForm onNavigateForgotPassword={handleForgotPassword} />
+          <LoginForm onSuccess={onSuccess} onNavigateForgotPassword={handleForgotPassword} />
         </div>
       </div>
     </div>
