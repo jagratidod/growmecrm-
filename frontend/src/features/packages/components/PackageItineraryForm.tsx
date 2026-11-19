@@ -12,6 +12,7 @@ import {
   Link as LinkIcon,
 } from 'lucide-react'
 import { usePackages } from '../../../context/PackagesContext'
+import { useSightseeing } from '../../../context/SightseeingContext'
 import { useToast } from '../../../components/ui/Toast'
 import type { PackageItineraryDay } from '../../../types/package.types'
 
@@ -22,6 +23,7 @@ interface PackageItineraryFormProps {
 
 export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNext, onBack }) => {
   const { activePackage, savePackage } = usePackages()
+  const { activities: sightseeingActivities } = useSightseeing()
   const { toast } = useToast()
 
   const [days, setDays] = useState<PackageItineraryDay[]>(() => {
@@ -271,12 +273,54 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
               </button>
             </div>
 
-            {/* Sightseeing notice + AI Generate Button Row */}
+            {/* Sightseeing notice / selector + AI Generate Button Row */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/70 text-xs text-slate-500">
-                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>No sightseeing activities yet — add some on the Sightseeing page</span>
-              </div>
+              {sightseeingActivities.length === 0 ? (
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/70 text-xs text-slate-500">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>No sightseeing activities yet — add some on the Sightseeing page</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      const actId = e.target.value
+                      if (!actId) return
+                      const act = sightseeingActivities.find((a) => a.id === actId)
+                      if (act) {
+                        setDays((prev) =>
+                          prev.map((d) =>
+                            d.id === day.id
+                              ? {
+                                  ...d,
+                                  title: d.title || act.name,
+                                  dayPlan: d.dayPlan
+                                    ? `${d.dayPlan}\n${act.description}`
+                                    : act.description,
+                                  photos:
+                                    act.coverImage && !d.photos?.includes(act.coverImage)
+                                      ? [...(d.photos || []), act.coverImage]
+                                      : d.photos,
+                                }
+                              : d
+                          )
+                        )
+                        toast({ title: `Added "${act.name}" to Day ${day.dayNumber}`, type: 'success' })
+                      }
+                      e.target.value = ''
+                    }}
+                    defaultValue=""
+                    className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#453372] border border-purple-200 cursor-pointer focus:outline-none transition-all shadow-2xs"
+                  >
+                    <option value="" disabled>+ Add activity from Sightseeing library</option>
+                    {sightseeingActivities.map((act) => (
+                      <option key={act.id} value={act.id}>
+                        {act.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <button
                 type="button"
