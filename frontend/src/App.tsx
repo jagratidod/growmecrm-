@@ -8,6 +8,7 @@ import { BillsProvider } from './context/BillsContext'
 import { SettingsProvider } from './context/SettingsContext'
 import { ItinerariesProvider } from './context/ItinerariesContext'
 import { PackagesProvider } from './context/PackagesContext'
+import { HotelsProvider } from './context/HotelsContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
 import { LeadsPage } from './features/leads/LeadsPage'
@@ -16,6 +17,7 @@ import { TeamPage } from './features/team/TeamPage'
 import { BillsPage } from './features/bills/BillsPage'
 import { ItinerariesPage } from './features/itineraries/ItinerariesPage'
 import { PackagesPage } from './features/packages/PackagesPage'
+import { HotelsPage } from './features/hotels/HotelsPage'
 import { ProfilePage } from './features/settings/ProfilePage'
 import { ChannelsPage } from './features/settings/ChannelsPage'
 import { AiAgentPage } from './features/settings/AiAgentPage'
@@ -62,6 +64,8 @@ const AppContent: React.FC = () => {
       navigate('/itineraries')
     } else if (menuName === 'Packages') {
       navigate('/packages')
+    } else if (menuName === 'Hotels') {
+      navigate('/hotels')
     } else if (menuName === 'My profile') {
       navigate('/profile')
     } else if (menuName === 'Channels') {
@@ -94,6 +98,10 @@ const AppContent: React.FC = () => {
     return <PackagesPage onNavigateMenu={handleMenuNavigation} />
   }
 
+  if (path === '/hotels') {
+    return <HotelsPage onNavigateMenu={handleMenuNavigation} />
+  }
+
   if (path === '/profile') {
     return <ProfilePage onNavigateMenu={handleMenuNavigation} />
   }
@@ -119,11 +127,13 @@ export default function App() {
               <BillsProvider>
                 <ItinerariesProvider>
                   <PackagesProvider>
-                    <SettingsProvider>
-                      <ToastProvider>
-                        <AppContent />
-                      </ToastProvider>
-                    </SettingsProvider>
+                    <HotelsProvider>
+                      <SettingsProvider>
+                        <ToastProvider>
+                          <AppContent />
+                        </ToastProvider>
+                      </SettingsProvider>
+                    </HotelsProvider>
                   </PackagesProvider>
                 </ItinerariesProvider>
               </BillsProvider>
