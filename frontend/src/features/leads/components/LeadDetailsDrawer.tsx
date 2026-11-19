@@ -1,0 +1,371 @@
+import React, { useState } from 'react'
+import {
+  X,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  Users,
+  DollarSign,
+  Package,
+  Clock,
+  Trash2,
+  MessageCircle,
+  Plus,
+} from 'lucide-react'
+import { useLeads } from '../../../context/LeadsContext'
+import { useToast } from '../../../components/ui/Toast'
+import type { LeadStage } from '../../../types/lead.types'
+
+export const LeadDetailsDrawer: React.FC = () => {
+  const { selectedLead, setSelectedLead, changeLeadStage, updateLead, deleteLead, addLeadActivity } = useLeads()
+  const { toast } = useToast()
+
+  const [newNote, setNewNote] = useState('')
+
+  if (!selectedLead) return null
+
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newNote.trim()) return
+
+    addLeadActivity(selectedLead.id, {
+      type: 'note_added',
+      description: `Note added: "${newNote.trim()}"`,
+      author: 'Kushal Pareta',
+    })
+
+    toast({
+      type: 'success',
+      title: 'Note Logged',
+      description: 'Activity timeline updated.',
+    })
+
+    setNewNote('')
+  }
+
+  const handleLogCall = () => {
+    addLeadActivity(selectedLead.id, {
+      type: 'call',
+      description: `Outbound phone call initiated to ${selectedLead.phone}.`,
+      author: 'Kushal Pareta',
+    })
+    toast({
+      type: 'info',
+      title: 'Call Logged',
+      description: `Recorded call to ${selectedLead.name}.`,
+    })
+  }
+
+  const handleLogWhatsApp = () => {
+    addLeadActivity(selectedLead.id, {
+      type: 'whatsapp',
+      description: `WhatsApp chat session initiated with customer.`,
+      author: 'Kushal Pareta',
+    })
+    const sanitizedPhone = selectedLead.phone.replace(/[^0-9]/g, '')
+    window.open(`https://wa.me/${sanitizedPhone}`, '_blank')
+  }
+
+  const handleLogEmail = () => {
+    if (selectedLead.email) {
+      addLeadActivity(selectedLead.id, {
+        type: 'email',
+        description: `Email composer opened for ${selectedLead.email}.`,
+        author: 'Kushal Pareta',
+      })
+      window.open(`mailto:${selectedLead.email}`, '_blank')
+    } else {
+      toast({
+        type: 'error',
+        title: 'No Email Available',
+        description: 'This lead has no registered email address.',
+      })
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
+      <div className="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300">
+        {/* Drawer Header */}
+        <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/60">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">
+                {selectedLead.customerType}
+              </span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
+                {selectedLead.source}
+              </span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-rose-500 text-white">
+                {selectedLead.temperature}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mt-2">{selectedLead.name}</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Enquiry ID: <span className="font-mono text-slate-600">{selectedLead.id}</span>
+            </p>
+          </div>
+
+          <button
+            onClick={() => setSelectedLead(null)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Quick Communication Actions Bar */}
+          <div className="grid grid-cols-4 gap-2">
+            <button
+              onClick={handleLogCall}
+              className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-slate-700 hover:text-indigo-600 transition shadow-xs group"
+            >
+              <Phone className="w-4 h-4 text-slate-500 group-hover:text-indigo-600 mb-1" />
+              <span className="text-xs font-medium">Call</span>
+            </button>
+
+            <button
+              onClick={handleLogWhatsApp}
+              className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 text-slate-700 hover:text-emerald-600 transition shadow-xs group"
+            >
+              <MessageCircle className="w-4 h-4 text-slate-500 group-hover:text-emerald-600 mb-1" />
+              <span className="text-xs font-medium">WhatsApp</span>
+            </button>
+
+            <button
+              onClick={handleLogEmail}
+              className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 hover:border-sky-400 hover:bg-sky-50/50 text-slate-700 hover:text-sky-600 transition shadow-xs group"
+            >
+              <Mail className="w-4 h-4 text-slate-500 group-hover:text-sky-600 mb-1" />
+              <span className="text-xs font-medium">Email</span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (window.confirm(`Delete lead "${selectedLead.name}"?`)) {
+                  deleteLead(selectedLead.id)
+                  toast({
+                    type: 'info',
+                    title: 'Lead Deleted',
+                    description: `${selectedLead.name} has been removed.`,
+                  })
+                }
+              }}
+              className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/50 text-slate-700 hover:text-rose-600 transition shadow-xs group"
+            >
+              <Trash2 className="w-4 h-4 text-slate-500 group-hover:text-rose-600 mb-1" />
+              <span className="text-xs font-medium">Delete</span>
+            </button>
+          </div>
+
+          {/* Pipeline Stage & Assigned To Controls */}
+          <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                Current Stage
+              </label>
+              <select
+                value={selectedLead.status}
+                onChange={(e) => changeLeadStage(selectedLead.id, e.target.value as LeadStage)}
+                className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
+              >
+                <option value="New">New</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Qualified">Qualified</option>
+                <option value="Proposal sent">Proposal sent</option>
+                <option value="Negotiation">Negotiation</option>
+                <option value="Won">Won</option>
+                <option value="Lost">Lost</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-slate-500 mb-1">
+                Assigned Team Member
+              </label>
+              <select
+                value={selectedLead.assignedTo}
+                onChange={(e) => updateLead(selectedLead.id, { assignedTo: e.target.value })}
+                className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
+              >
+                <option value="Unassigned">Unassigned</option>
+                <option value="Kushal Pareta">Kushal Pareta</option>
+                <option value="Pooja Sharma">Pooja Sharma</option>
+                <option value="Rahul Verma">Rahul Verma</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Lead Information Cards */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Enquiry Particulars
+            </h4>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-xl border border-slate-200 bg-white space-y-1">
+                <span className="text-slate-400 flex items-center gap-1 font-medium">
+                  <Phone className="w-3.5 h-3.5" /> Phone Number
+                </span>
+                <p className="font-semibold text-slate-800">{selectedLead.phone}</p>
+              </div>
+
+              <div className="p-3 rounded-xl border border-slate-200 bg-white space-y-1">
+                <span className="text-slate-400 flex items-center gap-1 font-medium">
+                  <Mail className="w-3.5 h-3.5" /> Email
+                </span>
+                <p className="font-semibold text-slate-800 truncate">
+                  {selectedLead.email || 'None provided'}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl border border-slate-200 bg-white space-y-1">
+                <span className="text-slate-400 flex items-center gap-1 font-medium">
+                  <MapPin className="w-3.5 h-3.5 text-rose-500" /> Destination
+                </span>
+                <p className="font-semibold text-slate-800">{selectedLead.destination}</p>
+              </div>
+
+              <div className="p-3 rounded-xl border border-slate-200 bg-white space-y-1">
+                <span className="text-slate-400 flex items-center gap-1 font-medium">
+                  <Calendar className="w-3.5 h-3.5" /> Travel Date
+                </span>
+                <p className="font-semibold text-slate-800">
+                  {selectedLead.travelDate || 'Flexible'}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl border border-slate-200 bg-white space-y-1">
+                <span className="text-slate-400 flex items-center gap-1 font-medium">
+                  <Users className="w-3.5 h-3.5" /> Party Size
+                </span>
+                <p className="font-semibold text-slate-800">
+                  {selectedLead.travelers} Traveler{selectedLead.travelers > 1 ? 's' : ''}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl border border-slate-200 bg-white space-y-1">
+                <span className="text-slate-400 flex items-center gap-1 font-medium">
+                  <DollarSign className="w-3.5 h-3.5" /> Estimated Budget
+                </span>
+                <p className="font-semibold text-slate-800">
+                  {selectedLead.currency} {selectedLead.budget.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Interested Package & Tags */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Package & Tags
+            </h4>
+            <div className="flex items-center gap-2 flex-wrap">
+              {selectedLead.interestedPackage && (
+                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 font-medium">
+                  <Package className="w-3.5 h-3.5" />
+                  {selectedLead.interestedPackage}
+                </span>
+              )}
+              {selectedLead.tags.map((t) => (
+                <span
+                  key={t}
+                  className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-700"
+                >
+                  #{t}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Notes */}
+          {selectedLead.notes && (
+            <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/80">
+              <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block mb-1">
+                Client Notes
+              </span>
+              <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">
+                {selectedLead.notes}
+              </p>
+            </div>
+          )}
+
+          {/* Activity Timeline */}
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-indigo-600" /> Activity Timeline
+              </h4>
+              <span className="text-[10px] text-slate-400">
+                {selectedLead.activities?.length || 0} events recorded
+              </span>
+            </div>
+
+            {/* Quick Note Input */}
+            <form onSubmit={handleAddNote} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="Log a call note or follow-up update..."
+                className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
+              />
+              <button
+                type="submit"
+                disabled={!newNote.trim()}
+                className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </form>
+
+            {/* Timeline Events List */}
+            <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+              {selectedLead.activities?.map((act) => (
+                <div key={act.id} className="relative group">
+                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-indigo-600 ring-4 ring-white"></div>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-800 capitalize">
+                        {act.type.replace('_', ' ')}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {new Date(act.timestamp).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-0.5">{act.description}</p>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      by {act.author}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Drawer Footer */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
+          <span>
+            Created:{' '}
+            <strong className="text-slate-700">
+              {new Date(selectedLead.createdAt).toLocaleDateString()}
+            </strong>
+          </span>
+          <button
+            onClick={() => setSelectedLead(null)}
+            className="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
