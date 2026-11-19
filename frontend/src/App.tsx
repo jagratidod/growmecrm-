@@ -10,6 +10,7 @@ import { ItinerariesProvider } from './context/ItinerariesContext'
 import { PackagesProvider } from './context/PackagesContext'
 import { HotelsProvider } from './context/HotelsContext'
 import { SightseeingProvider } from './context/SightseeingContext'
+import { HostPageProvider } from './context/HostPageContext'
 import { CallLogProvider } from './context/CallLogContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
@@ -22,6 +23,7 @@ import { ItinerariesPage } from './features/itineraries/ItinerariesPage'
 import { PackagesPage } from './features/packages/PackagesPage'
 import { HotelsPage } from './features/hotels/HotelsPage'
 import { SightseeingPage } from './features/sightseeing/SightseeingPage'
+import { HostPage } from './features/hostPage/HostPage'
 import { CallLogPage } from './features/callLog/CallLogPage'
 import { ProfilePage } from './features/settings/ProfilePage'
 import { ChannelsPage } from './features/settings/ChannelsPage'
@@ -77,6 +79,8 @@ const AppContent: React.FC = () => {
       navigate('/sightseeing')
     } else if (menuName === 'Hotels') {
       navigate('/hotels')
+    } else if (menuName === 'Host Page') {
+      navigate('/host-page')
     } else if (menuName === 'Call Log') {
       navigate('/call-log')
     } else if (menuName === 'My profile') {
@@ -119,6 +123,10 @@ const AppContent: React.FC = () => {
     return <HotelsPage onNavigateMenu={handleMenuNavigation} />
   }
 
+  if (path === '/host-page') {
+    return <HostPage onNavigateMenu={handleMenuNavigation} />
+  }
+
   if (path === '/call-log') {
     return <CallLogPage onNavigateMenu={handleMenuNavigation} />
   }
@@ -158,13 +166,15 @@ export default function App() {
                   <PackagesProvider>
                     <HotelsProvider>
                       <SightseeingProvider>
-                        <CallLogProvider>
-                          <SettingsProvider>
-                            <ToastProvider>
-                              <AppContent />
-                            </ToastProvider>
-                          </SettingsProvider>
-                        </CallLogProvider>
+                        <HostPageProvider>
+                          <CallLogProvider>
+                            <SettingsProvider>
+                              <ToastProvider>
+                                <AppContent />
+                              </ToastProvider>
+                            </SettingsProvider>
+                          </CallLogProvider>
+                        </HostPageProvider>
                       </SightseeingProvider>
                     </HotelsProvider>
                   </PackagesProvider>
