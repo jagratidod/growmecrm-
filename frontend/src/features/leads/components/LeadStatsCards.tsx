@@ -1,50 +1,46 @@
 import React from 'react'
 import { useLeads } from '../../../context/LeadsContext'
-import { Building2, Users, UserCheck, HeartHandshake } from 'lucide-react'
+import { Calendar, Users, TrendingUp, CheckCircle2 } from 'lucide-react'
 
 export const LeadStatsCards: React.FC = () => {
   const { stats, leads } = useLeads()
 
-  const inProgressCount = leads.filter(
+  const inPipelineCount = leads.filter(
     (l) => l.status !== 'Won' && l.status !== 'Lost'
   ).length
 
   const cards = [
     {
-      title: 'Schools / Total Leads',
-      shortTitle: 'Schools',
-      value: stats.overall > 0 ? stats.overall : 6000,
-      icon: Building2,
-      accentColor: 'bg-[#ff7675]',
-      iconBg: 'bg-[#ff7675]/12 text-[#ff7675]',
+      title: 'Overall Leads Captured',
+      shortTitle: 'Overall Leads',
+      value: stats.overall,
+      icon: Calendar,
       barColor: '#ff7675',
+      iconBg: 'bg-[#ff7675]/12 text-[#ff7675]',
     },
     {
-      title: 'Students / Active Enquiries',
-      shortTitle: 'Students',
-      value: inProgressCount > 0 ? inProgressCount : 24542,
+      title: "Today's Enquiries",
+      shortTitle: "Today's Leads",
+      value: stats.today,
       icon: Users,
-      accentColor: 'bg-[#453372]',
-      iconBg: 'bg-[#453372]/12 text-[#453372]',
       barColor: '#453372',
+      iconBg: 'bg-[#453372]/12 text-[#453372]',
     },
     {
-      title: 'Teachers / In Progress',
-      shortTitle: 'Teachers',
-      value: stats.today > 0 ? stats.today * 120 : 5000,
-      icon: UserCheck,
-      accentColor: 'bg-[#ffb800]',
-      iconBg: 'bg-[#ffb800]/15 text-[#ffb800]',
+      title: 'Active In Pipeline',
+      shortTitle: 'In Pipeline',
+      value: inPipelineCount,
+      icon: TrendingUp,
       barColor: '#ffb800',
+      iconBg: 'bg-[#ffb800]/15 text-[#ffb800]',
     },
     {
-      title: 'Parents / Won Deals',
-      shortTitle: 'Parents',
-      value: stats.converted > 0 ? stats.converted : 10000,
-      icon: HeartHandshake,
-      accentColor: 'bg-[#22c55e]',
-      iconBg: 'bg-[#22c55e]/15 text-[#22c55e]',
+      title: 'Leads Converted',
+      shortTitle: 'Deals Won',
+      value: stats.converted,
+      icon: CheckCircle2,
       barColor: '#22c55e',
+      iconBg: 'bg-[#22c55e]/15 text-[#22c55e]',
     },
   ]
 
@@ -54,18 +50,18 @@ export const LeadStatsCards: React.FC = () => {
         const Icon = card.icon
         return (
           <div
-            key={card.title}
+            key={card.shortTitle}
             className="bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-100 flex items-center justify-between relative overflow-hidden transition-all hover:shadow-md group"
           >
-            {/* Left Accent Color Indicator Strip */}
+            {/* Left Accent Color Indicator Strip from reference */}
             <div
               className="absolute left-0 top-3 bottom-3 w-1.5 rounded-r-full"
               style={{ backgroundColor: card.barColor }}
             />
 
-            {/* Left Icon */}
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ml-1.5 ${card.iconBg}`}>
-              <Icon className="w-6 h-6" />
+            {/* Left Icon with tinted square background */}
+            <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ml-1.5 ${card.iconBg}`}>
+              <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
 
             {/* Right Metric Label & Count */}

@@ -1,14 +1,18 @@
 import React from 'react'
 import {
   LayoutGrid,
-  Users,
-  UserCheck,
-  CalendarCheck,
-  BookOpen,
   Calendar,
-  FileText,
-  CreditCard,
-  Settings,
+  Inbox,
+  Send,
+  PhoneCall,
+  GitFork,
+  CalendarCheck,
+  Ticket,
+  Map,
+  Package,
+  Compass,
+  Building2,
+  Globe,
   LogOut,
   X,
 } from 'lucide-react'
@@ -19,24 +23,29 @@ interface LeadsSidebarProps {
   isOpen?: boolean
   onClose?: () => void
   currentPath?: string
+  onSelectMenu?: (menuName: string) => void
 }
 
 export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
   isOpen = false,
   onClose,
-  currentPath = 'Dashboard',
+  currentPath = 'Leads',
+  onSelectMenu,
 }) => {
   const menuItems = [
     { name: 'Dashboard', icon: LayoutGrid },
-    { name: 'Students', icon: Users },
-    { name: 'Teachers', icon: UserCheck },
-    { name: 'Parents', icon: Users },
-    { name: 'Library', icon: BookOpen },
-    { name: 'Attendance', icon: Calendar },
-    { name: 'Exam', icon: FileText },
-    { name: 'Notice', icon: CalendarCheck },
-    { name: 'Account', icon: CreditCard },
-    { name: 'Settings', icon: Settings },
+    { name: 'Leads', icon: Calendar },
+    { name: 'Inbox', icon: Inbox },
+    { name: 'Communications', icon: Send },
+    { name: 'Call Log', icon: PhoneCall },
+    { name: 'Bot Flows', icon: GitFork },
+    { name: 'Bookings', icon: CalendarCheck },
+    { name: 'Events', icon: Ticket },
+    { name: 'Itineraries', icon: Map },
+    { name: 'Packages', icon: Package },
+    { name: 'Sightseeing', icon: Compass },
+    { name: 'Hotels', icon: Building2 },
+    { name: 'Host Page', icon: Globe },
   ]
 
   const { logout, user } = useAuth()
@@ -58,32 +67,21 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
       )}
 
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-56 sm:w-60 bg-[#453372] text-white flex flex-col justify-between transition-transform duration-300 ease-in-out shrink-0 select-none overflow-hidden ${
+        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-60 sm:w-64 bg-[#453372] text-white flex flex-col justify-between transition-transform duration-300 ease-in-out shrink-0 select-none overflow-hidden ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        {/* Top Brand Logo */}
-        <div className="pt-6 pb-4 px-6 flex items-center justify-between">
+        {/* Top Brand Logo matching reference circular icon style */}
+        <div className="pt-5 pb-4 px-5 flex items-center justify-between border-b border-purple-400/15">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-white text-[#453372] flex items-center justify-center shadow-md">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-6 h-6"
-              >
-                <circle cx="12" cy="6" r="2.5" fill="currentColor" />
-                <path d="M4 19.5c0-3.5 3.5-5.5 8-5.5s8 2 8 5.5" />
-                <path d="M7 19.5h10" />
-                <path d="M4 16l3-1.5" />
-                <path d="M20 16l-3-1.5" />
-              </svg>
+            <div className="w-10 h-10 rounded-full bg-white text-[#453372] flex items-center justify-center font-black text-sm tracking-wide shadow-md shrink-0">
+              TT
             </div>
-            <div className="lg:hidden">
-              <h2 className="text-sm font-bold text-white tracking-wide">Smart CRM</h2>
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-white tracking-tight leading-none truncate">
+                Treki Travels
+              </h2>
+              <p className="text-[11px] text-purple-200/70 font-medium mt-1">Travel CRM</p>
             </div>
           </div>
 
@@ -97,9 +95,10 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
           )}
         </div>
 
-        {/* Navigation list */}
-        <nav className="flex-1 overflow-y-auto pl-4 pr-0 py-3 space-y-1.5 scrollbar-none z-10">
+        {/* Navigation list: All original CRM items with the curved active tab cutout from reference */}
+        <nav className="flex-1 overflow-y-auto pl-4 pr-0 py-3 space-y-1 scrollbar-thin scrollbar-thumb-purple-900/40">
           {menuItems.map((item) => {
+            const Icon = item.icon
             const isActive = item.name === currentPath
 
             return (
@@ -107,14 +106,20 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
                 <button
                   type="button"
                   onClick={() => {
+                    if (onSelectMenu) onSelectMenu(item.name)
                     if (onClose) onClose()
                   }}
-                  className={`w-full flex items-center gap-3.5 px-4 py-2.5 text-xs sm:text-sm font-medium transition-all text-left ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs sm:text-sm font-medium transition-all text-left ${
                     isActive
                       ? 'sidebar-active-tab text-[#453372] font-bold shadow-xs'
-                      : 'text-purple-200/85 hover:text-white hover:translate-x-1'
+                      : 'text-purple-200/80 hover:text-white hover:bg-white/5 rounded-l-xl'
                   }`}
                 >
+                  <Icon
+                    className={`w-4 h-4 shrink-0 transition-colors ${
+                      isActive ? 'text-[#453372]' : 'text-purple-300/80'
+                    }`}
+                  />
                   <span className="truncate">{item.name}</span>
                 </button>
               </div>
@@ -122,97 +127,24 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
           })}
         </nav>
 
-        {/* Botanical / Tropical Leaf Illustration Art in Bottom Section */}
-        <div className="relative w-full h-44 pointer-events-none overflow-hidden mt-auto">
-          {/* Subtle gradient overlay to blend into purple */}
-          <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#453372]/30 to-[#453372] z-10 pointer-events-none" />
-
-          <svg
-            viewBox="0 0 240 180"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="absolute bottom-0 left-0 w-full h-full object-cover opacity-85"
-          >
-            {/* Background deep leaves */}
-            <path
-              d="M10 180 C20 120 70 100 120 110 C80 140 50 165 30 180 Z"
-              fill="#2e1f52"
-            />
-            <path
-              d="M140 180 C150 110 200 90 250 100 C210 135 180 165 160 180 Z"
-              fill="#372661"
-            />
-
-            {/* Midground Teal Leaves */}
-            <path
-              d="M-20 180 C0 110 50 85 90 95 C60 125 30 155 10 180 Z"
-              fill="#1e737d"
-              opacity="0.85"
-            />
-            <path
-              d="M200 180 C180 120 140 100 110 105 C140 135 170 160 190 180 Z"
-              fill="#258994"
-              opacity="0.8"
-            />
-
-            {/* Foreground Fresh Aqua & Mint Leaves */}
-            <path
-              d="M40 180 C55 125 105 105 135 115 C100 140 75 165 60 180 Z"
-              fill="#42a8b3"
-              opacity="0.9"
-            />
-            <path
-              d="M80 180 C100 130 160 115 195 125 C155 150 120 170 100 180 Z"
-              fill="#62c4ce"
-              opacity="0.95"
-            />
-            <path
-              d="M10 180 C25 140 65 130 90 140 C65 160 40 175 25 180 Z"
-              fill="#86dce3"
-              opacity="0.9"
-            />
-            <path
-              d="M130 180 C145 140 195 130 220 140 C190 160 165 175 150 180 Z"
-              fill="#a2ebef"
-              opacity="0.85"
-            />
-
-            {/* Leaf Vein lines */}
-            <path
-              d="M40 180 Q85 145 135 115"
-              stroke="#62c4ce"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              opacity="0.6"
-            />
-            <path
-              d="M80 180 Q135 150 195 125"
-              stroke="#86dce3"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              opacity="0.6"
-            />
-          </svg>
-        </div>
-
-        {/* Minimal User Profile & Logout */}
-        <div className="p-3 border-t border-purple-400/20 bg-[#3a2864]/90 z-20 flex items-center justify-between">
+        {/* Bottom User Profile Footer in Purple Theme */}
+        <div className="p-3 border-t border-purple-400/15 bg-[#3a2864]/95 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-white/15 text-white font-semibold text-xs flex items-center justify-center shrink-0">
-              {user ? user.username.slice(0, 2).toUpperCase() : 'SM'}
+              {user ? user.username.slice(0, 2).toUpperCase() : 'KP'}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-white truncate">
-                {user ? user.name : 'Smart Admin'}
+                {user ? user.name : 'Kushal Pareta'}
               </p>
-              <p className="text-[10px] text-purple-200/70 truncate">Administrator</p>
+              <p className="text-[10px] text-purple-200/70 truncate">Admin</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={handleLogout}
-            title="Sign Out"
+            title="Sign out"
             className="p-1.5 rounded-lg text-purple-200 hover:text-white hover:bg-white/10 transition"
           >
             <LogOut className="w-4 h-4" />
