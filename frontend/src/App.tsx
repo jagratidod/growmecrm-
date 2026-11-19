@@ -29,6 +29,11 @@ import { HostPage } from './features/hostPage/HostPage'
 import { InboxPage } from './features/inbox/InboxPage'
 import { CalendarPage } from './features/calendar/CalendarPage'
 import { CallLogPage } from './features/callLog/CallLogPage'
+import { FollowUpsPage } from './features/followUps/FollowUpsPage'
+import { InvoicesPage } from './features/invoices/InvoicesPage'
+import { LinkTreePage } from './features/linkTree/LinkTreePage'
+import { CommunicationsPage } from './features/communications/CommunicationsPage'
+import { BotFlowsPage } from './features/botFlows/BotFlowsPage'
 import { ProfilePage } from './features/settings/ProfilePage'
 import { ChannelsPage } from './features/settings/ChannelsPage'
 import { AiAgentPage } from './features/settings/AiAgentPage'
@@ -90,10 +95,20 @@ const AppContent: React.FC = () => {
       navigate('/host-page')
     } else if (menuName === 'Inbox') {
       navigate('/inbox')
-    } else if (menuName === 'Calendar') {
+    } else if (menuName === 'Calendar' || menuName === 'Events') {
       navigate('/calendar')
     } else if (menuName === 'Call Log') {
       navigate('/call-log')
+    } else if (menuName === 'Follow-ups') {
+      navigate('/follow-ups')
+    } else if (menuName === 'Invoices') {
+      navigate('/invoices')
+    } else if (menuName === 'LinkTree') {
+      navigate('/linktree')
+    } else if (menuName === 'Communications') {
+      navigate('/communications')
+    } else if (menuName === 'Bot Flows') {
+      navigate('/bot-flows')
     } else if (menuName === 'My profile') {
       navigate('/profile')
     } else if (menuName === 'Channels') {
@@ -148,12 +163,32 @@ const AppContent: React.FC = () => {
     return <InboxPage onNavigateMenu={handleMenuNavigation} />
   }
 
-  if (path === '/calendar') {
+  if (path === '/calendar' || path === '/events') {
     return <CalendarPage onNavigateMenu={handleMenuNavigation} />
   }
 
   if (path === '/call-log') {
     return <CallLogPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/follow-ups') {
+    return <FollowUpsPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/invoices') {
+    return <InvoicesPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/linktree') {
+    return <LinkTreePage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/communications') {
+    return <CommunicationsPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/bot-flows') {
+    return <BotFlowsPage onNavigateMenu={handleMenuNavigation} />
   }
 
   if (path === '/profile') {

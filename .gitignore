@@ -12,8 +12,6 @@ build/
 out/
 
 # Environment files
-.env
-.env.*
 !.env.example
 *.local
 
@@ -28,7 +26,6 @@ pnpm-debug.log*
 *.log
 
 # Editor and IDE directories
-.vscode/*
 !.vscode/extensions.json
 .idea/
 *.suo
@@ -40,3 +37,4 @@ pnpm-debug.log*
 # OS generated files
 .DS_Store
 Thumbs.db
+config.bat

@@ -20,6 +20,9 @@ import {
   Bot,
   Zap,
   Globe,
+  Share2,
+  ListChecks,
+  FileSpreadsheet,
   LogOut,
   X,
 } from 'lucide-react'
@@ -42,28 +45,31 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
   const menuItems = [
     { name: 'Dashboard', icon: LayoutGrid },
     { name: 'Leads', icon: Calendar },
-    { name: 'Bookings', icon: CalendarCheck },
-    { name: 'Bills', icon: Receipt },
-    { name: 'Team', icon: Users },
     { name: 'Inbox', icon: Inbox },
     { name: 'Communications', icon: Send },
     { name: 'Call Log', icon: PhoneCall },
     { name: 'Bot Flows', icon: GitFork },
+    { name: 'Bookings', icon: CalendarCheck },
     { name: 'Events', icon: Ticket },
     { name: 'Itineraries', icon: Map },
     { name: 'Packages', icon: Package },
     { name: 'Sightseeing', icon: Compass },
     { name: 'Hotels', icon: Building2 },
     { name: 'Host Page', icon: Globe },
+    { name: 'LinkTree', icon: Share2 },
+    { name: 'Follow-ups', icon: ListChecks },
     { name: 'Calendar', icon: CalendarDays },
+    { name: 'Invoices', icon: FileSpreadsheet },
+    { name: 'Bills', icon: Receipt },
+    { name: 'Team', icon: Users },
   ]
 
   const settingsItems = [
     { name: 'My profile', icon: User },
-    { name: 'Channels', icon: Plug },
-    { name: 'AI Agent', icon: Bot },
     { name: 'Organization', icon: Building2 },
     { name: 'Invoice Detail', icon: Receipt },
+    { name: 'Channels', icon: Plug },
+    { name: 'AI Agent', icon: Bot },
     { name: 'Automation', icon: Zap },
   ]
 
@@ -77,12 +83,22 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
 
   const handleItemClick = (name: string) => {
     if (onSelectMenu) onSelectMenu(name)
-    if (name === 'Bookings') {
+    if (name === 'Dashboard') {
+      navigate('/dashboard')
+    } else if (name === 'Leads') {
+      navigate('/leads')
+    } else if (name === 'Inbox') {
+      navigate('/inbox')
+    } else if (name === 'Communications') {
+      navigate('/communications')
+    } else if (name === 'Call Log') {
+      navigate('/call-log')
+    } else if (name === 'Bot Flows') {
+      navigate('/bot-flows')
+    } else if (name === 'Bookings') {
       navigate('/bookings')
-    } else if (name === 'Bills') {
-      navigate('/bills')
-    } else if (name === 'Team') {
-      navigate('/team')
+    } else if (name === 'Events') {
+      navigate('/calendar')
     } else if (name === 'Itineraries') {
       navigate('/itineraries')
     } else if (name === 'Packages') {
@@ -91,29 +107,33 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
       navigate('/sightseeing')
     } else if (name === 'Hotels') {
       navigate('/hotels')
-    } else if (name === 'Inbox') {
-      navigate('/inbox')
     } else if (name === 'Host Page') {
       navigate('/host-page')
+    } else if (name === 'LinkTree') {
+      navigate('/linktree')
+    } else if (name === 'Follow-ups') {
+      navigate('/follow-ups')
     } else if (name === 'Calendar') {
       navigate('/calendar')
-    } else if (name === 'Call Log') {
-      navigate('/call-log')
+    } else if (name === 'Invoices') {
+      navigate('/invoices')
+    } else if (name === 'Bills') {
+      navigate('/bills')
+    } else if (name === 'Team') {
+      navigate('/team')
     } else if (name === 'My profile') {
       navigate('/profile')
-    } else if (name === 'Channels') {
-      navigate('/channels')
-    } else if (name === 'AI Agent') {
-      navigate('/ai-agent')
     } else if (name === 'Organization') {
       navigate('/organization')
     } else if (name === 'Invoice Detail') {
       navigate('/invoice-detail')
+    } else if (name === 'Channels') {
+      navigate('/channels')
+    } else if (name === 'AI Agent') {
+      navigate('/ai-agent')
     } else if (name === 'Automation') {
       navigate('/automation')
-    } else if (name === 'Dashboard') {
-      navigate('/dashboard')
-    } else if (name === 'Leads') {
+    } else {
       navigate('/leads')
     }
     if (onClose) onClose()
