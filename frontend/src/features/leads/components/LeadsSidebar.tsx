@@ -81,6 +81,8 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
       navigate('/bills')
     } else if (name === 'Team') {
       navigate('/team')
+    } else if (name === 'Itineraries') {
+      navigate('/itineraries')
     } else if (name === 'My profile') {
       navigate('/profile')
     } else if (name === 'Channels') {

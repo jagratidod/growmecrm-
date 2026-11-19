@@ -6,12 +6,14 @@ import { BookingsProvider } from './context/BookingsContext'
 import { TeamProvider } from './context/TeamContext'
 import { BillsProvider } from './context/BillsContext'
 import { SettingsProvider } from './context/SettingsContext'
+import { ItinerariesProvider } from './context/ItinerariesContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
 import { LeadsPage } from './features/leads/LeadsPage'
 import { BookingsPage } from './features/bookings/BookingsPage'
 import { TeamPage } from './features/team/TeamPage'
 import { BillsPage } from './features/bills/BillsPage'
+import { ItinerariesPage } from './features/itineraries/ItinerariesPage'
 import { ProfilePage } from './features/settings/ProfilePage'
 import { ChannelsPage } from './features/settings/ChannelsPage'
 import { AiAgentPage } from './features/settings/AiAgentPage'
@@ -54,6 +56,8 @@ const AppContent: React.FC = () => {
       navigate('/bills')
     } else if (menuName === 'Team') {
       navigate('/team')
+    } else if (menuName === 'Itineraries') {
+      navigate('/itineraries')
     } else if (menuName === 'My profile') {
       navigate('/profile')
     } else if (menuName === 'Channels') {
@@ -76,6 +80,10 @@ const AppContent: React.FC = () => {
 
   if (path === '/team') {
     return <TeamPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/itineraries') {
+    return <ItinerariesPage onNavigateMenu={handleMenuNavigation} />
   }
 
   if (path === '/profile') {
@@ -101,11 +109,13 @@ export default function App() {
           <BookingsProvider>
             <TeamProvider>
               <BillsProvider>
-                <SettingsProvider>
-                  <ToastProvider>
-                    <AppContent />
-                  </ToastProvider>
-                </SettingsProvider>
+                <ItinerariesProvider>
+                  <SettingsProvider>
+                    <ToastProvider>
+                      <AppContent />
+                    </ToastProvider>
+                  </SettingsProvider>
+                </ItinerariesProvider>
               </BillsProvider>
             </TeamProvider>
           </BookingsProvider>
