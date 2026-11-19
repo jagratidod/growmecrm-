@@ -33,6 +33,7 @@ import { ProfilePage } from './features/settings/ProfilePage'
 import { ChannelsPage } from './features/settings/ChannelsPage'
 import { AiAgentPage } from './features/settings/AiAgentPage'
 import { OrganizationPage } from './features/settings/OrganizationPage'
+import { InvoiceDetailPage } from './features/settings/InvoiceDetailPage'
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -100,6 +101,8 @@ const AppContent: React.FC = () => {
       navigate('/ai-agent')
     } else if (menuName === 'Organization') {
       navigate('/organization')
+    } else if (menuName === 'Invoice Detail') {
+      navigate('/invoice-detail')
     } else {
       navigate('/leads')
     }
@@ -164,6 +167,10 @@ const AppContent: React.FC = () => {
 
   if (path === '/organization') {
     return <OrganizationPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/invoice-detail') {
+    return <InvoiceDetailPage onNavigateMenu={handleMenuNavigation} />
   }
 
   if (path === '/dashboard') {

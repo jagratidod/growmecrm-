@@ -30,6 +30,22 @@ export interface OrganizationSettings {
   secondaryColor: string
 }
 
+export interface InvoiceDetailSettings {
+  secondPhone: string
+  secondEmail: string
+  state: string
+  stateCode: string
+  bankName: string
+  bankAccountNumber: string
+  ifscCode: string
+  gstin: string
+  pan: string
+  hsnSacCode: string
+  signatureImage?: string
+  signatoryTitle: string
+  termsAndConditions: string
+}
+
 interface SettingsContextType {
   profile: UserProfileSettings
   updateProfile: (updates: Partial<UserProfileSettings>) => void
@@ -40,6 +56,8 @@ interface SettingsContextType {
   updateAiAgent: (updates: Partial<AiAgentSettings>) => void
   organization: OrganizationSettings
   updateOrganization: (updates: Partial<OrganizationSettings>) => void
+  invoiceDetail: InvoiceDetailSettings
+  updateInvoiceDetail: (updates: Partial<InvoiceDetailSettings>) => void
 }
 
 const STORAGE_KEY = 'treki_crm_settings_data'
@@ -74,6 +92,23 @@ const DEFAULT_ORGANIZATION: OrganizationSettings = {
   logoUrl: '',
   primaryColor: '#4F46E5',
   secondaryColor: '#0D9488',
+}
+
+const DEFAULT_INVOICE_DETAIL: InvoiceDetailSettings = {
+  secondPhone: '+91 98765 43210',
+  secondEmail: 'accounts@agency.com',
+  state: 'Maharashtra',
+  stateCode: '27',
+  bankName: 'HDFC Bank, Andheri branch',
+  bankAccountNumber: '50100123456789',
+  ifscCode: 'HDFC0001234',
+  gstin: '27AAAAA0000A1Z5',
+  pan: 'AAAAA0000A',
+  hsnSacCode: '998552',
+  signatureImage: '',
+  signatoryTitle: 'Director',
+  termsAndConditions:
+    'We declare that there is no tax payable under reverse charge mechanism.\nThe total invoice value mentioned herein shall be non-refundable in nature.',
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
@@ -151,6 +186,24 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [organization])
 
+  const [invoiceDetail, setInvoiceDetail] = useState<InvoiceDetailSettings>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY + '_invoice')
+      if (saved) return JSON.parse(saved)
+    } catch {
+      // ignore
+    }
+    return DEFAULT_INVOICE_DETAIL
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY + '_invoice', JSON.stringify(invoiceDetail))
+    } catch {
+      // ignore
+    }
+  }, [invoiceDetail])
+
   const updateProfile = (updates: Partial<UserProfileSettings>) => {
     setProfile((prev) => ({ ...prev, ...updates }))
   }
@@ -181,6 +234,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setOrganization((prev) => ({ ...prev, ...updates }))
   }
 
+  const updateInvoiceDetail = (updates: Partial<InvoiceDetailSettings>) => {
+    setInvoiceDetail((prev) => ({ ...prev, ...updates }))
+  }
+
   return (
     <SettingsContext.Provider
       value={{
@@ -193,6 +250,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateAiAgent,
         organization,
         updateOrganization,
+        invoiceDetail,
+        updateInvoiceDetail,
       }}
     >
       {children}
