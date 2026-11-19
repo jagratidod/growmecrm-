@@ -13,6 +13,7 @@ import { SightseeingProvider } from './context/SightseeingContext'
 import { CallLogProvider } from './context/CallLogContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
+import { DashboardPage } from './features/dashboard/DashboardPage'
 import { LeadsPage } from './features/leads/LeadsPage'
 import { BookingsPage } from './features/bookings/BookingsPage'
 import { TeamPage } from './features/team/TeamPage'
@@ -58,7 +59,11 @@ const AppContent: React.FC = () => {
   }
 
   const handleMenuNavigation = (menuName: string) => {
-    if (menuName === 'Bookings') {
+    if (menuName === 'Dashboard') {
+      navigate('/dashboard')
+    } else if (menuName === 'Leads') {
+      navigate('/leads')
+    } else if (menuName === 'Bookings') {
       navigate('/bookings')
     } else if (menuName === 'Bills') {
       navigate('/bills')
@@ -130,7 +135,15 @@ const AppContent: React.FC = () => {
     return <AiAgentPage onNavigateMenu={handleMenuNavigation} />
   }
 
-  return <LeadsPage onNavigateMenu={handleMenuNavigation} />
+  if (path === '/dashboard') {
+    return <DashboardPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/leads') {
+    return <LeadsPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  return <DashboardPage onNavigateMenu={handleMenuNavigation} />
 }
 
 export default function App() {
