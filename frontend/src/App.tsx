@@ -12,6 +12,7 @@ import { HotelsProvider } from './context/HotelsContext'
 import { SightseeingProvider } from './context/SightseeingContext'
 import { HostPageProvider } from './context/HostPageContext'
 import { InboxProvider } from './context/InboxContext'
+import { CalendarProvider } from './context/CalendarContext'
 import { CallLogProvider } from './context/CallLogContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
@@ -26,6 +27,7 @@ import { HotelsPage } from './features/hotels/HotelsPage'
 import { SightseeingPage } from './features/sightseeing/SightseeingPage'
 import { HostPage } from './features/hostPage/HostPage'
 import { InboxPage } from './features/inbox/InboxPage'
+import { CalendarPage } from './features/calendar/CalendarPage'
 import { CallLogPage } from './features/callLog/CallLogPage'
 import { ProfilePage } from './features/settings/ProfilePage'
 import { ChannelsPage } from './features/settings/ChannelsPage'
@@ -85,6 +87,8 @@ const AppContent: React.FC = () => {
       navigate('/host-page')
     } else if (menuName === 'Inbox') {
       navigate('/inbox')
+    } else if (menuName === 'Calendar') {
+      navigate('/calendar')
     } else if (menuName === 'Call Log') {
       navigate('/call-log')
     } else if (menuName === 'My profile') {
@@ -135,6 +139,10 @@ const AppContent: React.FC = () => {
     return <InboxPage onNavigateMenu={handleMenuNavigation} />
   }
 
+  if (path === '/calendar') {
+    return <CalendarPage onNavigateMenu={handleMenuNavigation} />
+  }
+
   if (path === '/call-log') {
     return <CallLogPage onNavigateMenu={handleMenuNavigation} />
   }
@@ -177,11 +185,13 @@ export default function App() {
                         <SightseeingProvider>
                           <HostPageProvider>
                             <InboxProvider>
-                              <CallLogProvider>
-                                <SettingsProvider>
-                                  <AppContent />
-                                </SettingsProvider>
-                              </CallLogProvider>
+                              <CalendarProvider>
+                                <CallLogProvider>
+                                  <SettingsProvider>
+                                    <AppContent />
+                                  </SettingsProvider>
+                                </CallLogProvider>
+                              </CalendarProvider>
                             </InboxProvider>
                           </HostPageProvider>
                         </SightseeingProvider>

@@ -2,6 +2,7 @@ import React from 'react'
 import {
   LayoutGrid,
   Calendar,
+  CalendarDays,
   Inbox,
   Send,
   PhoneCall,
@@ -54,6 +55,7 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
     { name: 'Sightseeing', icon: Compass },
     { name: 'Hotels', icon: Building2 },
     { name: 'Host Page', icon: Globe },
+    { name: 'Calendar', icon: CalendarDays },
   ]
 
   const settingsItems = [
@@ -93,6 +95,8 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
       navigate('/inbox')
     } else if (name === 'Host Page') {
       navigate('/host-page')
+    } else if (name === 'Calendar') {
+      navigate('/calendar')
     } else if (name === 'Call Log') {
       navigate('/call-log')
     } else if (name === 'My profile') {
