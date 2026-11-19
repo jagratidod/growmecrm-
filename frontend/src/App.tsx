@@ -34,6 +34,7 @@ import { ChannelsPage } from './features/settings/ChannelsPage'
 import { AiAgentPage } from './features/settings/AiAgentPage'
 import { OrganizationPage } from './features/settings/OrganizationPage'
 import { InvoiceDetailPage } from './features/settings/InvoiceDetailPage'
+import { AutomationPage } from './features/settings/AutomationPage'
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -103,6 +104,8 @@ const AppContent: React.FC = () => {
       navigate('/organization')
     } else if (menuName === 'Invoice Detail') {
       navigate('/invoice-detail')
+    } else if (menuName === 'Automation') {
+      navigate('/automation')
     } else {
       navigate('/leads')
     }
@@ -171,6 +174,10 @@ const AppContent: React.FC = () => {
 
   if (path === '/invoice-detail') {
     return <InvoiceDetailPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/automation') {
+    return <AutomationPage onNavigateMenu={handleMenuNavigation} />
   }
 
   if (path === '/dashboard') {

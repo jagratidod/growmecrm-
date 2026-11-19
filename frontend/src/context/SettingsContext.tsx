@@ -46,6 +46,22 @@ export interface InvoiceDetailSettings {
   termsAndConditions: string
 }
 
+export interface AutomationLogEntry {
+  id: string
+  timestamp: string
+  status: 'Sent' | 'Skipped' | 'Checked' | 'Failed'
+  leadName?: string
+  channel?: 'WhatsApp' | 'Instagram' | 'Email'
+  details: string
+}
+
+export interface AutomationSettings {
+  enabled: boolean
+  nudgeAfterHours: number
+  nudgeMessage: string
+  logs: AutomationLogEntry[]
+}
+
 interface SettingsContextType {
   profile: UserProfileSettings
   updateProfile: (updates: Partial<UserProfileSettings>) => void
@@ -58,6 +74,8 @@ interface SettingsContextType {
   updateOrganization: (updates: Partial<OrganizationSettings>) => void
   invoiceDetail: InvoiceDetailSettings
   updateInvoiceDetail: (updates: Partial<InvoiceDetailSettings>) => void
+  automation: AutomationSettings
+  updateAutomation: (updates: Partial<AutomationSettings>) => void
 }
 
 const STORAGE_KEY = 'treki_crm_settings_data'
@@ -109,6 +127,29 @@ const DEFAULT_INVOICE_DETAIL: InvoiceDetailSettings = {
   signatoryTitle: 'Director',
   termsAndConditions:
     'We declare that there is no tax payable under reverse charge mechanism.\nThe total invoice value mentioned herein shall be non-refundable in nature.',
+}
+
+const DEFAULT_AUTOMATION: AutomationSettings = {
+  enabled: false,
+  nudgeAfterHours: 48,
+  nudgeMessage:
+    'Just checking in — happy to help if you still have questions about your trip! Let us know.',
+  logs: [
+    {
+      id: 'log-1',
+      timestamp: 'Today, 11:30 PM',
+      status: 'Checked',
+      details: 'Evaluated 4 open leads. None exceeded 48h silence threshold.',
+    },
+    {
+      id: 'log-2',
+      timestamp: 'Today, 11:15 PM',
+      status: 'Skipped',
+      leadName: 'Aarav Mehta',
+      channel: 'WhatsApp',
+      details: 'Last message was 18 hours ago (under 48h threshold).',
+    },
+  ],
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
@@ -204,6 +245,24 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [invoiceDetail])
 
+  const [automation, setAutomation] = useState<AutomationSettings>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY + '_automation')
+      if (saved) return JSON.parse(saved)
+    } catch {
+      // ignore
+    }
+    return DEFAULT_AUTOMATION
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY + '_automation', JSON.stringify(automation))
+    } catch {
+      // ignore
+    }
+  }, [automation])
+
   const updateProfile = (updates: Partial<UserProfileSettings>) => {
     setProfile((prev) => ({ ...prev, ...updates }))
   }
@@ -238,6 +297,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setInvoiceDetail((prev) => ({ ...prev, ...updates }))
   }
 
+  const updateAutomation = (updates: Partial<AutomationSettings>) => {
+    setAutomation((prev) => ({ ...prev, ...updates }))
+  }
+
   return (
     <SettingsContext.Provider
       value={{
@@ -252,6 +315,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateOrganization,
         invoiceDetail,
         updateInvoiceDetail,
+        automation,
+        updateAutomation,
       }}
     >
       {children}
