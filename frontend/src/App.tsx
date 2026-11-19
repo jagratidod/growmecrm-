@@ -3,10 +3,12 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import { LeadsProvider } from './context/LeadsContext'
 import { BookingsProvider } from './context/BookingsContext'
+import { TeamProvider } from './context/TeamContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
 import { LeadsPage } from './features/leads/LeadsPage'
 import { BookingsPage } from './features/bookings/BookingsPage'
+import { TeamPage } from './features/team/TeamPage'
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -42,6 +44,8 @@ const AppContent: React.FC = () => {
   const handleMenuNavigation = (menuName: string) => {
     if (menuName === 'Bookings') {
       navigate('/bookings')
+    } else if (menuName === 'Team') {
+      navigate('/team')
     } else {
       navigate('/leads')
     }
@@ -50,6 +54,10 @@ const AppContent: React.FC = () => {
   // Authenticated CRM Routes:
   if (path === '/bookings') {
     return <BookingsPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  if (path === '/team') {
+    return <TeamPage onNavigateMenu={handleMenuNavigation} />
   }
 
   return <LeadsPage onNavigateMenu={handleMenuNavigation} />
@@ -61,9 +69,11 @@ export default function App() {
       <AuthProvider>
         <LeadsProvider>
           <BookingsProvider>
-            <ToastProvider>
-              <AppContent />
-            </ToastProvider>
+            <TeamProvider>
+              <ToastProvider>
+                <AppContent />
+              </ToastProvider>
+            </TeamProvider>
           </BookingsProvider>
         </LeadsProvider>
       </AuthProvider>

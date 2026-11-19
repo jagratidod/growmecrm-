@@ -12,6 +12,7 @@ import {
   Package,
   Compass,
   Building2,
+  Users,
   Globe,
   LogOut,
   X,
@@ -45,6 +46,7 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
     { name: 'Packages', icon: Package },
     { name: 'Sightseeing', icon: Compass },
     { name: 'Hotels', icon: Building2 },
+    { name: 'Team', icon: Users },
     { name: 'Host Page', icon: Globe },
   ]
 
@@ -60,6 +62,8 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
     if (onSelectMenu) onSelectMenu(name)
     if (name === 'Bookings') {
       navigate('/bookings')
+    } else if (name === 'Team') {
+      navigate('/team')
     } else if (name === 'Leads' || name === 'Dashboard') {
       navigate('/leads')
     }
