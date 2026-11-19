@@ -6,6 +6,7 @@ import { PackagesList } from './components/PackagesList'
 import { PackageBuilderHeader } from './components/PackageBuilderHeader'
 import { PackageStepNavigation } from './components/PackageStepNavigation'
 import { PackageBasicsForm } from './components/PackageBasicsForm'
+import { PackageItineraryForm } from './components/PackageItineraryForm'
 import { Menu } from 'lucide-react'
 
 interface PackagesPageProps {
@@ -13,7 +14,14 @@ interface PackagesPageProps {
 }
 
 export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigateMenu }) => {
-  const { isBuilderOpen, setIsBuilderOpen, activePackage, savePackage } = usePackages()
+  const {
+    isBuilderOpen,
+    setIsBuilderOpen,
+    currentStep,
+    setCurrentStep,
+    activePackage,
+    savePackage,
+  } = usePackages()
   const { toast } = useToast()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -32,10 +40,19 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigateMenu }) =>
     }
   }
 
-  const handleNextStep = () => {
+  const handleNextFromBasics = () => {
+    setCurrentStep(2)
     toast({
-      title: 'Basics section saved!',
-      description: 'Ready for Section 2 (Itinerary) when you provide the next screenshots.',
+      title: 'Basics saved!',
+      description: 'Proceeding to Section 2: Itinerary.',
+      type: 'success',
+    })
+  }
+
+  const handleNextFromItinerary = () => {
+    toast({
+      title: 'Day-by-day Itinerary saved!',
+      description: 'Ready for Section 3 (Logistics) when you share the next screenshots.',
       type: 'success',
     })
   }
@@ -65,12 +82,34 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigateMenu }) =>
             {/* 7 Step Tabs matching screenshot 1 */}
             <PackageStepNavigation />
 
-            {/* Step 1: Basics Form matching all 4 screenshots */}
+            {/* Step Wizard Body */}
             <main className="flex-1 pb-16">
-              <PackageBasicsForm
-                onNext={handleNextStep}
-                onBack={() => setIsBuilderOpen(false)}
-              />
+              {currentStep === 1 ? (
+                <PackageBasicsForm
+                  onNext={handleNextFromBasics}
+                  onBack={() => setIsBuilderOpen(false)}
+                />
+              ) : currentStep === 2 ? (
+                <PackageItineraryForm
+                  onNext={handleNextFromItinerary}
+                  onBack={() => setCurrentStep(1)}
+                />
+              ) : (
+                <div className="max-w-3xl mx-auto my-12 bg-white rounded-2xl p-8 border border-slate-200 text-center shadow-xs">
+                  <h3 className="text-base font-bold text-slate-800">
+                    Step {currentStep} is coming next
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    Please provide the screenshot for this section to unlock it.
+                  </p>
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    className="mt-4 px-4 py-2 bg-[#453372] text-white text-xs font-semibold rounded-xl"
+                  >
+                    ← Back to Itinerary
+                  </button>
+                </div>
+              )}
             </main>
           </div>
         ) : (

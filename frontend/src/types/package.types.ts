@@ -13,6 +13,21 @@ export interface PackageDuration {
   days: number
 }
 
+export interface PackageItineraryDay {
+  id: string
+  dayNumber: number
+  title: string
+  sightseeing?: string[]
+  dayPlan: string
+  hotelType?: string
+  stay?: string
+  activities?: string
+  meals?: string
+  distance?: string
+  notes?: string
+  photos?: string[]
+}
+
 export interface TravelPackage {
   id: string
   name: string
@@ -31,6 +46,7 @@ export interface TravelPackage {
   route?: string
   bookingAmount?: number
   pricingOptions: PricingOption[]
+  itineraryDays?: PackageItineraryDay[]
   bannerImage?: string
   whatsappBannerImage?: string
   whatsappDescription?: string

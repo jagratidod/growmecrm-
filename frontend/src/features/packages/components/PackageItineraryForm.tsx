@@ -1,0 +1,493 @@
+import React, { useState } from 'react'
+import {
+  GripVertical,
+  Trash2,
+  Sparkles,
+  MapPin,
+  Plus,
+  ArrowRight,
+  ArrowLeft,
+  X,
+  Image as ImageIcon,
+  Link as LinkIcon,
+} from 'lucide-react'
+import { usePackages } from '../../../context/PackagesContext'
+import { useToast } from '../../../components/ui/Toast'
+import type { PackageItineraryDay } from '../../../types/package.types'
+
+interface PackageItineraryFormProps {
+  onNext: () => void
+  onBack: () => void
+}
+
+export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNext, onBack }) => {
+  const { activePackage, savePackage } = usePackages()
+  const { toast } = useToast()
+
+  const [days, setDays] = useState<PackageItineraryDay[]>(() => {
+    if (activePackage?.itineraryDays && activePackage.itineraryDays.length > 0) {
+      return activePackage.itineraryDays
+    }
+    return [
+      {
+        id: `day-${Date.now()}-1`,
+        dayNumber: 1,
+        title: '',
+        dayPlan: '',
+        hotelType: 'No hotel / custom stay',
+        stay: '',
+        activities: '',
+        meals: '',
+        distance: '',
+        notes: '',
+        photos: [],
+      },
+    ]
+  })
+
+  const [activeUrlDayId, setActiveUrlDayId] = useState<string | null>(null)
+  const [photoUrlInput, setPhotoUrlInput] = useState('')
+  const [generatingAiDayId, setGeneratingAiDayId] = useState<string | null>(null)
+
+  // Update a single day's field
+  const handleUpdateDay = (dayId: string, field: keyof PackageItineraryDay, value: any) => {
+    setDays((prev) =>
+      prev.map((d) => (d.id === dayId ? { ...d, [field]: value } : d))
+    )
+  }
+
+  // Add new day
+  const handleAddDay = () => {
+    const nextNumber = days.length + 1
+    const newDay: PackageItineraryDay = {
+      id: `day-${Date.now()}-${nextNumber}`,
+      dayNumber: nextNumber,
+      title: '',
+      dayPlan: '',
+      hotelType: 'No hotel / custom stay',
+      stay: '',
+      activities: '',
+      meals: '',
+      distance: '',
+      notes: '',
+      photos: [],
+    }
+    setDays((prev) => [...prev, newDay])
+    toast({ title: `Day ${nextNumber} added to plan`, type: 'info' })
+  }
+
+  // Remove a day
+  const handleRemoveDay = (dayId: string) => {
+    if (days.length === 1) {
+      toast({ title: 'An itinerary requires at least 1 day', type: 'error' })
+      return
+    }
+    const remaining = days
+      .filter((d) => d.id !== dayId)
+      .map((d, index) => ({ ...d, dayNumber: index + 1 }))
+    setDays(remaining)
+    toast({ title: 'Day removed', type: 'info' })
+  }
+
+  // AI Generation for a day
+  const handleAiGenerateDay = (day: PackageItineraryDay) => {
+    setGeneratingAiDayId(day.id)
+    const destination = activePackage?.destination || 'Destination'
+
+    setTimeout(() => {
+      let aiTitle = ''
+      let aiPlan = ''
+      let aiStay = ''
+      let aiActivities = ''
+      let aiMeals = 'Breakfast, Dinner'
+      let aiDistance = '45 Kms'
+      let aiNotes = 'Standard check-in time is 1:00 PM.'
+
+      if (day.dayNumber === 1) {
+        aiTitle = `Arrival in ${destination} & Leisure Sunset`
+        aiPlan = `Airport pickup by private chauffeur and welcome assistance.\nTransfer to hotel or resort; smooth check-in.\nAfternoon relaxation by the pool or beachfront.\nEvening scenic sunset orientation walk followed by a welcome dinner.`
+        aiStay = `${destination} Grand Resort`
+        aiActivities = 'Airport transfer, Sunset walk, Welcome dinner'
+        aiMeals = 'Dinner'
+        aiDistance = '25 Kms'
+      } else if (day.dayNumber === 2) {
+        aiTitle = `Cultural Highlights & Iconic Sightseeing`
+        aiPlan = `Breakfast at hotel.\nFull day guided excursion covering historic temples, viewpoints, and artisan craft markets.\nTraditional local lunch at a scenic panorama restaurant.\nEvening cultural performance and leisure time.`
+        aiStay = `${destination} Grand Resort`
+        aiActivities = 'Guided temple tour, Panoramic viewpoint, Cultural dance'
+        aiMeals = 'Breakfast, Lunch'
+        aiDistance = '65 Kms'
+        aiNotes = 'Modest clothing required for temple visits.'
+      } else if (day.dayNumber === 3) {
+        aiTitle = `Island Speedboat Adventure & Watersports`
+        aiPlan = `Early morning breakfast.\nDepart on high-speed catamaran cruise to outer islands.\nSnorkeling with marine life, swimming at white sand beaches, and cliff viewpoints.\nBarbecue lunch on the beach.\nReturn to mainland by late afternoon.`
+        aiStay = `${destination} Luxury Beachfront Villa`
+        aiActivities = 'Speedboat cruise, Snorkeling, Beach BBQ'
+        aiMeals = 'Breakfast, Lunch'
+        aiDistance = '80 Kms (boat)'
+        aiNotes = 'Carry swimwear, sunscreen, and dry bags.'
+      } else {
+        aiTitle = `Hidden Gems, Shopping & Farewell Dinner`
+        aiPlan = `Buffet breakfast with scenic mountain / ocean views.\nVisit local spices, tea, and handicraft souvenirs bazaar.\nOptional spa treatment and relaxation.\nGrand celebratory farewell dinner under the stars.`
+        aiStay = `${destination} Luxury Beachfront Villa`
+        aiActivities = 'Souvenir shopping, Spa wellness, Farewell dinner'
+        aiMeals = 'Breakfast, Dinner'
+        aiDistance = '30 Kms'
+        aiNotes = 'Pack luggage for departure next morning.'
+      }
+
+      setDays((prev) =>
+        prev.map((d) =>
+          d.id === day.id
+            ? {
+                ...d,
+                title: d.title || aiTitle,
+                dayPlan: d.dayPlan || aiPlan,
+                stay: d.stay || aiStay,
+                activities: d.activities || aiActivities,
+                meals: d.meals || aiMeals,
+                distance: d.distance || aiDistance,
+                notes: d.notes || aiNotes,
+              }
+            : d
+        )
+      )
+
+      setGeneratingAiDayId(null)
+      toast({
+        title: `AI generated plan for Day ${day.dayNumber}`,
+        type: 'success',
+      })
+    }, 700)
+  }
+
+  // Handle local photo upload
+  const handlePhotoUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    dayId: string
+  ) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          const photoUrl = reader.result
+          setDays((prev) =>
+            prev.map((d) =>
+              d.id === dayId
+                ? { ...d, photos: [...(d.photos || []), photoUrl] }
+                : d
+            )
+          )
+          toast({ title: 'Day photo uploaded', type: 'success' })
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleAddPhotoUrl = (dayId: string) => {
+    if (!photoUrlInput.trim()) return
+    setDays((prev) =>
+      prev.map((d) =>
+        d.id === dayId
+          ? { ...d, photos: [...(d.photos || []), photoUrlInput.trim()] }
+          : d
+      )
+    )
+    setPhotoUrlInput('')
+    setActiveUrlDayId(null)
+    toast({ title: 'Photo URL added', type: 'success' })
+  }
+
+  const handleRemovePhoto = (dayId: string, photoIdx: number) => {
+    setDays((prev) =>
+      prev.map((d) =>
+        d.id === dayId
+          ? { ...d, photos: d.photos?.filter((_, i) => i !== photoIdx) }
+          : d
+      )
+    )
+  }
+
+  // Save and proceed
+  const handleProceed = async () => {
+    await savePackage({
+      itineraryDays: days,
+    })
+    onNext()
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6 animate-in fade-in duration-200">
+      {/* Section Header */}
+      <div>
+        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+          ITINERARY
+        </h4>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          Build the day-by-day plan — the stay, activities and photos on each day become its own page in the brochure PDF.
+        </p>
+      </div>
+
+      {/* Day Cards List */}
+      <div className="space-y-6">
+        {days.map((day) => (
+          <div
+            key={day.id}
+            className="bg-white rounded-2xl p-5 sm:p-7 border border-slate-200/80 shadow-xs space-y-4 transition-all hover:border-slate-300 relative group"
+          >
+            {/* Day Title Row matching screenshot 1 */}
+            <div className="flex items-center gap-3">
+              {/* Day Number Badge */}
+              <div className="w-8 h-8 rounded-full bg-[#453372] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                {day.dayNumber}
+              </div>
+
+              {/* Day Title Input */}
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder={`Day ${day.dayNumber} title — e.g. Arrival & beach sunset`}
+                  value={day.title}
+                  onChange={(e) => handleUpdateDay(day.id, 'title', e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200/90 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] bg-white transition-all"
+                />
+              </div>
+
+              {/* Grip Handle */}
+              <div className="text-slate-300 hover:text-slate-500 cursor-grab p-1">
+                <GripVertical className="w-4 h-4" />
+              </div>
+
+              {/* Delete Day Button */}
+              <button
+                type="button"
+                onClick={() => handleRemoveDay(day.id)}
+                className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                title="Delete Day"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Sightseeing notice + AI Generate Button Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/70 text-xs text-slate-500">
+                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span>No sightseeing activities yet — add some on the Sightseeing page</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleAiGenerateDay(day)}
+                disabled={generatingAiDayId === day.id}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200/90 hover:bg-purple-50/50 hover:border-[#453372]/30 text-xs font-semibold text-slate-700 hover:text-[#453372] transition-all shadow-2xs shrink-0 active:scale-[0.98]"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#453372]" />
+                <span>{generatingAiDayId === day.id ? 'Generating...' : 'Generate with AI'}</span>
+              </button>
+            </div>
+
+            {/* Day Plan Textarea */}
+            <div>
+              <textarea
+                rows={4}
+                placeholder="Day plan — pickup time, transfers, what happens today... (one point per line)"
+                value={day.dayPlan}
+                onChange={(e) => handleUpdateDay(day.id, 'dayPlan', e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+              />
+            </div>
+
+            {/* Hotel Type & Stay */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <select
+                  value={day.hotelType || 'No hotel / custom stay'}
+                  onChange={(e) => handleUpdateDay(day.id, 'hotelType', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                >
+                  <option value="No hotel / custom stay">No hotel / custom stay</option>
+                  <option value="3-Star Deluxe Hotel">3-Star Deluxe Hotel</option>
+                  <option value="4-Star Premium Resort">4-Star Premium Resort</option>
+                  <option value="5-Star Luxury Villa">5-Star Luxury Villa</option>
+                  <option value="Boutique Heritage Haveli">Boutique Heritage Haveli</option>
+                  <option value="Riverside Alpine Camp">Riverside Alpine Camp</option>
+                  <option value="Houseboat Deluxe Stay">Houseboat Deluxe Stay</option>
+                </select>
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  placeholder="Stay — e.g. Riverside camp, Rishikesh"
+                  value={day.stay || ''}
+                  onChange={(e) => handleUpdateDay(day.id, 'stay', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                />
+              </div>
+            </div>
+
+            {/* Activities & Meals */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Activities — rafting, bonfire, trek... (comma separated)"
+                  value={day.activities || ''}
+                  onChange={(e) => handleUpdateDay(day.id, 'activities', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                />
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  placeholder="Meals — e.g. Breakfast, Dinner"
+                  value={day.meals || ''}
+                  onChange={(e) => handleUpdateDay(day.id, 'meals', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                />
+              </div>
+            </div>
+
+            {/* Distance & Notes */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-1">
+                <input
+                  type="text"
+                  placeholder="Distance — e.g. 225 Kms"
+                  value={day.distance || ''}
+                  onChange={(e) => handleUpdateDay(day.id, 'distance', e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <textarea
+                  rows={2}
+                  placeholder="Notes for this day (one per line) — e.g. Standard check-in time is 1:00 PM"
+                  value={day.notes || ''}
+                  onChange={(e) => handleUpdateDay(day.id, 'notes', e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Photo Upload Area matching screenshot 1 and 2 */}
+            <div className="pt-2">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Uploaded day photos */}
+                {day.photos &&
+                  day.photos.map((photo, pIdx) => (
+                    <div
+                      key={pIdx}
+                      className="relative w-24 h-24 rounded-2xl overflow-hidden border border-slate-200 shadow-2xs group/photo"
+                    >
+                      <img
+                        src={photo}
+                        alt={`Day ${day.dayNumber} photo ${pIdx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(day.id, pIdx)}
+                        className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-rose-600 text-white rounded-full transition-colors opacity-0 group-hover/photo:opacity-100"
+                        title="Remove photo"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+
+                {/* Upload dashed square box matching screenshot */}
+                <div className="relative w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#453372]/50 hover:bg-purple-50/20 transition-all flex flex-col items-center justify-center cursor-pointer group/upload">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoUpload(e, day.id)}
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  />
+                  <ImageIcon className="w-5 h-5 text-slate-400 group-hover/upload:text-[#453372] transition-colors mb-1" />
+                  <span className="text-[11px] font-semibold text-slate-600 group-hover/upload:text-[#453372]">
+                    Upload
+                  </span>
+                </div>
+
+                {/* URL upload helper */}
+                {activeUrlDayId === day.id ? (
+                  <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <input
+                      type="url"
+                      placeholder="https://example.com/photo.jpg"
+                      value={photoUrlInput}
+                      onChange={(e) => setPhotoUrlInput(e.target.value)}
+                      className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 w-48"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddPhotoUrl(day.id)}
+                      className="px-2.5 py-1 text-xs font-semibold bg-[#453372] text-white rounded-lg"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveUrlDayId(null)}
+                      className="text-xs text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setActiveUrlDayId(day.id)}
+                    className="text-[11px] text-slate-400 hover:text-[#453372] flex items-center gap-1 font-medium"
+                  >
+                    <LinkIcon className="w-3 h-3" />
+                    <span>paste URL</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Full-width "+ Add day" dashed button matching screenshot 2 */}
+      <div>
+        <button
+          type="button"
+          onClick={handleAddDay}
+          className="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#453372]/60 hover:bg-purple-50/20 text-slate-600 hover:text-[#453372] font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add day</span>
+        </button>
+      </div>
+
+      {/* Bottom Navigation matching screenshot 2 */}
+      <div className="flex items-center justify-between pt-4">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleProceed}
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
+        >
+          <span>Next: Logistics</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  )
+}

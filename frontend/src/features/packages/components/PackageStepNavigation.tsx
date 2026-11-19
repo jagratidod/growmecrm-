@@ -17,12 +17,12 @@ export const PackageStepNavigation: React.FC = () => {
   ]
 
   const handleStepClick = (stepNum: number) => {
-    if (stepNum === 1) {
-      setCurrentStep(1)
+    if (stepNum === 1 || stepNum === 2) {
+      setCurrentStep(stepNum)
     } else {
       toast({
         title: `Step ${stepNum} (${steps[stepNum - 1].title})`,
-        description: 'Currently focusing on section 1 (Basics). Next sections will be activated as you provide them!',
+        description: 'Currently focusing on sections 1 & 2. Next sections will be activated as you provide them!',
         type: 'info',
       })
     }
