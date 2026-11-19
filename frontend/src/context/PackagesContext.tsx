@@ -148,6 +148,22 @@ export const NEW_PACKAGE_INITIAL: Omit<TravelPackage, 'id' | 'createdAt' | 'upda
       photos: [],
     },
   ],
+  inclusions: 'Return flights\nHotel 4★\nDaily breakfast',
+  exclusions: 'Visa fees\nLunch & dinner\nPersonal expenses',
+  pickupDropPoints: 'Pickup: Airport T2\nDrop: Hotel lobby',
+  thingsToCarry: 'Passport\nSunscreen\nComfortable shoes',
+  cancellationPolicy: 'Free cancellation up to 15 days before departure...',
+  paymentTerms: '25% advance to confirm, balance 7 days before travel...',
+  termsAndConditions: 'Any additional terms travellers should know...',
+  faqs: [
+    {
+      id: 'faq-1',
+      question: 'Are flights included?',
+      answer: 'Yes, round-trip economy flights are included in this package.',
+    },
+  ],
+  highlights: ['Private sunset dinner on the beach'],
+  galleryImages: [],
 }
 
 const PackagesContext = createContext<PackagesContextType | undefined>(undefined)

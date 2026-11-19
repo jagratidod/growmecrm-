@@ -1,10 +1,8 @@
 import React from 'react'
 import { usePackages } from '../../../context/PackagesContext'
-import { useToast } from '../../../components/ui/Toast'
 
 export const PackageStepNavigation: React.FC = () => {
   const { currentStep, setCurrentStep } = usePackages()
-  const { toast } = useToast()
 
   const steps = [
     { number: 1, title: 'Basics' },
@@ -17,15 +15,7 @@ export const PackageStepNavigation: React.FC = () => {
   ]
 
   const handleStepClick = (stepNum: number) => {
-    if (stepNum === 1 || stepNum === 2) {
-      setCurrentStep(stepNum)
-    } else {
-      toast({
-        title: `Step ${stepNum} (${steps[stepNum - 1].title})`,
-        description: 'Currently focusing on sections 1 & 2. Next sections will be activated as you provide them!',
-        type: 'info',
-      })
-    }
+    setCurrentStep(stepNum)
   }
 
   return (

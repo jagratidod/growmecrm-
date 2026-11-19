@@ -7,6 +7,11 @@ import { PackageBuilderHeader } from './components/PackageBuilderHeader'
 import { PackageStepNavigation } from './components/PackageStepNavigation'
 import { PackageBasicsForm } from './components/PackageBasicsForm'
 import { PackageItineraryForm } from './components/PackageItineraryForm'
+import { PackageLogisticsForm } from './components/PackageLogisticsForm'
+import { PackagePoliciesForm } from './components/PackagePoliciesForm'
+import { PackageFaqsForm } from './components/PackageFaqsForm'
+import { PackageExtraForm } from './components/PackageExtraForm'
+import { PackageReviewStep } from './components/PackageReviewStep'
 import { Menu } from 'lucide-react'
 
 interface PackagesPageProps {
@@ -42,19 +47,31 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigateMenu }) =>
 
   const handleNextFromBasics = () => {
     setCurrentStep(2)
-    toast({
-      title: 'Basics saved!',
-      description: 'Proceeding to Section 2: Itinerary.',
-      type: 'success',
-    })
   }
 
   const handleNextFromItinerary = () => {
-    toast({
-      title: 'Day-by-day Itinerary saved!',
-      description: 'Ready for Section 3 (Logistics) when you share the next screenshots.',
-      type: 'success',
-    })
+    setCurrentStep(3)
+  }
+
+  const handleNextFromLogistics = () => {
+    setCurrentStep(4)
+  }
+
+  const handleNextFromPolicies = () => {
+    setCurrentStep(5)
+  }
+
+  const handleNextFromFaqs = () => {
+    setCurrentStep(6)
+  }
+
+  const handleNextFromExtra = () => {
+    setCurrentStep(7)
+  }
+
+  const handleFinished = () => {
+    setIsBuilderOpen(false)
+    setCurrentStep(1)
   }
 
   return (
@@ -84,31 +101,47 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigateMenu }) =>
 
             {/* Step Wizard Body */}
             <main className="flex-1 pb-16">
-              {currentStep === 1 ? (
+              {currentStep === 1 && (
                 <PackageBasicsForm
                   onNext={handleNextFromBasics}
                   onBack={() => setIsBuilderOpen(false)}
                 />
-              ) : currentStep === 2 ? (
+              )}
+              {currentStep === 2 && (
                 <PackageItineraryForm
                   onNext={handleNextFromItinerary}
                   onBack={() => setCurrentStep(1)}
                 />
-              ) : (
-                <div className="max-w-3xl mx-auto my-12 bg-white rounded-2xl p-8 border border-slate-200 text-center shadow-xs">
-                  <h3 className="text-base font-bold text-slate-800">
-                    Step {currentStep} is coming next
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    Please provide the screenshot for this section to unlock it.
-                  </p>
-                  <button
-                    onClick={() => setCurrentStep(2)}
-                    className="mt-4 px-4 py-2 bg-[#453372] text-white text-xs font-semibold rounded-xl"
-                  >
-                    ← Back to Itinerary
-                  </button>
-                </div>
+              )}
+              {currentStep === 3 && (
+                <PackageLogisticsForm
+                  onNext={handleNextFromLogistics}
+                  onBack={() => setCurrentStep(2)}
+                />
+              )}
+              {currentStep === 4 && (
+                <PackagePoliciesForm
+                  onNext={handleNextFromPolicies}
+                  onBack={() => setCurrentStep(3)}
+                />
+              )}
+              {currentStep === 5 && (
+                <PackageFaqsForm
+                  onNext={handleNextFromFaqs}
+                  onBack={() => setCurrentStep(4)}
+                />
+              )}
+              {currentStep === 6 && (
+                <PackageExtraForm
+                  onNext={handleNextFromExtra}
+                  onBack={() => setCurrentStep(5)}
+                />
+              )}
+              {currentStep === 7 && (
+                <PackageReviewStep
+                  onBack={() => setCurrentStep(6)}
+                  onFinished={handleFinished}
+                />
               )}
             </main>
           </div>

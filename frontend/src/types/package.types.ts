@@ -28,6 +28,12 @@ export interface PackageItineraryDay {
   photos?: string[]
 }
 
+export interface PackageFaq {
+  id: string
+  question: string
+  answer: string
+}
+
 export interface TravelPackage {
   id: string
   name: string
@@ -53,6 +59,25 @@ export interface TravelPackage {
   description?: string
   contactNumber?: string
   contactEmail?: string
+
+  // Step 3: Logistics
+  inclusions?: string
+  exclusions?: string
+  pickupDropPoints?: string
+  thingsToCarry?: string
+
+  // Step 4: Policies
+  cancellationPolicy?: string
+  paymentTerms?: string
+  termsAndConditions?: string
+
+  // Step 5: FAQs
+  faqs?: PackageFaq[]
+
+  // Step 6: Extra
+  highlights?: string[]
+  galleryImages?: string[]
+
   createdAt: string
   updatedAt: string
 }
