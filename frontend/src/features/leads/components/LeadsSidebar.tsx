@@ -14,6 +14,10 @@ import {
   Compass,
   Building2,
   Users,
+  User,
+  Plug,
+  Bot,
+  Zap,
   Globe,
   LogOut,
   X,
@@ -37,19 +41,28 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
   const menuItems = [
     { name: 'Dashboard', icon: LayoutGrid },
     { name: 'Leads', icon: Calendar },
+    { name: 'Bookings', icon: CalendarCheck },
+    { name: 'Bills', icon: Receipt },
+    { name: 'Team', icon: Users },
     { name: 'Inbox', icon: Inbox },
     { name: 'Communications', icon: Send },
     { name: 'Call Log', icon: PhoneCall },
     { name: 'Bot Flows', icon: GitFork },
-    { name: 'Bookings', icon: CalendarCheck },
-    { name: 'Bills', icon: Receipt },
     { name: 'Events', icon: Ticket },
     { name: 'Itineraries', icon: Map },
     { name: 'Packages', icon: Package },
     { name: 'Sightseeing', icon: Compass },
     { name: 'Hotels', icon: Building2 },
-    { name: 'Team', icon: Users },
     { name: 'Host Page', icon: Globe },
+  ]
+
+  const settingsItems = [
+    { name: 'My profile', icon: User },
+    { name: 'Channels', icon: Plug },
+    { name: 'AI Agent', icon: Bot },
+    { name: 'Organization', icon: Building2 },
+    { name: 'Invoice Detail', icon: Receipt },
+    { name: 'Automation', icon: Zap },
   ]
 
   const { logout, user } = useAuth()
@@ -68,6 +81,12 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
       navigate('/bills')
     } else if (name === 'Team') {
       navigate('/team')
+    } else if (name === 'My profile') {
+      navigate('/profile')
+    } else if (name === 'Channels') {
+      navigate('/channels')
+    } else if (name === 'AI Agent') {
+      navigate('/ai-agent')
     } else if (name === 'Leads' || name === 'Dashboard') {
       navigate('/leads')
     }
@@ -116,6 +135,39 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
         {/* Navigation list: All original CRM items with the curved active tab cutout from reference */}
         <nav className="flex-1 overflow-y-auto pl-4 pr-0 py-3 space-y-1 scrollbar-thin scrollbar-thumb-purple-900/40">
           {menuItems.map((item) => {
+            const Icon = item.icon
+            const isActive = item.name === currentPath
+
+            return (
+              <div key={item.name} className="relative">
+                <button
+                  type="button"
+                  onClick={() => handleItemClick(item.name)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs sm:text-sm font-medium transition-all text-left ${
+                    isActive
+                      ? 'sidebar-active-tab text-[#453372] font-bold shadow-xs'
+                      : 'text-purple-200/80 hover:text-white hover:bg-white/5 rounded-l-xl'
+                  }`}
+                >
+                  <Icon
+                    className={`w-4 h-4 shrink-0 transition-colors ${
+                      isActive ? 'text-[#453372]' : 'text-purple-300/80'
+                    }`}
+                  />
+                  <span className="truncate">{item.name}</span>
+                </button>
+              </div>
+            )
+          })}
+
+          {/* SETTINGS Group matching reference */}
+          <div className="pt-4 pb-1.5 px-3.5">
+            <p className="text-[10px] font-black text-purple-300/60 uppercase tracking-widest">
+              Settings
+            </p>
+          </div>
+
+          {settingsItems.map((item) => {
             const Icon = item.icon
             const isActive = item.name === currentPath
 
