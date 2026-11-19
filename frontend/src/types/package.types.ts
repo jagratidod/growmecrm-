@@ -78,6 +78,10 @@ export interface TravelPackage {
   highlights?: string[]
   galleryImages?: string[]
 
+  // Step 7: Review & Distribution
+  showOnLinkTree?: boolean
+  linkTreeCategories?: string[]
+
   createdAt: string
   updatedAt: string
 }
