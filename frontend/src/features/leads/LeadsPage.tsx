@@ -13,7 +13,11 @@ import { ImportCsvModal } from './components/ImportCsvModal'
 import { useLeads } from '../../context/LeadsContext'
 import { SearchX } from 'lucide-react'
 
-export const LeadsPage: React.FC = () => {
+interface LeadsPageProps {
+  onNavigateMenu?: (menu: string) => void
+}
+
+export const LeadsPage: React.FC<LeadsPageProps> = ({ onNavigateMenu }) => {
   const { leads, filteredLeads, resetFilters } = useLeads()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [currentMenu, setCurrentMenu] = useState('Leads')
@@ -28,7 +32,10 @@ export const LeadsPage: React.FC = () => {
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
         currentPath={currentMenu}
-        onSelectMenu={(menu) => setCurrentMenu(menu)}
+        onSelectMenu={(menu) => {
+          setCurrentMenu(menu)
+          if (onNavigateMenu) onNavigateMenu(menu)
+        }}
       />
 
       {/* Main CRM Application Area */}

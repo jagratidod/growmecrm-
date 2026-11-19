@@ -56,6 +56,16 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
     navigate('/login')
   }
 
+  const handleItemClick = (name: string) => {
+    if (onSelectMenu) onSelectMenu(name)
+    if (name === 'Bookings') {
+      navigate('/bookings')
+    } else if (name === 'Leads' || name === 'Dashboard') {
+      navigate('/leads')
+    }
+    if (onClose) onClose()
+  }
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -105,10 +115,7 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
               <div key={item.name} className="relative">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (onSelectMenu) onSelectMenu(item.name)
-                    if (onClose) onClose()
-                  }}
+                  onClick={() => handleItemClick(item.name)}
                   className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs sm:text-sm font-medium transition-all text-left ${
                     isActive
                       ? 'sidebar-active-tab text-[#453372] font-bold shadow-xs'

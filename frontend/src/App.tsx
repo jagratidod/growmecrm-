@@ -2,9 +2,11 @@ import React, { useEffect } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import { LeadsProvider } from './context/LeadsContext'
+import { BookingsProvider } from './context/BookingsContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
 import { LeadsPage } from './features/leads/LeadsPage'
+import { BookingsPage } from './features/bookings/BookingsPage'
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -33,15 +35,24 @@ const AppContent: React.FC = () => {
   // Base route is /login: show AuthPage if path is /login or if unauthenticated
   const isLoginPage = path === '/login' || !isAuthenticated
 
-  return (
-    <div className="relative">
-      {isLoginPage ? (
-        <AuthPage onSuccess={() => navigate('/leads')} />
-      ) : (
-        <LeadsPage />
-      )}
-    </div>
-  )
+  if (isLoginPage) {
+    return <AuthPage onSuccess={() => navigate('/leads')} />
+  }
+
+  const handleMenuNavigation = (menuName: string) => {
+    if (menuName === 'Bookings') {
+      navigate('/bookings')
+    } else {
+      navigate('/leads')
+    }
+  }
+
+  // Authenticated CRM Routes:
+  if (path === '/bookings') {
+    return <BookingsPage onNavigateMenu={handleMenuNavigation} />
+  }
+
+  return <LeadsPage onNavigateMenu={handleMenuNavigation} />
 }
 
 export default function App() {
@@ -49,9 +60,11 @@ export default function App() {
     <RouterProvider>
       <AuthProvider>
         <LeadsProvider>
-          <ToastProvider>
-            <AppContent />
-          </ToastProvider>
+          <BookingsProvider>
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
+          </BookingsProvider>
         </LeadsProvider>
       </AuthProvider>
     </RouterProvider>
