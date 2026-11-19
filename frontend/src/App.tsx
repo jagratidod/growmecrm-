@@ -157,33 +157,33 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <RouterProvider>
-      <AuthProvider>
-        <LeadsProvider>
-          <BookingsProvider>
-            <TeamProvider>
-              <BillsProvider>
-                <ItinerariesProvider>
-                  <PackagesProvider>
-                    <HotelsProvider>
-                      <SightseeingProvider>
-                        <HostPageProvider>
-                          <CallLogProvider>
-                            <SettingsProvider>
-                              <ToastProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <LeadsProvider>
+            <BookingsProvider>
+              <TeamProvider>
+                <BillsProvider>
+                  <ItinerariesProvider>
+                    <PackagesProvider>
+                      <HotelsProvider>
+                        <SightseeingProvider>
+                          <HostPageProvider>
+                            <CallLogProvider>
+                              <SettingsProvider>
                                 <AppContent />
-                              </ToastProvider>
-                            </SettingsProvider>
-                          </CallLogProvider>
-                        </HostPageProvider>
-                      </SightseeingProvider>
-                    </HotelsProvider>
-                  </PackagesProvider>
-                </ItinerariesProvider>
-              </BillsProvider>
-            </TeamProvider>
-          </BookingsProvider>
-        </LeadsProvider>
-      </AuthProvider>
+                              </SettingsProvider>
+                            </CallLogProvider>
+                          </HostPageProvider>
+                        </SightseeingProvider>
+                      </HotelsProvider>
+                    </PackagesProvider>
+                  </ItinerariesProvider>
+                </BillsProvider>
+              </TeamProvider>
+            </BookingsProvider>
+          </LeadsProvider>
+        </AuthProvider>
+      </ToastProvider>
     </RouterProvider>
   )
 }
