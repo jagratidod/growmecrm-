@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plus, Search, Compass } from 'lucide-react'
+import { Plus, Search, Compass, RefreshCw } from 'lucide-react'
 import { useSightseeing } from '../../../context/SightseeingContext'
 
 interface SightseeingHeaderProps {
@@ -7,7 +7,7 @@ interface SightseeingHeaderProps {
 }
 
 export const SightseeingHeader: React.FC<SightseeingHeaderProps> = ({ onOpenNewModal }) => {
-  const { filters, setSearch, activities } = useSightseeing()
+  const { filters, setSearch, activities, isLoading, refreshActivities } = useSightseeing()
 
   return (
     <div className="space-y-6">
@@ -22,13 +22,23 @@ export const SightseeingHeader: React.FC<SightseeingHeaderProps> = ({ onOpenNewM
           </p>
         </div>
 
-        <button
-          onClick={onOpenNewModal}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New activity</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => refreshActivities()}
+            disabled={isLoading}
+            className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#453372] hover:bg-purple-50 transition cursor-pointer"
+            title="Refresh from server"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={onOpenNewModal}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New activity</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Bar matching screenshot */}

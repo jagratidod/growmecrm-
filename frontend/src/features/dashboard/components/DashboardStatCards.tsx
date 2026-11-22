@@ -11,46 +11,56 @@ import {
 } from 'lucide-react'
 import { useLeads } from '../../../context/LeadsContext'
 import { useBookings } from '../../../context/BookingsContext'
+import type { DashboardMetrics } from '../../../services/dashboardService'
 
-export const DashboardStatCards: React.FC = () => {
+interface DashboardStatCardsProps {
+  metrics?: DashboardMetrics
+}
+
+export const DashboardStatCards: React.FC<DashboardStatCardsProps> = ({ metrics }) => {
   const { leads } = useLeads()
   const { bookings } = useBookings()
 
-  // Compute metrics dynamically from current data
-  const totalLeads = leads.length
+  // Use server metrics when available, or compute dynamically as fallback
+  const totalLeads = metrics ? metrics.totalLeads : leads.length
 
-  const openLeads = leads.filter(
-    (l) => l.status !== 'Won' && l.status !== 'Lost'
-  ).length
+  const openLeads = metrics
+    ? metrics.openLeads
+    : leads.filter((l) => l.status !== 'Won' && l.status !== 'Lost').length
 
-  const wonLeads = leads.filter((l) => l.status === 'Won').length
+  const wonLeads = metrics
+    ? metrics.wonLeads
+    : leads.filter((l) => l.status === 'Won').length
 
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const newThisWeek = leads.filter((l) => {
-    const created = new Date(l.createdAt)
-    return created >= sevenDaysAgo
-  }).length
+  const newThisWeek = metrics
+    ? metrics.newThisWeek
+    : leads.filter((l) => {
+        const created = new Date(l.createdAt)
+        return created >= sevenDaysAgo
+      }).length
 
-  const totalBookings = bookings.length
+  const totalBookings = metrics ? metrics.totalBookings : bookings.length
 
   const currentMonth = now.getMonth()
   const currentYear = now.getFullYear()
-  const departingThisMonth = bookings.filter((b) => {
-    if (!b.departure) return false
-    const depDate = new Date(b.departure)
-    return depDate.getMonth() === currentMonth && depDate.getFullYear() === currentYear
-  }).length
+  const departingThisMonth = metrics
+    ? metrics.departingThisMonth
+    : bookings.filter((b) => {
+        if (!b.departure) return false
+        const depDate = new Date(b.departure)
+        return depDate.getMonth() === currentMonth && depDate.getFullYear() === currentYear
+      }).length
 
-  // Trip value: sum of bookings totalAmount (or won leads budget if no bookings)
-  const bookingsTripValue = bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
-  const leadsWonValue = leads
-    .filter((l) => l.status === 'Won')
-    .reduce((sum, l) => sum + (l.budget || 0), 0)
-  const totalTripValue = bookingsTripValue > 0 ? bookingsTripValue : leadsWonValue
+  const totalTripValue = metrics
+    ? metrics.totalTripValue
+    : bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0) ||
+      leads.filter((l) => l.status === 'Won').reduce((sum, l) => sum + (l.budget || 0), 0)
 
-  // Collected value: sum of bookings amountPaid
-  const totalCollected = bookings.reduce((sum, b) => sum + (b.amountPaid || 0), 0)
+  const totalCollected = metrics
+    ? metrics.totalCollected
+    : bookings.reduce((sum, b) => sum + (b.amountPaid || 0), 0)
 
   const stats = [
     {

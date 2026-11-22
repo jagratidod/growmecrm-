@@ -64,6 +64,57 @@ export const authService = {
     sessionStorage.removeItem('crm_auth_user')
   },
 
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Failed to send verification code')
+      }
+      return data
+    } catch (err: any) {
+      if (USE_MOCK && err?.message?.includes('Failed to fetch')) {
+        await new Promise((r) => setTimeout(r, 800))
+        return {
+          message: 'A 6-digit verification code has been simulated for ' + email + ' (Demo OTP: 123456).',
+        }
+      }
+      throw err
+    }
+  },
+
+  async resetPassword(payload: { email: string; otp: string; newPassword: string }): Promise<{ message: string }> {
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Failed to reset password')
+      }
+      return data
+    } catch (err: any) {
+      if (USE_MOCK && err?.message?.includes('Failed to fetch')) {
+        await new Promise((r) => setTimeout(r, 800))
+        if (payload.otp !== '123456' && payload.otp.length !== 6) {
+          throw new Error('Invalid verification code.')
+        }
+        return {
+          message: 'Your password has been reset successfully. You can now sign in with your new password.',
+        }
+      }
+      throw err
+    }
+  },
+
   getStoredSession(): { user: AuthResponse['user'] | null; token: string | null } {
     const token = localStorage.getItem('crm_auth_token') || sessionStorage.getItem('crm_auth_token')
     const userStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')

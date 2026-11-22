@@ -3,6 +3,10 @@ export interface SightseeingActivity {
   name: string
   coverImage?: string
   description: string
+  destination?: string
+  duration?: string
+  tags?: string[]
+  isFavorite?: boolean
   createdAt: string
   updatedAt: string
 }

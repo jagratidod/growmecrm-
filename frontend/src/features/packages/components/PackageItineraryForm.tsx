@@ -10,9 +10,11 @@ import {
   X,
   Image as ImageIcon,
   Link as LinkIcon,
+  Building2,
 } from 'lucide-react'
 import { usePackages } from '../../../context/PackagesContext'
 import { useSightseeing } from '../../../context/SightseeingContext'
+import { useHotels } from '../../../context/HotelsContext'
 import { useToast } from '../../../components/ui/Toast'
 import type { PackageItineraryDay } from '../../../types/package.types'
 
@@ -24,6 +26,7 @@ interface PackageItineraryFormProps {
 export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNext, onBack }) => {
   const { activePackage, savePackage } = usePackages()
   const { activities: sightseeingActivities } = useSightseeing()
+  const { hotels: partnerHotels } = useHotels()
   const { toast } = useToast()
 
   const [days, setDays] = useState<PackageItineraryDay[]>(() => {
@@ -56,6 +59,40 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
     setDays((prev) =>
       prev.map((d) => (d.id === dayId ? { ...d, [field]: value } : d))
     )
+  }
+
+  // Select a partner hotel from directory
+  const handleSelectPartnerHotel = (dayId: string, hotelId: string) => {
+    const hotel = partnerHotels.find((h) => h.id === hotelId)
+    if (!hotel) return
+
+    const tierName =
+      hotel.stars >= 5
+        ? '5-Star Luxury Villa'
+        : hotel.stars === 4
+        ? '4-Star Premium Resort'
+        : '3-Star Deluxe Hotel'
+
+    setDays((prev) =>
+      prev.map((d) => {
+        if (d.id !== dayId) return d
+        const newPhotos = [...(d.photos || [])]
+        if (hotel.photos?.[0] && !newPhotos.includes(hotel.photos[0])) {
+          newPhotos.push(hotel.photos[0])
+        }
+        return {
+          ...d,
+          hotelType: tierName,
+          stay: `${hotel.name}, ${hotel.city}`,
+          photos: newPhotos,
+        }
+      })
+    )
+    toast({
+      title: `Selected ${hotel.name}`,
+      description: `Auto-filled stay details and photo from Hotels directory`,
+      type: 'success',
+    })
   }
 
   // Add new day
@@ -344,32 +381,60 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
               />
             </div>
 
-            {/* Hotel Type & Stay */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <select
-                  value={day.hotelType || 'No hotel / custom stay'}
-                  onChange={(e) => handleUpdateDay(day.id, 'hotelType', e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
-                >
-                  <option value="No hotel / custom stay">No hotel / custom stay</option>
-                  <option value="3-Star Deluxe Hotel">3-Star Deluxe Hotel</option>
-                  <option value="4-Star Premium Resort">4-Star Premium Resort</option>
-                  <option value="5-Star Luxury Villa">5-Star Luxury Villa</option>
-                  <option value="Boutique Heritage Haveli">Boutique Heritage Haveli</option>
-                  <option value="Riverside Alpine Camp">Riverside Alpine Camp</option>
-                  <option value="Houseboat Deluxe Stay">Houseboat Deluxe Stay</option>
-                </select>
+            {/* Partner Hotel Selector & Stay Details */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-[#453372]" />
+                  <span>Accommodation & Stay</span>
+                </label>
+                {partnerHotels.length > 0 && (
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleSelectPartnerHotel(day.id, e.target.value)
+                        e.target.value = ''
+                      }
+                    }}
+                    className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-[#453372] border border-purple-200 cursor-pointer focus:outline-none transition-all shadow-2xs"
+                  >
+                    <option value="" disabled>🏨 Choose from Partner Hotels directory</option>
+                    {partnerHotels.map((h) => (
+                      <option key={h.id} value={h.id}>
+                        {h.name} ({h.stars}★, {h.city}) — ₹{h.pricePerNight?.toLocaleString('en-IN')}/n
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
-              <div>
-                <input
-                  type="text"
-                  placeholder="Stay — e.g. Riverside camp, Rishikesh"
-                  value={day.stay || ''}
-                  onChange={(e) => handleUpdateDay(day.id, 'stay', e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <select
+                    value={day.hotelType || 'No hotel / custom stay'}
+                    onChange={(e) => handleUpdateDay(day.id, 'hotelType', e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                  >
+                    <option value="No hotel / custom stay">No hotel / custom stay</option>
+                    <option value="3-Star Deluxe Hotel">3-Star Deluxe Hotel</option>
+                    <option value="4-Star Premium Resort">4-Star Premium Resort</option>
+                    <option value="5-Star Luxury Villa">5-Star Luxury Villa</option>
+                    <option value="Boutique Heritage Haveli">Boutique Heritage Haveli</option>
+                    <option value="Riverside Alpine Camp">Riverside Alpine Camp</option>
+                    <option value="Houseboat Deluxe Stay">Houseboat Deluxe Stay</option>
+                  </select>
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Stay — e.g. The Grand Bali Resort, Ubud"
+                    value={day.stay || ''}
+                    onChange={(e) => handleUpdateDay(day.id, 'stay', e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                  />
+                </div>
               </div>
             </div>
 

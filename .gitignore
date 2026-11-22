@@ -1,31 +1,61 @@
 # Dependencies
 node_modules/
+backend/node_modules/
 frontend/node_modules/
 .pnp
 .pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
 
 # Production build outputs
 dist/
-frontend/dist/
 dist-ssr/
 build/
 out/
+backend/dist/
+frontend/dist/
+*.tsbuildinfo
 
-# Environment files
+# Environment and Local Configuration
+.env
+.env.*
 !.env.example
+!.env.*.example
 *.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Vercel deployment artifacts
 .vercel/
 
 # Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-*.log
+lerna-debug.log*
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Temporary and Cache directories
+.tmp/
+.temp/
+.cache/
+*.tmp
+*.temp
+.eslintcache
+.stylelintcache
 
 # Editor and IDE directories
+.vscode/*
 !.vscode/extensions.json
 .idea/
 *.suo
@@ -33,8 +63,14 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+*.sublime-workspace
+*.sublime-project
 
 # OS generated files
 .DS_Store
-Thumbs.db
+.DS_Store?
+._*
+[Tt]humbs.db
+[Ee]hthumbs.db
+[Dd]esktop.ini
 config.bat

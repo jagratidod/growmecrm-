@@ -1,3 +1,11 @@
+export interface RoomType {
+  id?: string
+  name: string
+  pricePerNight: number
+  inclusions?: string
+  capacity?: number
+}
+
 export interface Hotel {
   id: string
   name: string
@@ -9,6 +17,9 @@ export interface Hotel {
   phone?: string
   email?: string
   notes?: string
+  commissionRate?: number
+  contractExpiry?: string
+  roomTypes?: RoomType[]
   photos: string[]
   createdAt: string
   updatedAt: string

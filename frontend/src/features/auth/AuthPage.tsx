@@ -1,22 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { AuthHeroPanel } from './components/AuthHeroPanel'
 import { LoginForm } from './components/LoginForm'
-import { useToast } from '../../components/ui/Toast'
+import { ResetPasswordForm } from './components/ResetPasswordForm'
 
 interface AuthPageProps {
   onSuccess?: () => void
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
-  const { toast } = useToast()
-
-  const handleForgotPassword = () => {
-    toast({
-      type: 'info',
-      title: 'Reset Password',
-      description: 'A password reset link will be sent to your registered email address.',
-    })
-  }
+  const [authMode, setAuthMode] = useState<'login' | 'forgot-password'>('login')
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col lg:flex-row overflow-x-hidden font-sans">
@@ -41,8 +33,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
         />
 
         {/* Main interactive form */}
-        <div className="w-full relative z-10">
-          <LoginForm onSuccess={onSuccess} onNavigateForgotPassword={handleForgotPassword} />
+        <div className="w-full relative z-10 transition-all duration-300">
+          {authMode === 'login' ? (
+            <LoginForm
+              onSuccess={onSuccess}
+              onNavigateForgotPassword={() => setAuthMode('forgot-password')}
+            />
+          ) : (
+            <ResetPasswordForm
+              onNavigateLogin={() => setAuthMode('login')}
+            />
+          )}
         </div>
       </div>
     </div>

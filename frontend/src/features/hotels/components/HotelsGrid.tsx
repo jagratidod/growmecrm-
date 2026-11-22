@@ -8,6 +8,8 @@ import {
   Trash2,
   Building2,
   FileText,
+  BedDouble,
+  Percent,
 } from 'lucide-react'
 import { useHotels } from '../../../context/HotelsContext'
 import { useToast } from '../../../components/ui/Toast'
@@ -60,6 +62,14 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               </div>
 
+              {/* Commission Rate Badge */}
+              {hotel.commissionRate !== undefined && hotel.commissionRate > 0 && (
+                <div className="absolute bottom-3 left-3 px-2 py-0.5 rounded-md bg-emerald-600/90 backdrop-blur-xs text-white text-[11px] font-bold flex items-center gap-0.5 shadow-2xs">
+                  <Percent className="w-3 h-3" />
+                  <span>{hotel.commissionRate}% Margin</span>
+                </div>
+              )}
+
               {/* Photos count */}
               {hotel.photos?.length > 1 && (
                 <div className="absolute bottom-3 right-3 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[11px] font-semibold">
@@ -94,6 +104,26 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
                   </p>
                 )}
               </div>
+
+              {/* Room Tiers Badges if defined */}
+              {hotel.roomTypes && hotel.roomTypes.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {hotel.roomTypes.slice(0, 3).map((room, rIdx) => (
+                    <span
+                      key={rIdx}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-medium text-slate-700"
+                    >
+                      <BedDouble className="w-2.5 h-2.5 text-[#453372]" />
+                      <span>{room.name}</span>
+                    </span>
+                  ))}
+                  {hotel.roomTypes.length > 3 && (
+                    <span className="text-[10px] text-slate-400 self-center">
+                      +{hotel.roomTypes.length - 3} more
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Notes / Contract Rates */}
               {hotel.notes && (

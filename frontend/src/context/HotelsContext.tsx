@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import type { Hotel, HotelFilters } from '../types/hotel.types'
+import { hotelsService } from '../services/hotelsService'
 
 interface HotelsContextType {
   hotels: Hotel[]
   filteredHotels: Hotel[]
   filters: HotelFilters
+  isLoading: boolean
   setSearch: (search: string) => void
   setCityFilter: (city: string) => void
   setStarsFilter: (stars: number | 'All') => void
@@ -15,6 +17,7 @@ interface HotelsContextType {
   addHotel: (data: Omit<Hotel, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Hotel>
   updateHotel: (id: string, updates: Partial<Hotel>) => Promise<void>
   deleteHotel: (id: string) => Promise<void>
+  refreshHotels: () => Promise<void>
 }
 
 const STORAGE_KEY = 'treki_crm_hotels_data'
@@ -88,6 +91,8 @@ export const HotelsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return DEFAULT_HOTELS
   })
 
+  const [isLoading, setIsLoading] = useState(false)
+
   const [filters, setFilters] = useState<HotelFilters>({
     search: '',
     city: 'All',
@@ -97,6 +102,7 @@ export const HotelsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingHotel, setEditingHotel] = useState<Hotel | null>(null)
 
+  // Sync to localStorage as client-side cache
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(hotels))
@@ -104,6 +110,31 @@ export const HotelsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.error('Failed to save hotels to localStorage', e)
     }
   }, [hotels])
+
+  // Fetch hotels from backend API on mount
+  const refreshHotels = async () => {
+    setIsLoading(true)
+    try {
+      const data = await hotelsService.getHotels()
+      if (data && data.length > 0) {
+        setHotels(data)
+      }
+    } catch (err) {
+      console.warn('Backend hotels fetch failed, using local cache:', err)
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY)
+        if (saved) setHotels(JSON.parse(saved))
+      } catch (e) {
+        console.error('Failed to load hotels from localStorage', e)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    refreshHotels()
+  }, [])
 
   const setSearch = (search: string) => {
     setFilters((prev) => ({ ...prev, search }))
@@ -118,28 +149,49 @@ export const HotelsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }
 
   const addHotel = async (data: Omit<Hotel, 'id' | 'createdAt' | 'updatedAt'>): Promise<Hotel> => {
-    const newHotel: Hotel = {
-      ...data,
-      id: `hotel-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    try {
+      const created = await hotelsService.createHotel(data)
+      setHotels((prev) => [created, ...prev])
+      return created
+    } catch (err) {
+      console.warn('Failed to save hotel to backend, falling back to local state:', err)
+      const newHotel: Hotel = {
+        ...data,
+        id: `hotel-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      setHotels((prev) => [newHotel, ...prev])
+      return newHotel
     }
-    setHotels((prev) => [newHotel, ...prev])
-    return newHotel
   }
 
   const updateHotel = async (id: string, updates: Partial<Hotel>) => {
-    setHotels((prev) =>
-      prev.map((h) =>
-        h.id === id ? { ...h, ...updates, updatedAt: new Date().toISOString() } : h
+    try {
+      const updated = await hotelsService.updateHotel(id, updates)
+      setHotels((prev) => prev.map((h) => (h.id === id ? updated : h)))
+      if (editingHotel?.id === id) {
+        setEditingHotel(updated)
+      }
+    } catch (err) {
+      console.warn('Failed to update hotel on backend, applying local fallback:', err)
+      setHotels((prev) =>
+        prev.map((h) =>
+          h.id === id ? { ...h, ...updates, updatedAt: new Date().toISOString() } : h
+        )
       )
-    )
-    if (editingHotel?.id === id) {
-      setEditingHotel((prev) => (prev ? { ...prev, ...updates } : null))
+      if (editingHotel?.id === id) {
+        setEditingHotel((prev) => (prev ? { ...prev, ...updates } : null))
+      }
     }
   }
 
   const deleteHotel = async (id: string) => {
+    try {
+      await hotelsService.deleteHotel(id)
+    } catch (err) {
+      console.warn('Failed to delete hotel on backend, removing from local state:', err)
+    }
     setHotels((prev) => prev.filter((h) => h.id !== id))
     if (editingHotel?.id === id) {
       setEditingHotel(null)
@@ -168,6 +220,7 @@ export const HotelsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         hotels,
         filteredHotels,
         filters,
+        isLoading,
         setSearch,
         setCityFilter,
         setStarsFilter,
@@ -178,6 +231,7 @@ export const HotelsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addHotel,
         updateHotel,
         deleteHotel,
+        refreshHotels,
       }}
     >
       {children}

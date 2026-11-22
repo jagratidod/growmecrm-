@@ -1,9 +1,14 @@
 import React from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLeads } from '../../../context/LeadsContext'
 
-export const DashboardHero: React.FC = () => {
+interface DashboardHeroProps {
+  onRefresh?: () => void
+  isLoading?: boolean
+}
+
+export const DashboardHero: React.FC<DashboardHeroProps> = ({ onRefresh, isLoading }) => {
   const { user } = useAuth()
   const { setIsNewLeadModalOpen } = useLeads()
 
@@ -38,13 +43,25 @@ export const DashboardHero: React.FC = () => {
         </p>
       </div>
 
-      <button
-        onClick={() => setIsNewLeadModalOpen(true)}
-        className="bg-white hover:bg-slate-50 text-slate-800 font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0 inline-flex items-center gap-1.5 cursor-pointer"
-      >
-        <Plus className="w-4 h-4 text-slate-700" />
-        <span>New lead</span>
-      </button>
+      <div className="flex items-center gap-2.5 shrink-0">
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition cursor-pointer"
+            title="Refresh dashboard metrics"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+        )}
+        <button
+          onClick={() => setIsNewLeadModalOpen(true)}
+          className="bg-white hover:bg-slate-50 text-slate-800 font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-xs hover:shadow transition-all active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+        >
+          <Plus className="w-4 h-4 text-slate-700" />
+          <span>New lead</span>
+        </button>
+      </div>
     </div>
   )
 }
