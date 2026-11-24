@@ -16,6 +16,8 @@ import hostPageRoutes from './routes/hostPageRoutes';
 import botFlowRoutes from './routes/botFlowRoutes';
 import billRoutes from './routes/billRoutes';
 import invoiceRoutes from './routes/invoiceRoutes';
+import callLogRoutes from './routes/callLogRoutes';
+import calendarRoutes from './routes/calendarRoutes';
 
 dotenv.config();
 
@@ -68,6 +70,8 @@ app.use('/api/host-page', hostPageRoutes);
 app.use('/api/bot-flows', botFlowRoutes);
 app.use('/api/bills', billRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/call-logs', callLogRoutes);
+app.use('/api/calendar/events', calendarRoutes);
 
 // Root health check endpoint
 app.get('/api/health', (req, res) => {

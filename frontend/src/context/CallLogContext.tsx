@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { CallLogEntry, CallLogFilters } from '../types/callLog.types'
+import { callLogsService } from '../services/callLogsService'
 
 interface CallLogContextType {
   callLogs: CallLogEntry[]
@@ -11,6 +12,7 @@ interface CallLogContextType {
   setIsLogModalOpen: (open: boolean) => void
   logCall: (data: Omit<CallLogEntry, 'id' | 'createdAt'>) => Promise<CallLogEntry>
   deleteCallLog: (id: string) => Promise<void>
+  refreshCallLogs: () => Promise<void>
 }
 
 const STORAGE_KEY = 'treki_crm_call_logs_data'
@@ -23,7 +25,7 @@ const DEFAULT_CALL_LOGS: CallLogEntry[] = [
     userName: 'Kushal Pareta',
     outcome: 'Connected',
     notes: 'Discussed Bali romantic pool villa package. Client confirmed 4N/5D dates for Dec 10. Sending updated quote with flight options on WhatsApp.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 mins ago
+    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
   },
   {
     id: 'call-2',
@@ -32,7 +34,7 @@ const DEFAULT_CALL_LOGS: CallLogEntry[] = [
     userName: 'Kushal Pareta',
     outcome: 'No answer',
     notes: 'Followed up on Kashmir winter family package quote. Phone rang but no answer. Sent reminder follow-up text.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 hours ago
+    createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
   },
   {
     id: 'call-3',
@@ -41,7 +43,7 @@ const DEFAULT_CALL_LOGS: CallLogEntry[] = [
     userName: 'Priya Sharma',
     outcome: 'Connected',
     notes: 'Client interested in Goa heritage & beach package with watersports for family of 4. Requested weekend departure.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 360).toISOString(), // 6 hours ago
+    createdAt: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
   },
 ]
 
@@ -59,11 +61,28 @@ export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   })
 
   const [filters, setFilters] = useState<CallLogFilters>({
-    user: 'Kushal Pareta', // matching screenshot dropdown selection!
+    user: 'All users',
     searchLead: '',
   })
 
   const [isLogModalOpen, setIsLogModalOpen] = useState(false)
+
+  // Fetch call logs from backend
+  const refreshCallLogs = useCallback(async () => {
+    try {
+      const res = await callLogsService.getCallLogs()
+      if (res?.callLogs && res.callLogs.length > 0) {
+        setCallLogs(res.callLogs)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(res.callLogs))
+      }
+    } catch {
+      // offline fallback
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshCallLogs()
+  }, [refreshCallLogs])
 
   useEffect(() => {
     try {
@@ -84,17 +103,29 @@ export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const logCall = async (
     data: Omit<CallLogEntry, 'id' | 'createdAt'>
   ): Promise<CallLogEntry> => {
+    const tempId = `call-${Date.now()}`
     const newEntry: CallLogEntry = {
       ...data,
-      id: `call-${Date.now()}`,
+      id: tempId,
       createdAt: new Date().toISOString(),
     }
     setCallLogs((prev) => [newEntry, ...prev])
+
+    callLogsService
+      .logCall(data)
+      .then((res) => {
+        if (res?.callLog) {
+          setCallLogs((prev) => prev.map((c) => (c.id === tempId ? res.callLog : c)))
+        }
+      })
+      .catch(() => {})
+
     return newEntry
   }
 
   const deleteCallLog = async (id: string) => {
     setCallLogs((prev) => prev.filter((c) => c.id !== id))
+    callLogsService.deleteCallLog(id).catch(() => {})
   }
 
   const filteredCallLogs = useMemo(() => {
@@ -126,6 +157,7 @@ export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsLogModalOpen,
         logCall,
         deleteCallLog,
+        refreshCallLogs,
       }}
     >
       {children}

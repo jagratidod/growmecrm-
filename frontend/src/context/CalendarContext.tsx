@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { CalendarEvent } from '../types/calendar.types'
 import { useBookings } from './BookingsContext'
 import { useToast } from '../components/ui/Toast'
+import { calendarService } from '../services/calendarService'
 
 interface CalendarContextType {
   events: CalendarEvent[]
@@ -17,6 +18,7 @@ interface CalendarContextType {
   setIsAddEventModalOpen: (open: boolean) => void
   selectedDate: string
   setSelectedDate: (date: string) => void
+  refreshEvents: () => Promise<void>
 }
 
 const STORAGE_KEY = 'treki_crm_calendar_events'
@@ -24,9 +26,9 @@ const STORAGE_KEY = 'treki_crm_calendar_events'
 const DEFAULT_EVENTS: CalendarEvent[] = [
   {
     id: 'evt-1',
-    title: 'asdfg',
+    title: 'Goa Tour Group Briefing',
     date: '2026-11-19',
-    notes: 'Goa group departure briefing',
+    notes: 'Goa group departure briefing & flight vouchers distribution.',
     type: 'manual',
     color: '#453372',
     createdAt: new Date().toISOString(),
@@ -49,13 +51,34 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return DEFAULT_EVENTS
   })
 
-  // Date anchor: defaults to November 2026 as in screenshots
+  // Date anchor: defaults to November 2026
   const [currentDate, setCurrentDate] = useState<Date>(() => {
     return new Date(2026, 10, 19)
   })
 
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState('2026-11-19')
+
+  // Fetch from backend API
+  const refreshEvents = useCallback(async () => {
+    try {
+      const res = await calendarService.getEvents()
+      if (res?.events && res.events.length > 0) {
+        // filter out booking auto events for manual events state
+        const manualOnly = res.events.filter((e) => e.type === 'manual')
+        if (manualOnly.length > 0) {
+          setEvents(manualOnly)
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(manualOnly))
+        }
+      }
+    } catch {
+      // offline fallback
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshEvents()
+  }, [refreshEvents])
 
   // Save manual events to localStorage
   useEffect(() => {
@@ -111,8 +134,9 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }
 
   const addEvent = (data: { title: string; date: string; notes?: string }) => {
+    const tempId = `evt-${Date.now()}`
     const newEvent: CalendarEvent = {
-      id: `evt-${Date.now()}`,
+      id: tempId,
       title: data.title,
       date: data.date,
       notes: data.notes,
@@ -124,11 +148,21 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setEvents((prev) => [newEvent, ...prev])
     setIsAddEventModalOpen(false)
     toast({ title: 'Event added to calendar', type: 'success' })
+
+    calendarService
+      .createEvent(data)
+      .then((res) => {
+        if (res?.event) {
+          setEvents((prev) => prev.map((e) => (e.id === tempId ? res.event : e)))
+        }
+      })
+      .catch(() => {})
   }
 
   const deleteEvent = (id: string) => {
     setEvents((prev) => prev.filter((e) => e.id !== id))
-    toast({ title: 'Event deleted', type: 'info' })
+    toast({ title: 'Event removed', type: 'info' })
+    calendarService.deleteEvent(id).catch(() => {})
   }
 
   return (
@@ -147,6 +181,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsAddEventModalOpen,
         selectedDate,
         setSelectedDate,
+        refreshEvents,
       }}
     >
       {children}
