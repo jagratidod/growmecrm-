@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { useToast } from '../../components/ui/Toast'
+import { campaignsService } from '../../services/campaignsService'
+import type { CampaignItem } from '../../services/campaignsService'
 import {
   Send,
   Plus,
@@ -15,17 +17,6 @@ import {
 
 interface CommunicationsPageProps {
   onNavigateMenu?: (menu: string) => void
-}
-
-interface CampaignItem {
-  id: string
-  title: string
-  channel: 'whatsapp' | 'email'
-  audience: string
-  recipientCount: number
-  sentAt: string
-  status: 'sent' | 'scheduled' | 'draft'
-  openRate: string
 }
 
 export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNavigateMenu }) => {
@@ -78,15 +69,31 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
     ]
   })
 
+  // Load from API on mount
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      try {
+        const data = await campaignsService.getCampaigns()
+        if (Array.isArray(data) && data.length > 0) {
+          setCampaigns(data)
+          localStorage.setItem('treki_crm_campaigns', JSON.stringify(data))
+        }
+      } catch (err) {
+        console.warn('Could not load campaigns from server, using local cache:', err)
+      }
+    }
+    fetchCampaigns()
+  }, [])
+
   // New campaign modal form
   const [title, setTitle] = useState('')
   const [channel, setChannel] = useState<'whatsapp' | 'email'>('whatsapp')
   const [audience, setAudience] = useState('All Active Leads')
   const [message, setMessage] = useState('')
 
-  const handleCreateCampaign = (e: React.FormEvent) => {
+  const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault()
-    const newCamp: CampaignItem = {
+    const optimisticCamp: CampaignItem = {
       id: `camp-${Date.now()}`,
       title,
       channel,
@@ -96,17 +103,38 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
       status: 'sent',
       openRate: '100%',
     }
-    const updated = [newCamp, ...campaigns]
+    const updated = [optimisticCamp, ...campaigns]
     setCampaigns(updated)
     localStorage.setItem('treki_crm_campaigns', JSON.stringify(updated))
     setIsNewModalOpen(false)
+    const submittedTitle = title
+    const submittedChannel = channel
+    const submittedAudience = audience
+    const submittedMessage = message
     setTitle('')
     setMessage('')
     toast({
       type: 'success',
       title: 'Campaign Launched',
-      description: `Broadcast sent successfully via ${channel.toUpperCase()}.`,
+      description: `Broadcast sent successfully via ${submittedChannel.toUpperCase()}.`,
     })
+
+    try {
+      const created = await campaignsService.createCampaign({
+        title: submittedTitle,
+        channel: submittedChannel,
+        audience: submittedAudience,
+        message: submittedMessage,
+        recipientCount: 30,
+      })
+      if (created) {
+        setCampaigns((prev) =>
+          prev.map((c) => (c.id === optimisticCamp.id ? created : c))
+        )
+      }
+    } catch (err) {
+      console.error('Failed to sync campaign to server:', err)
+    }
   }
 
   const filtered = campaigns.filter((c) => {

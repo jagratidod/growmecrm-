@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { settingsService } from '../services/settingsService'
 
 export interface UserProfileSettings {
   fullName: string
@@ -263,30 +264,73 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [automation])
 
+  // Fetch remote settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await settingsService.getSettings()
+        if (data) {
+          if (data.channels) setChannels((prev) => ({ ...prev, ...data.channels }))
+          if (data.aiAgent) setAiAgent((prev) => ({ ...prev, ...data.aiAgent }))
+          if (data.automation) setAutomation((prev) => ({ ...prev, ...data.automation }))
+        }
+      } catch (err) {
+        console.warn('Could not fetch settings from server, using local cache:', err)
+      }
+    }
+    fetchSettings()
+  }, [])
+
   const updateProfile = (updates: Partial<UserProfileSettings>) => {
     setProfile((prev) => ({ ...prev, ...updates }))
   }
 
-  const toggleChannel = (channel: 'whatsapp' | 'instagram') => {
+  const toggleChannel = async (channel: 'whatsapp' | 'instagram') => {
+    let nextChannels: ChannelsSettings | null = null
     setChannels((prev) => {
-      if (channel === 'whatsapp') {
-        return { ...prev, whatsappConnected: !prev.whatsappConnected }
+      const updated = {
+        ...prev,
+        [channel === 'whatsapp' ? 'whatsappConnected' : 'instagramConnected']:
+          !prev[channel === 'whatsapp' ? 'whatsappConnected' : 'instagramConnected'],
       }
-      return { ...prev, instagramConnected: !prev.instagramConnected }
+      nextChannels = updated
+      return updated
     })
+
+    if (nextChannels) {
+      try {
+        await settingsService.updateChannels(nextChannels)
+      } catch (err) {
+        console.error('Failed to sync channel toggle to server:', err)
+      }
+    }
   }
 
-  const updateEmailConfig = (fromAddress: string, apiKey: string) => {
-    setChannels((prev) => ({
-      ...prev,
+  const updateEmailConfig = async (fromAddress: string, apiKey: string) => {
+    const updatedChannels: ChannelsSettings = {
+      ...channels,
       emailFromAddress: fromAddress,
       emailApiKey: apiKey,
       emailConnected: Boolean(apiKey.trim()),
-    }))
+    }
+    setChannels(updatedChannels)
+
+    try {
+      await settingsService.updateChannels(updatedChannels)
+    } catch (err) {
+      console.error('Failed to sync email config to server:', err)
+    }
   }
 
-  const updateAiAgent = (updates: Partial<AiAgentSettings>) => {
-    setAiAgent((prev) => ({ ...prev, ...updates }))
+  const updateAiAgent = async (updates: Partial<AiAgentSettings>) => {
+    const updatedAi: AiAgentSettings = { ...aiAgent, ...updates }
+    setAiAgent(updatedAi)
+
+    try {
+      await settingsService.updateAiAgent(updatedAi)
+    } catch (err) {
+      console.error('Failed to sync AI Agent config to server:', err)
+    }
   }
 
   const updateOrganization = (updates: Partial<OrganizationSettings>) => {
@@ -297,8 +341,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setInvoiceDetail((prev) => ({ ...prev, ...updates }))
   }
 
-  const updateAutomation = (updates: Partial<AutomationSettings>) => {
-    setAutomation((prev) => ({ ...prev, ...updates }))
+  const updateAutomation = async (updates: Partial<AutomationSettings>) => {
+    const updatedAuto: AutomationSettings = { ...automation, ...updates }
+    setAutomation(updatedAuto)
+
+    try {
+      await settingsService.updateAutomation(updatedAuto)
+    } catch (err) {
+      console.error('Failed to sync automation settings to server:', err)
+    }
   }
 
   return (

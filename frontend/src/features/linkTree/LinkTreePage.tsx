@@ -1,25 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../components/ui/Toast'
+import { linkTreeService } from '../../services/linkTreeService'
+import type { BioLinkItem } from '../../services/linkTreeService'
 import {
   Copy,
   ExternalLink,
   Trash2,
   Menu,
   Check,
+  Save,
 } from 'lucide-react'
 
 interface LinkTreePageProps {
   onNavigateMenu?: (menu: string) => void
-}
-
-interface BioLinkItem {
-  id: string
-  title: string
-  url: string
-  icon: 'whatsapp' | 'package' | 'web' | 'review'
-  active: boolean
 }
 
 export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) => {
@@ -33,6 +28,7 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
   // Bio settings
   const [bioTitle, setBioTitle] = useState(org.agencyName || 'Treki Travels')
   const [bioTagline, setBioTagline] = useState('Curated Trips, Himalayan Treks & Luxury Getaways ✨')
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
 
   const [links, setLinks] = useState<BioLinkItem[]>(() => {
     const saved = localStorage.getItem('treki_crm_linktree_items')
@@ -82,6 +78,26 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
     ]
   })
 
+  // Load from server on mount
+  useEffect(() => {
+    const fetchLinkTree = async () => {
+      try {
+        const data = await linkTreeService.getLinkTree()
+        if (data) {
+          if (data.bioTitle) setBioTitle(data.bioTitle)
+          if (data.bioTagline) setBioTagline(data.bioTagline)
+          if (Array.isArray(data.links) && data.links.length > 0) {
+            setLinks(data.links)
+            localStorage.setItem('treki_crm_linktree_items', JSON.stringify(data.links))
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load LinkTree from server, using local cache:', err)
+      }
+    }
+    fetchLinkTree()
+  }, [])
+
   const [newTitle, setNewTitle] = useState('')
   const [newUrl, setNewUrl] = useState('')
 
@@ -101,18 +117,36 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleAddLink = (e: React.FormEvent) => {
+  const handleSaveProfile = async () => {
+    try {
+      setIsSavingProfile(true)
+      await linkTreeService.updateLinkTree({ bioTitle, bioTagline })
+      toast({
+        type: 'success',
+        title: 'Profile Saved',
+        description: 'Bio title and tagline updated successfully.',
+      })
+    } catch (err) {
+      console.error('Failed to save bio profile:', err)
+    } finally {
+      setIsSavingProfile(false)
+    }
+  }
+
+  const handleAddLink = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newTitle.trim()) return
+    const formattedUrl = newUrl.startsWith('http') ? newUrl : `https://${newUrl || 'joinetra.com'}`
     const newLink: BioLinkItem = {
       id: `l-${Date.now()}`,
-      title: newTitle,
-      url: newUrl.startsWith('http') ? newUrl : `https://${newUrl || 'joinetra.com'}`,
+      title: newTitle.trim(),
+      url: formattedUrl,
       icon: 'web',
       active: true,
     }
     const updated = [...links, newLink]
     saveLinks(updated)
+    const titleToAdd = newTitle.trim()
     setNewTitle('')
     setNewUrl('')
     toast({
@@ -120,9 +154,22 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
       title: 'Link Added',
       description: 'New link added to your bio page.',
     })
+
+    try {
+      const res = await linkTreeService.addLink({
+        title: titleToAdd,
+        url: formattedUrl,
+        icon: 'web',
+      })
+      if (res.linkTree?.links) {
+        saveLinks(res.linkTree.links)
+      }
+    } catch (err) {
+      console.error('Failed to sync link addition to server:', err)
+    }
   }
 
-  const handleDeleteLink = (id: string) => {
+  const handleDeleteLink = async (id: string) => {
     const updated = links.filter((l) => l.id !== id)
     saveLinks(updated)
     toast({
@@ -130,11 +177,23 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
       title: 'Link Removed',
       description: 'Link deleted from bio page.',
     })
+
+    try {
+      await linkTreeService.deleteLink(id)
+    } catch (err) {
+      console.error('Failed to delete link on server:', err)
+    }
   }
 
-  const handleToggleLink = (id: string) => {
+  const handleToggleLink = async (id: string) => {
     const updated = links.map((l) => (l.id === id ? { ...l, active: !l.active } : l))
     saveLinks(updated)
+
+    try {
+      await linkTreeService.toggleLink(id)
+    } catch (err) {
+      console.error('Failed to toggle link on server:', err)
+    }
   }
 
   return (
@@ -215,6 +274,17 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
                       onChange={(e) => setBioTagline(e.target.value)}
                       className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
                     />
+                  </div>
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleSaveProfile}
+                      disabled={isSavingProfile}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#453372] text-white font-semibold text-xs hover:bg-[#382860] transition disabled:opacity-50"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{isSavingProfile ? 'Saving...' : 'Save Profile'}</span>
+                    </button>
                   </div>
                 </div>
               </div>

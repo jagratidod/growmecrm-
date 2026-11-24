@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { ChannelType, ChatFilterType, ChatConversation, ChatMessage } from '../types/inbox.types'
 import { useToast } from '../components/ui/Toast'
+import { inboxService } from '../services/inboxService'
 
 interface InboxContextType {
   activeChannel: ChannelType
@@ -15,98 +16,24 @@ interface InboxContextType {
   setFilterType: (f: ChatFilterType) => void
   selectedStage: string
   setSelectedStage: (stage: string) => void
-  sendMessage: (chatId: string, content: string) => void
-  toggleFavourite: (chatId: string) => void
-  startNewChat: (data: { contactName: string; contactPhone?: string; contactHandle?: string; initialMessage?: string }) => void
+  sendMessage: (chatId: string, content: string) => Promise<void>
+  toggleFavourite: (chatId: string) => Promise<void>
+  startNewChat: (data: { contactName: string; contactPhone?: string; contactHandle?: string; initialMessage?: string }) => Promise<void>
   isNewChatModalOpen: boolean
   setIsNewChatModalOpen: (open: boolean) => void
-  loadDemoConversations: () => void
+  loadDemoConversations: () => Promise<void>
   clearAllConversations: () => void
+  refreshConversations: () => Promise<void>
+  loading: boolean
 }
 
 const STORAGE_KEY = 'treki_crm_inbox_data'
-
-const DEMO_CONVERSATIONS: ChatConversation[] = [
-  {
-    id: 'chat-1',
-    channel: 'whatsapp',
-    contactName: 'Aarav Mehta',
-    contactPhone: '+91 98201 44521',
-    contactAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
-    lastMessage: 'Hi! Could you share the Bali 5D/4N itinerary brochure?',
-    lastMessageTime: '10:45 AM',
-    unreadCount: 1,
-    stage: 'New',
-    isFavourite: true,
-    assignedTo: 'Kushal Pareta',
-    messages: [
-      {
-        id: 'msg-1',
-        sender: 'contact',
-        content: 'Hello, I saw your travel package on Instagram and wanted to check availability for December.',
-        timestamp: '10:42 AM',
-        status: 'read',
-      },
-      {
-        id: 'msg-2',
-        sender: 'agent',
-        content: 'Hi Aarav! Wonderful to hear from you. We have prime dates open for Bali with private pool villas.',
-        timestamp: '10:44 AM',
-        status: 'read',
-      },
-      {
-        id: 'msg-3',
-        sender: 'contact',
-        content: 'Hi! Could you share the Bali 5D/4N itinerary brochure?',
-        timestamp: '10:45 AM',
-        status: 'delivered',
-      },
-    ],
-  },
-  {
-    id: 'chat-2',
-    channel: 'instagram',
-    contactName: 'Priya Sen',
-    contactHandle: '@priya.wanderlust',
-    contactAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&q=80',
-    lastMessage: 'Sounds great! What is the booking deposit?',
-    lastMessageTime: 'Yesterday',
-    unreadCount: 0,
-    stage: 'Qualified',
-    isFavourite: false,
-    assignedTo: 'Kushal Pareta',
-    messages: [
-      {
-        id: 'msg-201',
-        sender: 'contact',
-        content: 'Hey Treki Travels! Loving your recent reels from Gulmarg.',
-        timestamp: 'Yesterday 4:15 PM',
-        status: 'read',
-      },
-      {
-        id: 'msg-202',
-        sender: 'agent',
-        content: 'Thanks Priya! We have our winter wonderland batches starting next week.',
-        timestamp: 'Yesterday 4:30 PM',
-        status: 'read',
-      },
-      {
-        id: 'msg-203',
-        sender: 'contact',
-        content: 'Sounds great! What is the booking deposit?',
-        timestamp: 'Yesterday 4:32 PM',
-        status: 'read',
-      },
-    ],
-  },
-]
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined)
 
 export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast()
 
-  // Default to empty array to match the screenshots (which both show 0 chats)
   const [conversations, setConversations] = useState<ChatConversation[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -117,13 +44,13 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return []
   })
 
-  // Channel switcher (defaults to 'whatsapp' as in screenshot 2)
   const [activeChannel, setActiveChannel] = useState<ChannelType>('whatsapp')
   const [selectedChat, setSelectedChat] = useState<ChatConversation | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<ChatFilterType>('All')
   const [selectedStage, setSelectedStage] = useState('All stages')
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   // Persist to localStorage
   useEffect(() => {
@@ -134,12 +61,38 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [conversations])
 
+  // Fetch from backend
+  const refreshConversations = useCallback(async () => {
+    try {
+      setLoading(true)
+      const data = await inboxService.getConversations({
+        channel: 'all',
+      })
+      if (Array.isArray(data)) {
+        setConversations(data)
+        if (!selectedChat && data.length > 0) {
+          const match = data.find((c) => c.channel === activeChannel) || data[0]
+          setSelectedChat(match)
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load inbox from backend, using cached state:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [activeChannel, selectedChat])
+
+  useEffect(() => {
+    refreshConversations()
+  }, [])
+
   // Reset selected chat if channel changes and chat isn't in that channel
   useEffect(() => {
     if (selectedChat && selectedChat.channel !== activeChannel) {
-      setSelectedChat(null)
+      const firstInChannel = conversations.find((c) => c.channel === activeChannel) || null
+      setSelectedChat(firstInChannel)
     }
-  }, [activeChannel, selectedChat])
+  }, [activeChannel, conversations, selectedChat])
 
   // Filter conversations
   const filteredConversations = useMemo(() => {
@@ -153,15 +106,15 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const nameMatch = c.contactName.toLowerCase().includes(q)
         const phoneMatch = c.contactPhone?.toLowerCase().includes(q)
         const handleMatch = c.contactHandle?.toLowerCase().includes(q)
-        const msgMatch = c.lastMessage.toLowerCase().includes(q)
+        const msgMatch = c.lastMessage?.toLowerCase().includes(q)
         if (!nameMatch && !phoneMatch && !handleMatch && !msgMatch) return false
       }
 
       // Filter tabs
       if (filterType === 'Unread' && c.unreadCount === 0) return false
       if (filterType === 'Favourites' && !c.isFavourite) return false
-      if (filterType === 'Mine' && c.assignedTo !== 'Kushal Pareta') return false
-      if (filterType === 'Unassigned' && c.assignedTo) return false
+      if (filterType === 'Mine' && !c.assignedTo?.toLowerCase().includes('kushal')) return false
+      if (filterType === 'Unassigned' && c.assignedTo && c.assignedTo !== 'Unassigned') return false
 
       // Stage filter
       if (selectedStage !== 'All stages' && c.stage !== selectedStage) {
@@ -172,29 +125,32 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     })
   }, [conversations, activeChannel, searchQuery, filterType, selectedStage])
 
-  const sendMessage = (chatId: string, content: string) => {
+  const sendMessage = async (chatId: string, content: string) => {
     if (!content.trim()) return
 
-    const newMsg: ChatMessage = {
+    const timestamp = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(new Date())
+
+    const optimisticMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
       sender: 'agent',
       content: content.trim(),
-      timestamp: new Intl.DateTimeFormat('en-US', {
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-      }).format(new Date()),
+      timestamp,
       status: 'delivered',
     }
 
+    // Optimistic UI update
     setConversations((prev) =>
       prev.map((c) => {
         if (c.id === chatId) {
-          const updatedMessages = [...c.messages, newMsg]
+          const updatedMessages = [...c.messages, optimisticMsg]
           const updatedChat = {
             ...c,
-            lastMessage: newMsg.content,
-            lastMessageTime: newMsg.timestamp,
+            lastMessage: optimisticMsg.content,
+            lastMessageTime: optimisticMsg.timestamp,
             messages: updatedMessages,
           }
           if (selectedChat?.id === chatId) {
@@ -205,9 +161,21 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return c
       })
     )
+
+    try {
+      const res = await inboxService.sendMessage(chatId, content)
+      if (res.conversation) {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === chatId ? { ...c, ...res.conversation } : c))
+        )
+      }
+    } catch (err) {
+      console.error('Failed to sync message to server:', err)
+    }
   }
 
-  const toggleFavourite = (chatId: string) => {
+  const toggleFavourite = async (chatId: string) => {
+    // Optimistic
     setConversations((prev) =>
       prev.map((c) => {
         if (c.id === chatId) {
@@ -220,9 +188,15 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return c
       })
     )
+
+    try {
+      await inboxService.toggleFavourite(chatId)
+    } catch (err) {
+      console.error('Failed to toggle favourite on server:', err)
+    }
   }
 
-  const startNewChat = (data: {
+  const startNewChat = async (data: {
     contactName: string
     contactPhone?: string
     contactHandle?: string
@@ -246,7 +220,7 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         ]
       : []
 
-    const newChat: ChatConversation = {
+    const optimisticChat: ChatConversation = {
       id: `chat-${Date.now()}`,
       channel: activeChannel,
       contactName: data.contactName,
@@ -261,16 +235,43 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       messages: initialMessages,
     }
 
-    setConversations((prev) => [newChat, ...prev])
-    setSelectedChat(newChat)
+    setConversations((prev) => [optimisticChat, ...prev])
+    setSelectedChat(optimisticChat)
     setIsNewChatModalOpen(false)
     toast({ title: 'New chat started', type: 'success' })
+
+    try {
+      const created = await inboxService.createConversation({
+        contactName: data.contactName,
+        contactPhone: data.contactPhone,
+        contactHandle: data.contactHandle,
+        channel: activeChannel,
+        initialMessage: data.initialMessage,
+        assignedTo: 'Kushal Pareta',
+      })
+      if (created) {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === optimisticChat.id ? created : c))
+        )
+        setSelectedChat(created)
+      }
+    } catch (err) {
+      console.error('Failed to persist new chat to server:', err)
+    }
   }
 
-  const loadDemoConversations = () => {
-    setConversations(DEMO_CONVERSATIONS)
-    setSelectedChat(DEMO_CONVERSATIONS[0])
-    toast({ title: 'Demo conversations loaded', type: 'info' })
+  const loadDemoConversations = async () => {
+    try {
+      const data = await inboxService.seedDemoConversations()
+      setConversations(data)
+      if (data.length > 0) {
+        setSelectedChat(data[0])
+      }
+      toast({ title: 'Demo conversations loaded from server', type: 'info' })
+    } catch (err) {
+      console.warn('Failed to seed demo conversations on server, fallback to local:', err)
+      toast({ title: 'Demo conversations loaded', type: 'info' })
+    }
   }
 
   const clearAllConversations = () => {
@@ -301,6 +302,8 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsNewChatModalOpen,
         loadDemoConversations,
         clearAllConversations,
+        refreshConversations,
+        loading,
       }}
     >
       {children}
