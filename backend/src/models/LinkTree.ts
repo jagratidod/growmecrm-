@@ -41,7 +41,6 @@ const LinkTreeSchema = new Schema<ILinkTree>(
       ref: 'Organization',
       required: true,
       unique: true,
-      index: true,
     },
     bioTitle: {
       type: String,

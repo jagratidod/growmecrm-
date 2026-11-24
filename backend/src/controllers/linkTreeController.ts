@@ -205,11 +205,15 @@ export const getPublicLinkTree = async (req: Request, res: Response): Promise<vo
 
     const slugStr = Array.isArray(slug) ? slug[0] : String(slug);
 
-    // Try finding organization by name slug or direct ID
+    // Try finding organization by slug, direct ID, or name match
     let org: any = null;
     if (Types.ObjectId.isValid(slugStr)) {
       org = await Organization.findById(slugStr);
-    } else {
+    }
+    if (!org) {
+      org = await Organization.findOne({ slug: slugStr.toLowerCase() });
+    }
+    if (!org) {
       const cleanName = slugStr.replace(/-/g, ' ');
       org = await Organization.findOne({
         name: { $regex: new RegExp(`^${cleanName}$`, 'i') },
@@ -219,6 +223,14 @@ export const getPublicLinkTree = async (req: Request, res: Response): Promise<vo
     let linkTree: any = null;
     if (org) {
       linkTree = await LinkTree.findOne({ organizationId: org._id });
+      if (!linkTree) {
+        linkTree = await LinkTree.create({
+          organizationId: org._id,
+          bioTitle: org.name || 'Treki Travels',
+          bioTagline: 'Curated Trips, Himalayan Treks & Luxury Getaways ✨',
+          links: DEFAULT_STARTER_LINKS,
+        });
+      }
     }
 
     if (!linkTree) {

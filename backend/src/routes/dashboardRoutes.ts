@@ -7,7 +7,8 @@ const router = Router();
 // Protect all dashboard endpoints with JWT tenant authentication
 router.use(authenticate);
 
-// GET /api/dashboard/summary - Complete real-time business intelligence summary
+// GET /api/dashboard and /api/dashboard/summary
+router.get('/', getDashboardSummary);
 router.get('/summary', getDashboardSummary);
 
 export default router;
