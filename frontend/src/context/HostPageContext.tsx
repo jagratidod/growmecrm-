@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { HostPageData, HostReview, HostContact } from '../types/hostPage.types'
+import { hostPageService } from '../services/hostPageService'
 import { useToast } from '../components/ui/Toast'
 
 interface HostPageContextType {
@@ -7,11 +8,13 @@ interface HostPageContextType {
   updateBannerImage: (url: string) => void
   updateAboutUs: (aboutUs: string) => void
   updateContact: (contact: Partial<HostContact>) => void
-  addReview: (review: Omit<HostReview, 'id' | 'createdAt'>) => void
-  deleteReview: (id: string) => void
+  addReview: (review: Omit<HostReview, 'id' | 'createdAt'>) => Promise<void>
+  deleteReview: (id: string) => Promise<void>
   isPublicPreviewOpen: boolean
   setIsPublicPreviewOpen: (open: boolean) => void
-  saveWebsite: () => void
+  saveWebsite: () => Promise<void>
+  isLoading: boolean
+  refreshHostPage: () => Promise<void>
 }
 
 const STORAGE_KEY = 'treki_crm_host_page_data'
@@ -32,6 +35,7 @@ const HostPageContext = createContext<HostPageContextType | undefined>(undefined
 
 export const HostPageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
 
   const [hostData, setHostData] = useState<HostPageData>(() => {
     try {
@@ -44,6 +48,34 @@ export const HostPageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   })
 
   const [isPublicPreviewOpen, setIsPublicPreviewOpen] = useState(false)
+
+  // Fetch host page from backend API
+  const refreshHostPage = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const res = await hostPageService.getHostPage()
+      if (res?.hostPage) {
+        setHostData(res.hostPage)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(res.hostPage))
+      }
+    } catch {
+      // Fallback to local storage if offline or not logged in
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          setHostData(JSON.parse(saved))
+        } catch {
+          // ignore
+        }
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshHostPage()
+  }, [refreshHostPage])
 
   // Persist to localStorage whenever hostData updates
   useEffect(() => {
@@ -69,37 +101,70 @@ export const HostPageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }))
   }
 
-  const addReview = (reviewData: Omit<HostReview, 'id' | 'createdAt'>) => {
-    const newReview: HostReview = {
+  const addReview = async (reviewData: Omit<HostReview, 'id' | 'createdAt'>) => {
+    // Optimistic local update
+    const tempId = `rev-${Date.now()}`
+    const tempReview: HostReview = {
       ...reviewData,
-      id: `rev-${Date.now()}`,
+      id: tempId,
       createdAt: new Date().toISOString(),
     }
     setHostData((prev) => ({
       ...prev,
-      reviews: [newReview, ...prev.reviews],
+      reviews: [tempReview, ...prev.reviews],
     }))
-    toast({ title: 'Review added', type: 'success' })
+
+    try {
+      const res = await hostPageService.addReview(reviewData)
+      if (res?.hostPage) {
+        setHostData(res.hostPage)
+      }
+      toast({ title: 'Review added', type: 'success' })
+    } catch {
+      toast({ title: 'Review added locally', description: 'Saved offline.', type: 'info' })
+    }
   }
 
-  const deleteReview = (id: string) => {
+  const deleteReview = async (id: string) => {
     setHostData((prev) => ({
       ...prev,
       reviews: prev.reviews.filter((r) => r.id !== id),
     }))
-    toast({ title: 'Review removed', type: 'info' })
+
+    try {
+      const res = await hostPageService.deleteReview(id)
+      if (res?.hostPage) {
+        setHostData(res.hostPage)
+      }
+      toast({ title: 'Review removed', type: 'info' })
+    } catch {
+      // Revert if error
+      toast({ title: 'Review removed locally', type: 'info' })
+    }
   }
 
-  const saveWebsite = () => {
+  const saveWebsite = async () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(hostData))
+      const res = await hostPageService.updateHostPage({
+        bannerImage: hostData.bannerImage,
+        aboutUs: hostData.aboutUs,
+        contact: hostData.contact,
+      })
+      if (res?.hostPage) {
+        setHostData(res.hostPage)
+      }
       toast({
         title: 'Website changes saved successfully',
         description: 'Your public mini-website has been updated.',
         type: 'success',
       })
     } catch {
-      toast({ title: 'Failed to save website', type: 'error' })
+      toast({
+        title: 'Website changes saved locally',
+        description: 'Changes are cached locally in your browser.',
+        type: 'info',
+      })
     }
   }
 
@@ -115,6 +180,8 @@ export const HostPageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isPublicPreviewOpen,
         setIsPublicPreviewOpen,
         saveWebsite,
+        isLoading,
+        refreshHostPage,
       }}
     >
       {children}

@@ -12,6 +12,7 @@ import hotelRoutes from './routes/hotelRoutes';
 import followUpRoutes from './routes/followUpRoutes';
 import sightseeingRoutes from './routes/sightseeingRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
+import hostPageRoutes from './routes/hostPageRoutes';
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ app.use('/api/hotels', hotelRoutes);
 app.use('/api/follow-ups', followUpRoutes);
 app.use('/api/sightseeing', sightseeingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/host-page', hostPageRoutes);
 
 // Root health check endpoint
 app.get('/api/health', (req, res) => {
