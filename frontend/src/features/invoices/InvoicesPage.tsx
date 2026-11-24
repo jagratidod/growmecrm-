@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../components/ui/Toast'
+import { invoicesService, type InvoiceItem } from '../../services/invoicesService'
 import {
   FileText,
   Plus,
@@ -11,24 +12,14 @@ import {
   Printer,
   Menu,
   X,
+  Trash2,
 } from 'lucide-react'
 
 interface InvoicesPageProps {
   onNavigateMenu?: (menu: string) => void
 }
 
-interface InvoiceRecord {
-  id: string
-  invoiceNumber: string
-  customerName: string
-  customerPhone: string
-  destination: string
-  issueDate: string
-  dueDate: string
-  totalAmount: number
-  paidAmount: number
-  status: 'paid' | 'partial' | 'unpaid'
-}
+type InvoiceRecord = InvoiceItem
 
 export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) => {
   const { invoiceDetail: invoice, organization: org } = useSettings()
@@ -86,6 +77,23 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
     ]
   })
 
+  // Fetch invoices from API
+  const fetchInvoices = useCallback(async () => {
+    try {
+      const res = await invoicesService.getInvoices()
+      if (res?.invoices && res.invoices.length > 0) {
+        setInvoices(res.invoices)
+        localStorage.setItem('treki_crm_tax_invoices', JSON.stringify(res.invoices))
+      }
+    } catch {
+      // Keep local storage fallback
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchInvoices()
+  }, [fetchInvoices])
+
   // Modal state
   const [isNewModalOpen, setIsNewModalOpen] = useState(false)
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceRecord | null>(null)
@@ -102,16 +110,17 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
     localStorage.setItem('treki_crm_tax_invoices', JSON.stringify(records))
   }
 
-  const handleCreateInvoice = (e: React.FormEvent) => {
+  const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault()
     const nextNum = `INV-2026-00${invoices.length + 1}`
+    const tempId = `inv-${Date.now()}`
     const newRec: InvoiceRecord = {
-      id: `inv-${Date.now()}`,
+      id: tempId,
       invoiceNumber: nextNum,
       customerName: custName || 'Valued Traveller',
       customerPhone: custPhone || '+91 98765 00000',
       destination: tripName || 'Custom Travel Package',
-      issueDate: '2026-11-19',
+      issueDate: new Date().toISOString().split('T')[0],
       dueDate: dueDate,
       totalAmount: parseFloat(amount) || 0,
       paidAmount: 0,
@@ -124,14 +133,30 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
     setCustName('')
     setCustPhone('')
     setTripName('')
+
     toast({
       type: 'success',
       title: 'Tax Invoice Created',
       description: `Generated invoice ${nextNum} for ${newRec.customerName}.`,
     })
+
+    try {
+      const res = await invoicesService.createInvoice({
+        customerName: newRec.customerName,
+        customerPhone: newRec.customerPhone,
+        destination: newRec.destination,
+        dueDate: newRec.dueDate,
+        totalAmount: newRec.totalAmount,
+      })
+      if (res?.invoice) {
+        setInvoices((prev) => prev.map((inv) => (inv.id === tempId ? res.invoice : inv)))
+      }
+    } catch {
+      // offline fallback
+    }
   }
 
-  const handleMarkPaid = (id: string) => {
+  const handleMarkPaid = async (id: string) => {
     const updated = invoices.map((inv) => {
       if (inv.id === id) {
         return {
@@ -148,6 +173,31 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
       title: 'Payment Recorded',
       description: 'Invoice marked fully paid.',
     })
+
+    try {
+      await invoicesService.recordPayment(id, { markFull: true })
+    } catch {
+      // offline fallback
+    }
+  }
+
+  const handleDeleteInvoice = async (id: string, num: string) => {
+    if (!window.confirm(`Are you sure you want to delete invoice ${num}?`)) return
+    const prev = [...invoices]
+    const updated = invoices.filter((inv) => inv.id !== id)
+    saveInvoices(updated)
+    toast({
+      type: 'info',
+      title: 'Invoice Deleted',
+      description: `Invoice ${num} removed.`,
+    })
+
+    try {
+      await invoicesService.deleteInvoice(id)
+    } catch {
+      setInvoices(prev)
+      toast({ type: 'error', title: 'Delete Failed' })
+    }
   }
 
   const filteredInvoices = invoices.filter((inv) => {
@@ -349,6 +399,13 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                                 Mark Paid
                               </button>
                             )}
+                            <button
+                              onClick={() => handleDeleteInvoice(inv.id, inv.invoiceNumber)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                              title="Delete Invoice"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>

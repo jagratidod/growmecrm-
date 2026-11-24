@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react'
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react'
 import type { Bill, BillFilters, BillStats } from '../types/bill.types'
+import { billsService } from '../services/billsService'
 
 interface BillsContextType {
   bills: Bill[]
@@ -17,6 +18,7 @@ interface BillsContextType {
   setIsAddBillModalOpen: (open: boolean) => void
   loadDemoData: () => void
   clearAllBills: () => void
+  refreshBills: () => Promise<void>
 }
 
 const STORAGE_KEY = 'treki_crm_bills_data'
@@ -104,6 +106,23 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [isAddBillModalOpen, setIsAddBillModalOpen] = useState(false)
 
+  // Fetch from backend API
+  const refreshBills = useCallback(async () => {
+    try {
+      const res = await billsService.getBills()
+      if (res?.bills && res.bills.length > 0) {
+        setBills(res.bills)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(res.bills))
+      }
+    } catch {
+      // Keep local cache if offline
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshBills()
+  }, [refreshBills])
+
   // Sync to localStorage
   useEffect(() => {
     try {
@@ -177,15 +196,29 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const now = new Date().toISOString()
     const status = determineStatus(billData.totalAmount, billData.amountPaid)
 
+    const tempId = 'bill-' + Date.now()
     const newBill: Bill = {
       ...billData,
-      id: 'bill-' + Date.now(),
+      id: tempId,
       status,
       createdAt: now,
       updatedAt: now,
     }
 
     setBills((prev) => [newBill, ...prev])
+
+    // Sync to backend asynchronously
+    billsService
+      .createBill(billData)
+      .then((res) => {
+        if (res?.bill) {
+          setBills((prev) => prev.map((b) => (b.id === tempId ? res.bill : b)))
+        }
+      })
+      .catch(() => {
+        // Fallback already saved locally
+      })
+
     return newBill
   }
 
@@ -199,10 +232,13 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return merged
       })
     )
+
+    billsService.updateBill(id, updates).catch(() => {})
   }
 
   const deleteBill = (id: string) => {
     setBills((prev) => prev.filter((b) => b.id !== id))
+    billsService.deleteBill(id).catch(() => {})
   }
 
   const recordPayment = (id: string, additionalPaid: number) => {
@@ -218,6 +254,8 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       })
     )
+
+    billsService.recordPayment(id, additionalPaid).catch(() => {})
   }
 
   const loadDemoData = () => {
@@ -246,6 +284,7 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsAddBillModalOpen,
         loadDemoData,
         clearAllBills,
+        refreshBills,
       }}
     >
       {children}

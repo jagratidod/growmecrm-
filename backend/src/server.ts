@@ -14,6 +14,8 @@ import sightseeingRoutes from './routes/sightseeingRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import hostPageRoutes from './routes/hostPageRoutes';
 import botFlowRoutes from './routes/botFlowRoutes';
+import billRoutes from './routes/billRoutes';
+import invoiceRoutes from './routes/invoiceRoutes';
 
 dotenv.config();
 
@@ -64,6 +66,8 @@ app.use('/api/sightseeing', sightseeingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/host-page', hostPageRoutes);
 app.use('/api/bot-flows', botFlowRoutes);
+app.use('/api/bills', billRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 // Root health check endpoint
 app.get('/api/health', (req, res) => {
