@@ -18,6 +18,7 @@ import billRoutes from './routes/billRoutes';
 import invoiceRoutes from './routes/invoiceRoutes';
 import callLogRoutes from './routes/callLogRoutes';
 import calendarRoutes from './routes/calendarRoutes';
+import itineraryRoutes from './routes/itineraryRoutes';
 
 dotenv.config();
 
@@ -72,6 +73,7 @@ app.use('/api/bills', billRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/call-logs', callLogRoutes);
 app.use('/api/calendar/events', calendarRoutes);
+app.use('/api/itineraries', itineraryRoutes);
 
 // Root health check endpoint
 app.get('/api/health', (req, res) => {

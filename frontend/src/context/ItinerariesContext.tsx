@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { Itinerary, ItineraryDay, ItineraryFilters } from '../types/itinerary.types'
+import { itinerariesService } from '../services/itinerariesService'
 
 interface ItinerariesContextType {
   itineraries: Itinerary[]
@@ -17,6 +18,7 @@ interface ItinerariesContextType {
   addDay: (itineraryId: string, day: Omit<ItineraryDay, 'id' | 'dayNumber'>) => Promise<void>
   updateDay: (itineraryId: string, dayId: string, updates: Partial<ItineraryDay>) => Promise<void>
   deleteDay: (itineraryId: string, dayId: string) => Promise<void>
+  refreshItineraries: () => Promise<void>
 }
 
 const STORAGE_KEY = 'treki_crm_itineraries_data'
@@ -134,6 +136,23 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [isNewModalOpen, setIsNewModalOpen] = useState(false)
   const [selectedItinerary, setSelectedItinerary] = useState<Itinerary | null>(null)
 
+  // Fetch from backend API
+  const refreshItineraries = useCallback(async () => {
+    try {
+      const res = await itinerariesService.getItineraries()
+      if (res?.itineraries && res.itineraries.length > 0) {
+        setItineraries(res.itineraries)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(res.itineraries))
+      }
+    } catch {
+      // offline fallback
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshItineraries()
+  }, [refreshItineraries])
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(itineraries))
@@ -153,9 +172,10 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const addItinerary = async (
     data: Omit<Itinerary, 'id' | 'createdAt' | 'updatedAt' | 'days'> & { days?: ItineraryDay[] }
   ): Promise<Itinerary> => {
+    const tempId = `itn-${Date.now()}`
     const newItinerary: Itinerary = {
       ...data,
-      id: `itn-${Date.now()}`,
+      id: tempId,
       days: data.days || [
         {
           id: `day-${Date.now()}-1`,
@@ -171,6 +191,19 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
 
     setItineraries((prev) => [newItinerary, ...prev])
+
+    itinerariesService
+      .createItinerary(data)
+      .then((res) => {
+        if (res?.itinerary) {
+          setItineraries((prev) => prev.map((itn) => (itn.id === tempId ? res.itinerary : itn)))
+          if (selectedItinerary && selectedItinerary.id === tempId) {
+            setSelectedItinerary(res.itinerary)
+          }
+        }
+      })
+      .catch(() => {})
+
     return newItinerary
   }
 
@@ -183,6 +216,8 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (selectedItinerary && selectedItinerary.id === id) {
       setSelectedItinerary((prev) => (prev ? { ...prev, ...updates, updatedAt: new Date().toISOString() } : null))
     }
+
+    itinerariesService.updateItinerary(id, updates).catch(() => {})
   }
 
   const deleteItinerary = async (id: string) => {
@@ -190,16 +225,19 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (selectedItinerary && selectedItinerary.id === id) {
       setSelectedItinerary(null)
     }
+
+    itinerariesService.deleteItinerary(id).catch(() => {})
   }
 
   const addDay = async (itineraryId: string, day: Omit<ItineraryDay, 'id' | 'dayNumber'>) => {
+    const tempDayId = `day-${Date.now()}`
     setItineraries((prev) =>
       prev.map((itn) => {
         if (itn.id !== itineraryId) return itn
         const newDayNumber = (itn.days?.length || 0) + 1
         const newDay: ItineraryDay = {
           ...day,
-          id: `day-${Date.now()}`,
+          id: tempDayId,
           dayNumber: newDayNumber,
         }
         const updatedDays = [...(itn.days || []), newDay]
@@ -210,6 +248,8 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         return updated
       })
     )
+
+    itinerariesService.addDay(itineraryId, day).catch(() => {})
   }
 
   const updateDay = async (itineraryId: string, dayId: string, updates: Partial<ItineraryDay>) => {
@@ -224,6 +264,8 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         return updated
       })
     )
+
+    itinerariesService.updateDay(itineraryId, dayId, updates).catch(() => {})
   }
 
   const deleteDay = async (itineraryId: string, dayId: string) => {
@@ -240,6 +282,8 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         return updated
       })
     )
+
+    itinerariesService.deleteDay(itineraryId, dayId).catch(() => {})
   }
 
   const filteredItineraries = useMemo(() => {
@@ -275,6 +319,7 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         addDay,
         updateDay,
         deleteDay,
+        refreshItineraries,
       }}
     >
       {children}
