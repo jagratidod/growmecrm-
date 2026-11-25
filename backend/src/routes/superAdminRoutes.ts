@@ -7,7 +7,9 @@ import {
   updateTenantStatus,
   impersonateTenant,
   getSubscriptionPlans,
+  createSubscriptionPlan,
   updateSubscriptionPlan,
+  deleteSubscriptionPlan,
   getPlatformSettings,
   updatePlatformSettings,
   getAnnouncements,
@@ -52,7 +54,9 @@ router.post('/tenants/:id/impersonate', impersonateTenant);
 
 // 3. Subscription Plans
 router.get('/plans', getSubscriptionPlans);
+router.post('/plans', createSubscriptionPlan);
 router.put('/plans/:id', updateSubscriptionPlan);
+router.delete('/plans/:id', deleteSubscriptionPlan);
 
 // 4. Platform Settings
 router.get('/settings', getPlatformSettings);

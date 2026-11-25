@@ -6,7 +6,6 @@ import {
   MapPin,
   Edit3,
   Trash2,
-  Sparkles,
 } from 'lucide-react'
 import { usePackages } from '../../../context/PackagesContext'
 import { useToast } from '../../../components/ui/Toast'
@@ -57,7 +56,6 @@ export const PackagesList: React.FC = () => {
           onClick={startNewPackage}
           className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-sm shadow-sm hover:shadow transition-all active:scale-[0.98] shrink-0"
         >
-          <Sparkles className="w-4 h-4 text-purple-200" />
           <Plus className="w-4 h-4" />
           <span>New package</span>
         </button>

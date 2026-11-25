@@ -29,6 +29,9 @@ export interface OrganizationSettings {
   logoUrl?: string
   primaryColor: string
   secondaryColor: string
+  plan?: string
+  maxSeats?: number
+  maxLeads?: number
 }
 
 export interface InvoiceDetailSettings {

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import {
   GripVertical,
   Trash2,
-  Sparkles,
+  Wand2,
   MapPin,
   Plus,
   ArrowRight,
@@ -365,7 +365,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                 disabled={generatingAiDayId === day.id}
                 className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200/90 hover:bg-purple-50/50 hover:border-[#453372]/30 text-xs font-semibold text-slate-700 hover:text-[#453372] transition-all shadow-2xs shrink-0 active:scale-[0.98]"
               >
-                <Sparkles className="w-3.5 h-3.5 text-[#453372]" />
+                <Wand2 className="w-3.5 h-3.5 text-[#453372]" />
                 <span>{generatingAiDayId === day.id ? 'Generating...' : 'Generate with AI'}</span>
               </button>
             </div>

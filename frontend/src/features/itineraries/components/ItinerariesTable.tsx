@@ -7,7 +7,6 @@ import {
   Trash2,
   Share2,
   ChevronRight,
-  Sparkles,
   PackageCheck,
 } from 'lucide-react'
 import { useItineraries } from '../../../context/ItinerariesContext'
@@ -160,7 +159,7 @@ export const ItinerariesTable: React.FC<ItinerariesTableProps> = ({ onOpenDetail
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#453372]/10 text-[#453372] hover:bg-[#453372] hover:text-white transition-colors"
                         title="Open Day-by-Day Plan"
                       >
-                        <Sparkles className="w-3 h-3" />
+                        <Route className="w-3 h-3" />
                         <span>Plan</span>
                       </button>
 
@@ -239,7 +238,7 @@ export const ItinerariesTable: React.FC<ItinerariesTableProps> = ({ onOpenDetail
                   }}
                   className="text-xs font-semibold text-[#453372] flex items-center gap-1"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Route className="w-3.5 h-3.5" />
                   <span>Design Day-by-day</span>
                 </button>
 

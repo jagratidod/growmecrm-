@@ -8,7 +8,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   Clock,
-  Sparkles,
+  Crown,
   RefreshCw,
 } from 'lucide-react';
 import { SuperAdminLayout } from './SuperAdminLayout';
@@ -64,7 +64,7 @@ export const SuperAdminDashboard: React.FC = () => {
       <div className="rounded-3xl bg-gradient-to-r from-[#3e2e68] via-[#453372] to-[#594096] text-white p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm border border-purple-400/20">
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-amber-300 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5" />
+            <Crown className="w-3.5 h-3.5" />
             GrowMe Multi-Tenant SaaS Master Controls
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">

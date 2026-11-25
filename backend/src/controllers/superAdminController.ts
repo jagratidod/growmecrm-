@@ -347,10 +347,60 @@ export const getSubscriptionPlans = async (req: AuthenticatedRequest, res: Respo
   }
 };
 
+export const createSubscriptionPlan = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { name, code, tagline, priceMonthly, priceYearly, currency, maxSeats, maxLeads, features, isPopular } = req.body;
+    if (!name || !name.trim()) {
+      res.status(400).json({ error: 'Plan name is required' });
+      return;
+    }
+
+    const planCode = (code || name.toUpperCase().replace(/[^A-Z0-9]/g, '_')).slice(0, 20);
+    const existing = await SubscriptionPlan.findOne({ code: planCode });
+    if (existing) {
+      res.status(400).json({ error: `A plan with code '${planCode}' already exists` });
+      return;
+    }
+
+    const plan = await SubscriptionPlan.create({
+      name: name.trim(),
+      code: planCode,
+      tagline: tagline ? tagline.trim() : '',
+      priceMonthly: Number(priceMonthly) || 0,
+      priceYearly: Number(priceYearly) || 0,
+      currency: currency || 'INR',
+      maxSeats: Number(maxSeats) || 2,
+      maxLeads: Number(maxLeads) || 500,
+      features: Array.isArray(features) && features.length > 0 ? features : ['Standard Feature Access', 'Priority Support'],
+      isPopular: Boolean(isPopular),
+      isActive: true,
+    });
+
+    await AuditLog.create({
+      actorEmail: req.user?.email || 'superadmin@growmecrm.com',
+      actorRole: req.user?.role || 'SUPER_ADMIN',
+      action: 'CREATE_PLAN',
+      details: `Created new subscription plan ${plan.name} (${plan.code}) at ₹${plan.priceMonthly}/mo`,
+      status: 'SUCCESS',
+    });
+
+    res.status(201).json({ message: 'Subscription model created successfully', plan });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Error creating subscription plan' });
+  }
+};
+
 export const updateSubscriptionPlan = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const plan = await SubscriptionPlan.findByIdAndUpdate(id, req.body, { new: true });
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+    let plan = null;
+    if (id && Types.ObjectId.isValid(id)) {
+      plan = await SubscriptionPlan.findByIdAndUpdate(id, req.body, { new: true });
+    }
+    if (!plan && id) {
+      plan = await SubscriptionPlan.findOneAndUpdate({ code: id }, req.body, { new: true });
+    }
     if (!plan) {
       res.status(404).json({ error: 'Subscription plan not found' });
       return;
@@ -367,6 +417,38 @@ export const updateSubscriptionPlan = async (req: AuthenticatedRequest, res: Res
     res.status(200).json({ message: 'Plan updated successfully', plan });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Error updating plan' });
+  }
+};
+
+export const deleteSubscriptionPlan = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const rawId = req.params.id;
+    const id = Array.isArray(rawId) ? rawId[0] : rawId;
+    let plan = null;
+    if (id && Types.ObjectId.isValid(id)) {
+      plan = await SubscriptionPlan.findById(id);
+    }
+    if (!plan && id) {
+      plan = await SubscriptionPlan.findOne({ code: id });
+    }
+    if (!plan) {
+      res.status(404).json({ error: 'Subscription plan not found' });
+      return;
+    }
+
+    await SubscriptionPlan.findByIdAndDelete(plan._id);
+
+    await AuditLog.create({
+      actorEmail: req.user?.email || 'superadmin@growmecrm.com',
+      actorRole: req.user?.role || 'SUPER_ADMIN',
+      action: 'DELETE_PLAN',
+      details: `Deleted subscription plan ${plan.name} (${plan.code})`,
+      status: 'SUCCESS',
+    });
+
+    res.status(200).json({ message: 'Subscription plan deleted successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Error deleting plan' });
   }
 };
 

@@ -26,6 +26,7 @@ import {
   LogOut,
   X,
   Crown,
+  CreditCard,
 } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useSettings } from '../../../context/SettingsContext'
@@ -69,6 +70,7 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
   const settingsItems = [
     { name: 'My profile', icon: User },
     { name: 'Organization', icon: Building2 },
+    { name: 'Subscription', icon: CreditCard },
     { name: 'Invoice Detail', icon: Receipt },
     { name: 'Channels', icon: Plug },
     { name: 'AI Agent', icon: Bot },
@@ -158,6 +160,8 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
       navigate('/profile')
     } else if (name === 'Organization') {
       navigate('/organization')
+    } else if (name === 'Subscription') {
+      navigate('/subscription')
     } else if (name === 'Invoice Detail') {
       navigate('/invoice-detail')
     } else if (name === 'Channels') {

@@ -3,7 +3,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Plus,
-  Sparkles,
+  Star,
   X,
   Link as LinkIcon,
 } from 'lucide-react'
@@ -137,7 +137,7 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
                   className="flex items-center justify-between p-3 rounded-xl bg-purple-50/40 border border-purple-100/70 text-xs sm:text-sm text-slate-800"
                 >
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#453372] shrink-0" />
+                    <Star className="w-4 h-4 text-[#453372] shrink-0" />
                     <span>{h}</span>
                   </div>
                   <button

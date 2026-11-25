@@ -43,7 +43,7 @@ export interface SubscriptionPlan {
   _id?: string;
   id?: string;
   name: string;
-  code: 'STARTER' | 'PRO' | 'ENTERPRISE' | 'CUSTOM';
+  code: 'STARTER' | 'PRO' | 'ENTERPRISE' | 'CUSTOM' | string;
   tagline: string;
   priceMonthly: number;
   priceYearly: number;
@@ -53,6 +53,7 @@ export interface SubscriptionPlan {
   features: string[];
   isPopular: boolean;
   isActive: boolean;
+  createdAt?: string;
 }
 
 export interface PlatformSettings {

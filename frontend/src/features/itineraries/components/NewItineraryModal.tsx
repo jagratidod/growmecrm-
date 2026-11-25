@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { X, MapPin, Sparkles } from 'lucide-react'
+import { X, MapPin, Zap } from 'lucide-react'
 import { useItineraries } from '../../../context/ItinerariesContext'
 import { useToast } from '../../../components/ui/Toast'
 import type { ItineraryStatus, ItineraryDay } from '../../../types/itinerary.types'
@@ -434,7 +434,7 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
                 <label className="block text-xs font-semibold text-slate-700">Package</label>
                 {selectedPackage !== 'No package' && (
                   <span className="text-[11px] text-[#453372] font-semibold flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Auto-fills plan
+                    <Zap className="w-3 h-3" /> Auto-fills plan
                   </span>
                 )}
               </div>
@@ -491,7 +491,6 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
               disabled={isSubmitting}
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-sm font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
-              <Sparkles className="w-4 h-4 text-purple-200" />
               <span>{isSubmitting ? 'Creating...' : 'Create itinerary'}</span>
             </button>
           </div>

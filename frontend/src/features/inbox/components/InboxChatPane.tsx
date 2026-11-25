@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import {
   Send,
-  Sparkles,
+  Bot,
   Paperclip,
   CheckCheck,
   User,
@@ -166,7 +166,7 @@ export const InboxChatPane: React.FC = () => {
           disabled={isAiGenerating}
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#453372] text-xs font-semibold shrink-0 transition-colors cursor-pointer"
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <Bot className="w-3.5 h-3.5" />
           <span>{isAiGenerating ? 'Drafting...' : 'AI Suggestion'}</span>
         </button>
 

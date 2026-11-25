@@ -1,5 +1,5 @@
 import React from 'react'
-import { MessageCircle, Send, Plus, Sparkles } from 'lucide-react'
+import { MessageCircle, Send, Plus, Zap } from 'lucide-react'
 import { useInbox } from '../../../context/InboxContext'
 
 export const InboxEmptyPane: React.FC = () => {
@@ -42,7 +42,7 @@ export const InboxEmptyPane: React.FC = () => {
                 onClick={loadDemoConversations}
                 className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-all cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <Zap className="w-4 h-4 text-amber-500" />
                 <span>Load demo conversations</span>
               </button>
             )}
@@ -79,7 +79,7 @@ export const InboxEmptyPane: React.FC = () => {
                 onClick={loadDemoConversations}
                 className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-all cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <Zap className="w-4 h-4 text-amber-500" />
                 <span>Load demo conversations</span>
               </button>
             )}

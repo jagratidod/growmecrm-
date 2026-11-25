@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import {
-  Sparkles,
+  Wand2,
   CheckCircle2,
   UploadCloud,
   Plus,
@@ -351,7 +351,7 @@ export const PackageBasicsForm: React.FC<PackageBasicsFormProps> = ({ onNext, on
       <div className="bg-gradient-to-r from-[#453372] to-[#5a3e98] rounded-2xl p-5 sm:p-6 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-xs flex items-center justify-center text-purple-200 shrink-0">
-            <Sparkles className="w-5 h-5" />
+            <Wand2 className="w-5 h-5" />
           </div>
           <div>
             <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
@@ -369,7 +369,7 @@ export const PackageBasicsForm: React.FC<PackageBasicsFormProps> = ({ onNext, on
           disabled={isAiGenerating}
           className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#453372] hover:bg-purple-50 text-xs sm:text-sm font-bold shadow-sm transition-all active:scale-[0.98] shrink-0"
         >
-          <Sparkles className="w-4 h-4 text-[#453372]" />
+          <Wand2 className="w-4 h-4 text-[#453372]" />
           <span>{isAiGenerating ? 'Generating...' : 'Auto-generate'}</span>
         </button>
       </div>

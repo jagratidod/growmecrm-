@@ -130,6 +130,8 @@ const AppContent: React.FC = () => {
       navigate('/ai-agent')
     } else if (menuName === 'Organization') {
       navigate('/organization')
+    } else if (menuName === 'Subscription') {
+      navigate('/subscription')
     } else if (menuName === 'Invoice Detail') {
       navigate('/invoice-detail')
     } else if (menuName === 'Automation') {
@@ -246,7 +248,11 @@ const AppContent: React.FC = () => {
   }
 
   if (path === '/organization') {
-    return <OrganizationPage onNavigateMenu={handleMenuNavigation} />
+    return <OrganizationPage onNavigateMenu={handleMenuNavigation} initialTab="branding" />
+  }
+
+  if (path === '/subscription' || path === '/plans') {
+    return <OrganizationPage onNavigateMenu={handleMenuNavigation} initialTab="subscription" />
   }
 
   if (path === '/invoice-detail') {

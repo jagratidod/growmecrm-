@@ -7,7 +7,6 @@ import {
   Mail,
   Star,
   Clock,
-  Sparkles,
 } from 'lucide-react'
 import { useHostPage } from '../../../context/HostPageContext'
 import { usePackages } from '../../../context/PackagesContext'
@@ -101,7 +100,7 @@ export const PublicWebsitePreviewModal: React.FC = () => {
 
             <div className="relative z-10 text-center px-4 max-w-2xl text-white space-y-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-semibold text-purple-200">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <Star className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
                 Handcrafted Journeys & Group Trips
               </span>
               <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white drop-shadow-md">

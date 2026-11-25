@@ -10,7 +10,7 @@ import {
   Copy,
   Globe,
   Webhook,
-  Sparkles,
+  Zap,
 } from 'lucide-react'
 
 const InstagramIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
@@ -420,7 +420,7 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
               {/* Quick Test Ingestion Buttons */}
               <div className="mb-6 p-4 bg-purple-50/50 border border-purple-100 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-4 h-4 text-[#453372]" />
+                  <Zap className="w-4 h-4 text-[#453372]" />
                   <span className="text-xs font-bold text-slate-800">Test Inbound Lead (Simulate Real Inbound Event):</span>
                 </div>
                 <p className="text-[11px] text-slate-500 mb-3">

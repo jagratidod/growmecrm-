@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../components/ui/Toast'
-import { Bot, Sparkles, Menu, Check } from 'lucide-react'
+import { Bot, Zap, Menu, Check } from 'lucide-react'
 
 interface AiAgentPageProps {
   onNavigateMenu?: (menu: string) => void
@@ -146,7 +146,7 @@ export const AiAgentPage: React.FC<AiAgentPageProps> = ({ onNavigateMenu }) => {
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4" />
+                      <Zap className="w-4 h-4" />
                       <span>Save</span>
                     </>
                   )}

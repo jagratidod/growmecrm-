@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plus, Search, Sparkles, Filter } from 'lucide-react'
+import { Plus, Search, Filter } from 'lucide-react'
 import { useItineraries } from '../../../context/ItinerariesContext'
 import type { ItineraryStatus } from '../../../types/itinerary.types'
 
@@ -35,7 +35,6 @@ export const ItinerariesHeader: React.FC<ItinerariesHeaderProps> = ({ onOpenNewM
           onClick={onOpenNewModal}
           className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] shrink-0"
         >
-          <Sparkles className="w-4 h-4 text-purple-200" />
           <Plus className="w-4 h-4" />
           <span>New itinerary</span>
         </button>

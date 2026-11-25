@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plus, Route, Sparkles } from 'lucide-react'
+import { Plus, Route } from 'lucide-react'
 
 interface ItinerariesEmptyStateProps {
   onOpenNewModal: () => void
@@ -31,7 +31,6 @@ export const ItinerariesEmptyState: React.FC<ItinerariesEmptyStateProps> = ({
           onClick={onOpenNewModal}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-sm font-semibold shadow-sm hover:shadow transition-all active:scale-[0.98]"
         >
-          <Sparkles className="w-4 h-4 text-purple-200" />
           <Plus className="w-4 h-4" />
           <span>New itinerary</span>
         </button>

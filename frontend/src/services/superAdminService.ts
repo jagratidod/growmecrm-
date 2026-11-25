@@ -407,6 +407,32 @@ export const superAdminService = {
     return getStoredOr(STORAGE_PLANS_KEY, DEFAULT_MOCK_PLANS);
   },
 
+  async createPlan(planData: Omit<SubscriptionPlan, 'id' | '_id'>): Promise<SubscriptionPlan> {
+    try {
+      const res = await fetch(`${API_BASE}/plans`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(planData),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.plan) return data.plan;
+      }
+    } catch {}
+
+    const plans = getStoredOr(STORAGE_PLANS_KEY, DEFAULT_MOCK_PLANS);
+    const newPlan: SubscriptionPlan = {
+      ...planData,
+      id: `plan_${Date.now()}`,
+      _id: `plan_${Date.now()}`,
+      isActive: true,
+      currency: planData.currency || 'INR',
+    };
+    const updated = [...plans, newPlan];
+    setStored(STORAGE_PLANS_KEY, updated);
+    return newPlan;
+  },
+
   async updatePlan(id: string, updates: Partial<SubscriptionPlan>): Promise<void> {
     try {
       await fetch(`${API_BASE}/plans/${id}`, {
@@ -418,6 +444,18 @@ export const superAdminService = {
 
     const plans = getStoredOr(STORAGE_PLANS_KEY, DEFAULT_MOCK_PLANS);
     const updated = plans.map((p) => ((p.id === id || p._id === id) ? { ...p, ...updates } : p));
+    setStored(STORAGE_PLANS_KEY, updated);
+  },
+
+  async deletePlan(id: string): Promise<void> {
+    try {
+      await fetch(`${API_BASE}/plans/${id}`, {
+        method: 'DELETE',
+      });
+    } catch {}
+
+    const plans = getStoredOr(STORAGE_PLANS_KEY, DEFAULT_MOCK_PLANS);
+    const updated = plans.filter((p) => p.id !== id && p._id !== id && p.code !== id);
     setStored(STORAGE_PLANS_KEY, updated);
   },
 

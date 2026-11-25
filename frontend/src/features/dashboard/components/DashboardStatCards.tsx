@@ -3,7 +3,7 @@ import {
   Users,
   Target,
   Trophy,
-  Sparkles,
+  Zap,
   CalendarCheck,
   Plane,
   Wallet,
@@ -84,7 +84,7 @@ export const DashboardStatCards: React.FC<DashboardStatCardsProps> = ({ metrics 
     {
       label: 'New this week',
       value: newThisWeek.toString(),
-      icon: Sparkles,
+      icon: Zap,
       badgeColor: 'bg-[#f59e0b] text-white',
     },
     {
