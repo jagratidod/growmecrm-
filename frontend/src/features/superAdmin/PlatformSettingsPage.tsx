@@ -68,27 +68,27 @@ export const PlatformSettingsPage: React.FC = () => {
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section 1: Maintenance Mode & Access Control */}
-        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-5">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xs space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Platform Maintenance & Access Control</h3>
+              <h3 className="text-base font-extrabold text-slate-900 tracking-tight">Platform Maintenance & Access Control</h3>
               <p className="text-xs text-slate-400 mt-0.5">Toggle maintenance lock or registration freeze</p>
             </div>
           </div>
 
-          <div className="space-y-4 pt-2 text-xs">
+          <div className="space-y-4 pt-1 text-xs">
             {/* Maintenance Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-              <div>
+            <div className="flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-100">
+              <div className="pr-4">
                 <span className="font-bold text-slate-900 text-sm block">Global Maintenance Mode</span>
-                <span className="text-slate-400 text-xs">
+                <span className="text-slate-400 text-xs mt-0.5 block">
                   When enabled, non-super-admin users see the maintenance screen upon logging in.
                 </span>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
                 <input
                   type="checkbox"
                   checked={settings.maintenanceMode}
@@ -100,26 +100,26 @@ export const PlatformSettingsPage: React.FC = () => {
             </div>
 
             {settings.maintenanceMode && (
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700">Custom Maintenance Downtime Message</label>
+              <div className="space-y-1.5 animate-fade-in">
+                <label className="font-bold text-slate-700 block">Custom Maintenance Downtime Message</label>
                 <textarea
                   rows={2}
                   value={settings.maintenanceMessage}
                   onChange={(e) => setSettings({ ...settings, maintenanceMessage: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-normal focus:border-[#453372] focus:outline-none resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-normal focus:border-[#453372] focus:outline-none resize-none bg-white"
                 />
               </div>
             )}
 
             {/* Allow New Registrations */}
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-              <div>
+            <div className="flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-100">
+              <div className="pr-4">
                 <span className="font-bold text-slate-900 text-sm block">Allow New Agency Sign-Ups</span>
-                <span className="text-slate-400 text-xs">
+                <span className="text-slate-400 text-xs mt-0.5 block">
                   Enables public agency onboarding via the /signup register portal.
                 </span>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
                 <input
                   type="checkbox"
                   checked={settings.allowNewRegistrations}
@@ -133,94 +133,94 @@ export const PlatformSettingsPage: React.FC = () => {
         </div>
 
         {/* Section 2: General SaaS Branding */}
-        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-5">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xs space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-purple-50 text-[#453372] flex items-center justify-center font-bold">
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">SaaS Identity & Support Contact</h3>
+              <h3 className="text-base font-extrabold text-slate-900 tracking-tight">SaaS Identity & Support Contact</h3>
               <p className="text-xs text-slate-400 mt-0.5">Brand name and support channels presented across workspaces</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700">Platform Brand Name</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 block">Platform Brand Name</label>
               <input
                 type="text"
                 value={settings.platformName}
                 onChange={(e) => setSettings({ ...settings, platformName: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-[#453372] focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700">Official Support Email</label>
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 block">Official Support Email</label>
               <input
                 type="email"
                 value={settings.supportEmail}
                 onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-[#453372] focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700">Support Phone / WhatsApp</label>
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 block">Support Phone / WhatsApp</label>
               <input
                 type="text"
                 value={settings.contactPhone}
                 onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-[#453372] focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700">Default Starter Trial Duration (Days)</label>
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 block">Default Starter Trial Duration (Days)</label>
               <input
                 type="number"
                 min="0"
                 max="90"
                 value={settings.defaultTrialDays}
                 onChange={(e) => setSettings({ ...settings, defaultTrialDays: Number(e.target.value) })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-[#453372] focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
               />
             </div>
           </div>
         </div>
 
         {/* Section 3: Payment Processors (Razorpay & Stripe) */}
-        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-5">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xs space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Payment Gateway Integrations</h3>
+              <h3 className="text-base font-extrabold text-slate-900 tracking-tight">Payment Gateway Integrations</h3>
               <p className="text-xs text-slate-400 mt-0.5">Collect subscription payments via Razorpay (INR) and Stripe (Global)</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700">Razorpay Key ID (Live / Test)</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 block">Razorpay Key ID (Live / Test)</label>
               <input
                 type="text"
                 placeholder="rzp_live_xxxxxxxxxx"
                 value={settings.razorpayKeyId || ''}
                 onChange={(e) => setSettings({ ...settings, razorpayKeyId: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-mono focus:border-[#453372] focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-mono focus:border-[#453372] focus:outline-none bg-white"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700">Stripe Publishable Key</label>
+            <div className="space-y-1.5">
+              <label className="font-bold text-slate-700 block">Stripe Publishable Key</label>
               <input
                 type="text"
                 placeholder="pk_live_xxxxxxxxxx"
                 value={settings.stripePublishableKey || ''}
                 onChange={(e) => setSettings({ ...settings, stripePublishableKey: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-mono focus:border-[#453372] focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-mono focus:border-[#453372] focus:outline-none bg-white"
               />
             </div>
           </div>
@@ -231,7 +231,7 @@ export const PlatformSettingsPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSaving}
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#453372] hover:bg-[#38285e] text-white font-extrabold text-sm shadow-md transition disabled:opacity-50"
+            className="flex items-center gap-2 px-7 py-3 rounded-2xl bg-[#453372] hover:bg-[#38285e] text-white font-extrabold text-sm shadow-md transition disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             <span>{isSaving ? 'Saving Settings...' : 'Save All Platform Settings'}</span>

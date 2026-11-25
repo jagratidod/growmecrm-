@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, ShieldAlert, ExternalLink } from 'lucide-react';
+import { Menu, ShieldAlert, ArrowUpRight } from 'lucide-react';
 import { SuperAdminSidebar } from './components/SuperAdminSidebar';
 import { useRouter } from '../../context/RouterContext';
 
@@ -31,7 +31,7 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({
       {/* Main Content Area */}
       <div className="flex-1 min-w-0 flex flex-col min-h-screen">
         {/* Top Navbar */}
-        <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+        <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between gap-4 shadow-2xs">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileSidebarOpen(true)}
@@ -46,13 +46,13 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({
                 <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                   {title}
                 </h1>
-                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-[#453372] border border-purple-200">
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-50 text-[#453372] border border-purple-200/80">
                   <ShieldAlert className="w-3 h-3 text-[#453372]" />
                   Super Admin
                 </span>
               </div>
               {subtitle && (
-                <p className="text-xs text-slate-500 font-normal hidden sm:block mt-0.5">
+                <p className="text-xs text-slate-400 font-medium hidden sm:block mt-0.5">
                   {subtitle}
                 </p>
               )}
@@ -60,13 +60,13 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({
           </div>
 
           {/* Quick shortcuts */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/leads')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#453372] text-xs font-bold border border-purple-200 transition"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#453372] text-xs font-bold border border-purple-200/70 transition-all shadow-2xs"
             >
-              <span>Agency Portal</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Agency View</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </header>

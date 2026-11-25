@@ -57,20 +57,20 @@ export const SuperAdminDashboard: React.FC = () => {
   return (
     <SuperAdminLayout
       currentPath="Dashboard"
-      title="Platform Overview Dashboard"
+      title="Platform Dashboard"
       subtitle="Real-time multi-tenant health, global subscriptions, and platform metrics."
     >
-      {/* Top Welcome Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-[#2f2054] via-[#453372] to-[#594096] text-white p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-md border border-purple-400/20">
+      {/* Top Welcome Banner with Refined Purple Palette */}
+      <div className="rounded-3xl bg-gradient-to-r from-[#3e2e68] via-[#453372] to-[#594096] text-white p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm border border-purple-400/20">
         <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-amber-300 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
             GrowMe Multi-Tenant SaaS Master Controls
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             Welcome back, Super Admin 👋
           </h2>
-          <p className="text-xs sm:text-sm text-purple-200 font-normal max-w-xl">
+          <p className="text-xs sm:text-sm text-purple-200/90 font-normal max-w-xl">
             Currently monitoring <strong className="text-white">{metrics.totalAgencies} tenant agencies</strong> and{' '}
             <strong className="text-white">{metrics.totalLeads.toLocaleString()} leads</strong> across all workspaces.
           </p>
@@ -83,13 +83,13 @@ export const SuperAdminDashboard: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold backdrop-blur-sm transition disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh Data
+            <span>Refresh</span>
           </button>
           <button
             onClick={() => navigate('/super-admin/tenants')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-900 text-xs font-extrabold shadow-md transition"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-black shadow-md transition"
           >
-            Manage Agencies
+            <span>Manage Agencies</span>
             <ArrowUpRight className="w-4 h-4" />
           </button>
         </div>
@@ -98,9 +98,9 @@ export const SuperAdminDashboard: React.FC = () => {
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* KPI 1: MRR */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-3">
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs hover:shadow-md transition space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               Monthly Revenue (MRR)
             </span>
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
@@ -112,15 +112,15 @@ export const SuperAdminDashboard: React.FC = () => {
               ₹{metrics.mrr.toLocaleString()}
             </div>
             <p className="text-xs text-slate-400 font-medium mt-1">
-              ARR: <strong className="text-emerald-600">₹{metrics.arr.toLocaleString()}</strong> / year
+              Annual Run Rate: <strong className="text-emerald-600 font-bold">₹{metrics.arr.toLocaleString()}</strong>
             </p>
           </div>
         </div>
 
         {/* KPI 2: Total Agencies */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-3">
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs hover:shadow-md transition space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               Workspaces / Agencies
             </span>
             <div className="w-10 h-10 rounded-2xl bg-purple-50 text-[#453372] flex items-center justify-center font-bold">
@@ -140,9 +140,9 @@ export const SuperAdminDashboard: React.FC = () => {
         </div>
 
         {/* KPI 3: Active Admins */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-3">
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs hover:shadow-md transition space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               Active Agency Admins
             </span>
             <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
@@ -154,15 +154,15 @@ export const SuperAdminDashboard: React.FC = () => {
               {metrics.totalAdmins}
             </div>
             <p className="text-xs text-slate-400 font-medium mt-1">
-              Across all tenant workspaces
+              Registered administrators
             </p>
           </div>
         </div>
 
         {/* KPI 4: Total Leads */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-3">
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs hover:shadow-md transition space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               Platform Leads Ingested
             </span>
             <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
@@ -183,10 +183,10 @@ export const SuperAdminDashboard: React.FC = () => {
       {/* Grid: Plan Distribution & Quick Health */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Plan Distribution Bar & Card */}
-        <div className="lg:col-span-6 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
+        <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-xs space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Subscription Tier Distribution</h3>
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">Subscription Tier Distribution</h3>
               <p className="text-xs text-slate-400 mt-0.5">Active tier breakdown across registered tenants</p>
             </div>
             <button
@@ -201,12 +201,12 @@ export const SuperAdminDashboard: React.FC = () => {
             <div>
               <div className="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
                 <span>Starter Plan (₹1,499/mo)</span>
-                <span>{planDist.STARTER || 0} Agencies</span>
+                <span className="text-purple-600 font-black">{planDist.STARTER || 0} Agencies</span>
               </div>
-              <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-purple-400 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(10, ((planDist.STARTER || 0) / (metrics.totalAgencies || 1)) * 100)}%` }}
+                  className="bg-purple-300 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${Math.max(12, ((planDist.STARTER || 0) / (metrics.totalAgencies || 1)) * 100)}%` }}
                 />
               </div>
             </div>
@@ -214,12 +214,12 @@ export const SuperAdminDashboard: React.FC = () => {
             <div>
               <div className="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
                 <span>Growth Pro Plan (₹3,999/mo)</span>
-                <span>{planDist.PRO || 0} Agencies</span>
+                <span className="text-[#453372] font-black">{planDist.PRO || 0} Agencies</span>
               </div>
-              <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div
                   className="bg-[#453372] h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(10, ((planDist.PRO || 0) / (metrics.totalAgencies || 1)) * 100)}%` }}
+                  style={{ width: `${Math.max(12, ((planDist.PRO || 0) / (metrics.totalAgencies || 1)) * 100)}%` }}
                 />
               </div>
             </div>
@@ -227,12 +227,12 @@ export const SuperAdminDashboard: React.FC = () => {
             <div>
               <div className="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
                 <span>Enterprise Agency (₹9,999/mo)</span>
-                <span>{planDist.ENTERPRISE || 0} Agencies</span>
+                <span className="text-amber-600 font-black">{planDist.ENTERPRISE || 0} Agencies</span>
               </div>
-              <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div
                   className="bg-amber-400 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.max(10, ((planDist.ENTERPRISE || 0) / (metrics.totalAgencies || 1)) * 100)}%` }}
+                  style={{ width: `${Math.max(12, ((planDist.ENTERPRISE || 0) / (metrics.totalAgencies || 1)) * 100)}%` }}
                 />
               </div>
             </div>
@@ -240,10 +240,10 @@ export const SuperAdminDashboard: React.FC = () => {
         </div>
 
         {/* Global Security & Maintenance Status */}
-        <div className="lg:col-span-6 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+        <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Platform Systems & Gateways</h3>
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">Platform Systems & Gateways</h3>
               <p className="text-xs text-slate-400 mt-0.5">Live connectivity status of global services</p>
             </div>
             <button
@@ -255,59 +255,59 @@ export const SuperAdminDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-3 pt-1">
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-800">Multi-Channel Lead Ingestion Webhook</h4>
-                  <p className="text-[11px] text-slate-400">POST /api/webhooks/lead • 45ms latency</p>
+                  <p className="text-[11px] text-slate-400 font-mono">POST /api/webhooks/lead • 45ms</p>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                Operational
+              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                ACTIVE
               </span>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-800">Meta Graph API & Instagram Webhook</h4>
-                  <p className="text-[11px] text-slate-400">GET/POST /api/webhooks/meta • Active</p>
+                  <p className="text-[11px] text-slate-400 font-mono">GET/POST /api/webhooks/meta • 124ms</p>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                Operational
+              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                ACTIVE
               </span>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-800">WhatsApp Cloud API Webhook</h4>
-                  <p className="text-[11px] text-slate-400">GET/POST /api/webhooks/whatsapp • Active</p>
+                  <p className="text-[11px] text-slate-400 font-mono">GET/POST /api/webhooks/whatsapp • 82ms</p>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                Operational
+              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                ACTIVE
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Tenant Directory & Audit Trail */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+      {/* Recent Platform Audit Trail */}
+      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Recent Platform Audit Trail</h3>
+            <h3 className="text-base font-bold text-slate-900 tracking-tight">Recent Platform Audit Trail</h3>
             <p className="text-xs text-slate-400 mt-0.5">Sensitive administrator actions across all workspaces</p>
           </div>
           <button
@@ -320,7 +320,7 @@ export const SuperAdminDashboard: React.FC = () => {
 
         <div className="divide-y divide-slate-100 text-xs">
           {(data?.recentAudit || []).slice(0, 4).map((log: any, idx: number) => (
-            <div key={log.id || idx} className="py-3 flex items-center justify-between gap-4">
+            <div key={log.id || idx} className="py-3.5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#453372] flex items-center justify-center shrink-0 font-bold">
                   <ShieldCheck className="w-4 h-4" />
@@ -330,7 +330,7 @@ export const SuperAdminDashboard: React.FC = () => {
                   <p className="text-[11px] text-slate-400">{log.actorEmail} • {log.action}</p>
                 </div>
               </div>
-              <span className="text-[11px] text-slate-400 shrink-0 flex items-center gap-1">
+              <span className="text-[11px] text-slate-400 shrink-0 flex items-center gap-1 font-medium">
                 <Clock className="w-3 h-3" />
                 {new Date(log.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
