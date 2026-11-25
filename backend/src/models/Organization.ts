@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import crypto from 'crypto';
 
 export type PlanType = 'STARTER' | 'PRO' | 'ENTERPRISE';
 
@@ -11,6 +12,7 @@ export interface IOrganization extends Document {
   plan: PlanType;
   maxSeats: number;
   maxLeads: number;
+  webhookApiKey: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'TRIAL';
   createdAt: Date;
   updatedAt: Date;
@@ -54,6 +56,12 @@ const OrganizationSchema = new Schema<IOrganization>(
     maxLeads: {
       type: Number,
       default: 500,
+    },
+    webhookApiKey: {
+      type: String,
+      unique: true,
+      index: true,
+      default: () => 'whk_' + crypto.randomBytes(16).toString('hex'),
     },
     status: {
       type: String,

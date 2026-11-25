@@ -42,6 +42,7 @@ const INITIAL_FILTERS: LeadFilters = {
   destination: '',
   assignedTo: '',
   customerType: 'All',
+  source: 'All',
 }
 
 const DEMO_LEADS: Lead[] = [
@@ -245,6 +246,11 @@ export const LeadsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Customer type
       if (filters.customerType && filters.customerType !== 'All') {
         if (lead.customerType !== filters.customerType) return false
+      }
+
+      // Source filter (WhatsApp, Instagram, Facebook, Website, etc.)
+      if (filters.source && filters.source !== 'All') {
+        if (lead.source !== filters.source) return false
       }
 
       // Assigned to

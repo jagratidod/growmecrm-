@@ -191,6 +191,7 @@ export const NewLeadModal: React.FC = () => {
                 <option value="Manual">Manual</option>
                 <option value="Website">Website</option>
                 <option value="Facebook">Facebook</option>
+                <option value="Instagram">Instagram</option>
                 <option value="Google">Google</option>
                 <option value="WhatsApp">WhatsApp</option>
                 <option value="Referral">Referral</option>

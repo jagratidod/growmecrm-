@@ -62,7 +62,6 @@ const HostPageSchema = new Schema<IHostPage>(
       ref: 'Organization',
       required: true,
       unique: true,
-      index: true,
     },
     websiteSlug: {
       type: String,
@@ -70,7 +69,6 @@ const HostPageSchema = new Schema<IHostPage>(
       unique: true,
       trim: true,
       lowercase: true,
-      index: true,
     },
     websiteUrl: {
       type: String,

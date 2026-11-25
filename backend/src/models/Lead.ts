@@ -15,6 +15,7 @@ export type LeadSource =
   | 'Manual'
   | 'Website'
   | 'Facebook'
+  | 'Instagram'
   | 'Google'
   | 'WhatsApp'
   | 'Referral';
@@ -83,7 +84,7 @@ const LeadSchema = new Schema<ILead>(
     phone: { type: String, required: [true, 'Phone number is required'], trim: true },
     source: {
       type: String,
-      enum: ['Manual', 'Website', 'Facebook', 'Google', 'WhatsApp', 'Referral'],
+      enum: ['Manual', 'Website', 'Facebook', 'Instagram', 'Google', 'WhatsApp', 'Referral'],
       default: 'Manual',
     },
     status: {

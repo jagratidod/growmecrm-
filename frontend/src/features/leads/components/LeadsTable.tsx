@@ -10,9 +10,95 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  MessageCircle,
+  Globe,
+  Search,
+  Share2,
+  User,
 } from 'lucide-react'
 import { useLeads } from '../../../context/LeadsContext'
-import type { Lead, LeadStage, LeadTemperature } from '../../../types/lead.types'
+import type { Lead, LeadStage, LeadTemperature, LeadSource } from '../../../types/lead.types'
+
+const InstagramIcon: React.FC<{ className?: string }> = ({ className = 'w-2.5 h-2.5' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+)
+
+const FacebookIcon: React.FC<{ className?: string }> = ({ className = 'w-2.5 h-2.5' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+  </svg>
+)
+
+const SourceBadge: React.FC<{ source: LeadSource | string }> = ({ source }) => {
+  const s = (source || 'Manual').toLowerCase()
+  if (s.includes('whats') || s.includes('wa')) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <MessageCircle className="w-2.5 h-2.5 text-emerald-600" /> WhatsApp
+      </span>
+    )
+  }
+  if (s.includes('insta')) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200">
+        <InstagramIcon className="w-2.5 h-2.5 text-pink-600" /> Instagram
+      </span>
+    )
+  }
+  if (s.includes('face') || s.includes('fb')) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+        <FacebookIcon className="w-2.5 h-2.5 text-blue-600" /> Facebook
+      </span>
+    )
+  }
+  if (s.includes('web')) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+        <Globe className="w-2.5 h-2.5 text-purple-600" /> Website
+      </span>
+    )
+  }
+  if (s.includes('goog')) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+        <Search className="w-2.5 h-2.5 text-amber-600" /> Google
+      </span>
+    )
+  }
+  if (s.includes('ref')) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+        <Share2 className="w-2.5 h-2.5 text-indigo-600" /> Referral
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+      <User className="w-2.5 h-2.5 text-slate-500" /> Manual
+    </span>
+  )
+}
 
 export const LeadsTable: React.FC = () => {
   const { filteredLeads, setSelectedLead, deleteLead, changeLeadStage } = useLeads()
@@ -87,6 +173,7 @@ export const LeadsTable: React.FC = () => {
                   <ArrowUpDown className="w-3 h-3 text-slate-400" />
                 </div>
               </th>
+              <th className="py-3 px-4">Source</th>
               <th className="py-3 px-4">Contact</th>
               <th
                 onClick={() => handleSort('destination')}
@@ -148,6 +235,11 @@ export const LeadsTable: React.FC = () => {
                       {lead.interestedPackage}
                     </p>
                   )}
+                </td>
+
+                {/* Source */}
+                <td className="py-3.5 px-4 whitespace-nowrap">
+                  <SourceBadge source={lead.source} />
                 </td>
 
                 {/* Contact */}

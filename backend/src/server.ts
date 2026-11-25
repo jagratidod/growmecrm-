@@ -23,6 +23,7 @@ import inboxRoutes from './routes/inboxRoutes';
 import campaignRoutes from './routes/campaignRoutes';
 import linkTreeRoutes from './routes/linkTreeRoutes';
 import settingsRoutes from './routes/settingsRoutes';
+import webhookRoutes from './routes/webhookRoutes';
 
 dotenv.config();
 
@@ -82,6 +83,7 @@ app.use('/api/inbox', inboxRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/linktree', linkTreeRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // Root health check endpoint
 app.get('/api/health', (req, res) => {

@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import crypto from 'crypto';
 import { AuthenticatedRequest } from '../types';
 import { Organization } from '../models/Organization';
 
@@ -13,6 +14,11 @@ export const getOrganization = async (req: AuthenticatedRequest, res: Response):
       return;
     }
 
+    if (!org.webhookApiKey) {
+      org.webhookApiKey = 'whk_' + crypto.randomBytes(16).toString('hex');
+      await org.save();
+    }
+
     res.status(200).json({
       id: org._id.toString(),
       agencyName: org.name,
@@ -24,6 +30,7 @@ export const getOrganization = async (req: AuthenticatedRequest, res: Response):
       plan: org.plan,
       maxSeats: org.maxSeats,
       maxLeads: org.maxLeads,
+      webhookApiKey: org.webhookApiKey,
       status: org.status,
     });
   } catch (error: any) {

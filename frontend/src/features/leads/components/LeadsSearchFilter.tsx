@@ -1,7 +1,7 @@
 import React from 'react'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { useLeads } from '../../../context/LeadsContext'
-import type { LeadStage, LeadTemperature, CustomerType } from '../../../types/lead.types'
+import type { LeadStage, LeadTemperature, CustomerType, LeadSource } from '../../../types/lead.types'
 
 export const LeadsSearchFilter: React.FC = () => {
   const {
@@ -16,6 +16,7 @@ export const LeadsSearchFilter: React.FC = () => {
     filters.stage !== 'All' ||
     filters.temperature !== 'All' ||
     filters.customerType !== 'All' ||
+    (filters.source && filters.source !== 'All') ||
     Boolean(filters.destination) ||
     Boolean(filters.assignedTo)
 
@@ -152,6 +153,27 @@ export const LeadsSearchFilter: React.FC = () => {
                 <option value="Kushal Pareta">Kushal Pareta</option>
                 <option value="Pooja Sharma">Pooja Sharma</option>
                 <option value="Rahul Verma">Rahul Verma</option>
+              </select>
+            </div>
+
+            {/* Lead Source */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                Lead Source
+              </label>
+              <select
+                value={filters.source || 'All'}
+                onChange={(e) => updateFilter('source', e.target.value as LeadSource | 'All')}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-400"
+              >
+                <option value="All">All Sources</option>
+                <option value="WhatsApp">🟢 WhatsApp</option>
+                <option value="Instagram">🟣 Instagram</option>
+                <option value="Facebook">🔵 Facebook</option>
+                <option value="Website">🌐 Website</option>
+                <option value="Google">🟡 Google</option>
+                <option value="Referral">🤝 Referral</option>
+                <option value="Manual">✍️ Manual</option>
               </select>
             </div>
           </div>

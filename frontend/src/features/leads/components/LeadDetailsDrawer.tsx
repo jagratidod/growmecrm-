@@ -94,7 +94,19 @@ export const LeadDetailsDrawer: React.FC = () => {
               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">
                 {selectedLead.customerType}
               </span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
+              <span
+                className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                  selectedLead.source === 'WhatsApp'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : selectedLead.source === 'Instagram'
+                    ? 'bg-pink-100 text-pink-800'
+                    : selectedLead.source === 'Facebook'
+                    ? 'bg-blue-100 text-blue-800'
+                    : selectedLead.source === 'Website'
+                    ? 'bg-purple-100 text-purple-800'
+                    : 'bg-slate-200 text-slate-800'
+                }`}
+              >
                 {selectedLead.source}
               </span>
               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-rose-500 text-white">

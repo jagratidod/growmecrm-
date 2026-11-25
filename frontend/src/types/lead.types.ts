@@ -15,6 +15,7 @@ export type LeadSource =
   | 'Manual'
   | 'Website'
   | 'Facebook'
+  | 'Instagram'
   | 'Google'
   | 'WhatsApp'
   | 'Referral'
@@ -58,6 +59,7 @@ export interface LeadFilters {
   destination?: string
   assignedTo?: string
   customerType?: CustomerType | 'All'
+  source?: LeadSource | 'All'
   travelDateFrom?: string
   travelDateTo?: string
 }
