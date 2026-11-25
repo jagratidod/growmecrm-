@@ -44,7 +44,7 @@ const LinkTreeSchema = new Schema<ILinkTree>(
     },
     bioTitle: {
       type: String,
-      default: 'Treki Travels',
+      default: 'GrowMe CRM',
       trim: true,
     },
     bioTagline: {

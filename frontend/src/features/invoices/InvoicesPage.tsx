@@ -550,7 +550,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
               {/* Header */}
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-xl font-black text-slate-800">{org.agencyName || 'Treki Travels'}</h3>
+                  <h3 className="text-xl font-black text-slate-800">{org.agencyName && org.agencyName !== 'Treki Travels' ? org.agencyName : 'GrowMe CRM'}</h3>
                   <p className="text-xs text-slate-500">Travel & Holiday Specialists</p>
                   <p className="text-xs text-slate-500">State: {invoice.state} (Code: {invoice.stateCode})</p>
                   <p className="text-xs text-slate-500">GSTIN: {invoice.gstin || '27AAAAA0000A1Z5'}</p>

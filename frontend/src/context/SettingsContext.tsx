@@ -82,12 +82,12 @@ interface SettingsContextType {
 const STORAGE_KEY = 'treki_crm_settings_data'
 
 const DEFAULT_PROFILE: UserProfileSettings = {
-  fullName: 'Kushal Pareta',
-  email: 'kushal@trekitravels.com',
-  role: 'Admin',
-  organization: 'Treki Travels',
-  memberSince: '8 Oct 2026',
-  lastSignIn: '18 Nov 2026, 12:39',
+  fullName: 'Agency Owner',
+  email: 'owner@agency.com',
+  role: 'Owner',
+  organization: 'GrowMe CRM',
+  memberSince: 'Today',
+  lastSignIn: 'Just now',
 }
 
 const DEFAULT_CHANNELS: ChannelsSettings = {
@@ -107,7 +107,7 @@ const DEFAULT_AI_AGENT: AiAgentSettings = {
 }
 
 const DEFAULT_ORGANIZATION: OrganizationSettings = {
-  agencyName: 'Treki Travels',
+  agencyName: 'GrowMe CRM',
   logoUrl: '',
   primaryColor: '#4F46E5',
   secondaryColor: '#0D9488',
@@ -158,8 +158,34 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [profile, setProfile] = useState<UserProfileSettings>(() => {
     try {
+      const authUserStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')
+      if (authUserStr) {
+        const authUser = JSON.parse(authUserStr)
+        if (authUser?.name) {
+          const orgName = (authUser.organizationName && authUser.organizationName !== 'Treki Travels')
+            ? authUser.organizationName
+            : (localStorage.getItem('crm_current_agency') || 'GrowMe CRM')
+          return {
+            fullName: authUser.name,
+            email: authUser.email || 'user@agency.com',
+            role: authUser.role ? (authUser.role.charAt(0).toUpperCase() + authUser.role.slice(1)) : 'Owner',
+            organization: orgName,
+            memberSince: authUser.memberSince || 'Today',
+            lastSignIn: authUser.lastSignIn || 'Just now',
+          }
+        }
+      }
       const saved = localStorage.getItem(STORAGE_KEY + '_profile')
-      if (saved) return JSON.parse(saved)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.organization === 'Treki Travels' || !parsed.organization) {
+          parsed.organization = localStorage.getItem('crm_current_agency') || 'GrowMe CRM'
+        }
+        if (parsed.fullName === 'Kushal Pareta') {
+          parsed.fullName = 'Agency Owner'
+        }
+        return parsed
+      }
     } catch {
       // ignore
     }
@@ -188,6 +214,34 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     try {
+      const authUserStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')
+      if (authUserStr) {
+        const authUser = JSON.parse(authUserStr)
+        const orgName = (authUser.organizationName && authUser.organizationName !== 'Treki Travels')
+          ? authUser.organizationName
+          : (localStorage.getItem('crm_current_agency') || 'GrowMe CRM')
+
+        if (authUser?.name) {
+          setProfile((prev) => ({
+            ...prev,
+            fullName: authUser.name,
+            email: authUser.email || prev.email,
+            role: authUser.role ? (authUser.role.charAt(0).toUpperCase() + authUser.role.slice(1)) : prev.role,
+            organization: orgName,
+          }))
+        }
+        if (orgName) {
+          setOrganization((prev) => ({
+            ...prev,
+            agencyName: orgName,
+          }))
+        }
+      }
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    try {
       localStorage.setItem(STORAGE_KEY + '_profile', JSON.stringify(profile))
     } catch {
       // ignore
@@ -212,8 +266,26 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const [organization, setOrganization] = useState<OrganizationSettings>(() => {
     try {
+      const authUserStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')
+      if (authUserStr) {
+        const authUser = JSON.parse(authUserStr)
+        if (authUser?.organizationName && authUser.organizationName !== 'Treki Travels') {
+          return {
+            agencyName: authUser.organizationName,
+            logoUrl: '',
+            primaryColor: '#4F46E5',
+            secondaryColor: '#0D9488',
+          }
+        }
+      }
       const saved = localStorage.getItem(STORAGE_KEY + '_org')
-      if (saved) return JSON.parse(saved)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.agencyName === 'Treki Travels' || !parsed.agencyName) {
+          parsed.agencyName = localStorage.getItem('crm_current_agency') || 'GrowMe CRM'
+        }
+        return parsed
+      }
     } catch {
       // ignore
     }

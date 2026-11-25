@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { useSettings } from '../../context/SettingsContext'
+import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import {
   UploadCloud,
@@ -17,12 +18,19 @@ interface OrganizationPageProps {
 
 export const OrganizationPage: React.FC<OrganizationPageProps> = ({ onNavigateMenu }) => {
   const { organization, updateOrganization } = useSettings()
+  const { user } = useAuth()
   const { toast } = useToast()
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   // Local form state
-  const [agencyName, setAgencyName] = useState(organization.agencyName || 'Treki Travels')
+  const defaultOrgName =
+    user?.organizationName && user.organizationName !== 'Treki Travels'
+      ? user.organizationName
+      : organization.agencyName && organization.agencyName !== 'Treki Travels'
+      ? organization.agencyName
+      : 'GrowMe CRM'
+  const [agencyName, setAgencyName] = useState(defaultOrgName)
   const [logoUrl, setLogoUrl] = useState(organization.logoUrl || '')
   const [primaryColor, setPrimaryColor] = useState(organization.primaryColor || '#4F46E5')
   const [secondaryColor, setSecondaryColor] = useState(organization.secondaryColor || '#0D9488')
@@ -31,11 +39,17 @@ export const OrganizationPage: React.FC<OrganizationPageProps> = ({ onNavigateMe
   const [isSaved, setIsSaved] = useState(false)
 
   useEffect(() => {
-    setAgencyName(organization.agencyName || 'Treki Travels')
+    const validOrg =
+      user?.organizationName && user.organizationName !== 'Treki Travels'
+        ? user.organizationName
+        : organization.agencyName && organization.agencyName !== 'Treki Travels'
+        ? organization.agencyName
+        : 'GrowMe CRM'
+    setAgencyName(validOrg)
     setLogoUrl(organization.logoUrl || '')
     setPrimaryColor(organization.primaryColor || '#4F46E5')
     setSecondaryColor(organization.secondaryColor || '#0D9488')
-  }, [organization])
+  }, [organization, user])
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -153,7 +167,7 @@ export const OrganizationPage: React.FC<OrganizationPageProps> = ({ onNavigateMe
                     type="text"
                     value={agencyName}
                     onChange={(e) => setAgencyName(e.target.value)}
-                    placeholder="Treki Travels"
+                    placeholder="GrowMe CRM"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
                   />
                 </div>

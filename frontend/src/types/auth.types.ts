@@ -3,14 +3,28 @@ export interface User {
   username: string
   name: string
   email: string
-  role: 'admin' | 'manager' | 'agent'
+  phone?: string
+  role: 'admin' | 'manager' | 'agent' | 'owner'
   avatarUrl?: string
+  organizationId?: string
+  organizationName?: string
+  memberSince?: string
+  lastSignIn?: string
 }
 
 export interface LoginCredentials {
   username: string
   password: string
   rememberMe: boolean
+}
+
+export interface RegisterData {
+  agencyName: string
+  name: string
+  email: string
+  phone?: string
+  password: string
+  rememberMe?: boolean
 }
 
 export interface AuthResponse {

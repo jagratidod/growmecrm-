@@ -9,11 +9,13 @@ import { useToast } from '../../../components/ui/Toast'
 interface LoginFormProps {
   onSuccess?: () => void
   onNavigateForgotPassword?: () => void
+  onNavigateRegister?: () => void
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess,
   onNavigateForgotPassword,
+  onNavigateRegister,
 }) => {
   const { login, isLoading } = useAuth()
   const { toast } = useToast()
@@ -153,6 +155,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </Button>
         </div>
       </form>
+
+      {/* Switch to Sign Up */}
+      <div className="mt-5 text-center">
+        <p className="text-xs text-slate-500">
+          Don't have an agency account yet?{' '}
+          <button
+            type="button"
+            onClick={onNavigateRegister}
+            className="text-xs font-bold text-[#453372] hover:text-[#382760] hover:underline transition focus:outline-none"
+          >
+            Create an Account (Sign up)
+          </button>
+        </p>
+      </div>
 
       {/* Demo helper pill */}
       <div className="mt-8 p-3 rounded-lg bg-slate-50 border border-slate-200 text-center">

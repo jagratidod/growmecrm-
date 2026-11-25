@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import type { User, LoginCredentials, AuthState } from '../types/auth.types'
+import type { User, LoginCredentials, RegisterData, AuthState } from '../types/auth.types'
 import { authService } from '../services/authService'
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>
+  register: (data: RegisterData) => Promise<void>
+  updateUser: (updates: Partial<User>) => void
   logout: () => Promise<void>
   clearError: () => void
 }
@@ -42,6 +44,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const register = async (data: RegisterData) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await authService.register(data)
+      setUser(response.user)
+      setToken(response.token)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Registration failed'
+      setError(msg)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updateUser = (updates: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return null
+      const updated = { ...prev, ...updates }
+      try {
+        localStorage.setItem('crm_auth_user', JSON.stringify(updated))
+      } catch {}
+      return updated
+    })
+  }
+
   const logout = async () => {
     setIsLoading(true)
     try {
@@ -64,6 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         error,
         login,
+        register,
+        updateUser,
         logout,
         clearError,
       }}

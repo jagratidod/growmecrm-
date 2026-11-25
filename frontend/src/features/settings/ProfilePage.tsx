@@ -1,7 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { useSettings } from '../../context/SettingsContext'
+import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../components/ui/Toast'
+import { profileService } from '../../services/profileService'
+import { organizationService } from '../../services/organizationService'
 import { Menu, Check } from 'lucide-react'
 
 interface ProfilePageProps {
@@ -9,15 +12,77 @@ interface ProfilePageProps {
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
-  const { profile, updateProfile } = useSettings()
+  const { user, updateUser } = useAuth()
+  const { profile, updateProfile, organization, updateOrganization } = useSettings()
   const { toast } = useToast()
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
+  const storedAgency = typeof window !== 'undefined' ? localStorage.getItem('crm_current_agency') : null
+  const activeOrg =
+    user?.organizationName && user.organizationName !== 'Treki Travels'
+      ? user.organizationName
+      : storedAgency && storedAgency !== 'Treki Travels'
+      ? storedAgency
+      : organization?.agencyName && organization.agencyName !== 'Treki Travels'
+      ? organization.agencyName
+      : 'GrowMe CRM'
+
+  // Derive active display values with priority to logged-in user
+  const activeFullName = user?.name || profile.fullName || 'User'
+  const activeEmail = user?.email || profile.email || 'user@agency.com'
+  const activeRole = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : (profile.role || 'Owner')
+  const activeMemberSince = user?.memberSince || profile.memberSince || 'Today'
+  const activeLastSignIn = user?.lastSignIn || profile.lastSignIn || 'Just now'
+
   // Personal details state
-  const [fullName, setFullName] = useState(profile.fullName)
-  const [email, setEmail] = useState(profile.email)
+  const [fullName, setFullName] = useState(activeFullName)
+  const [email, setEmail] = useState(activeEmail)
   const [savedPersonal, setSavedPersonal] = useState(false)
+
+  useEffect(() => {
+    if (user?.name) setFullName(user.name)
+    if (user?.email) setEmail(user.email)
+  }, [user])
+
+  useEffect(() => {
+    profileService
+      .getProfile()
+      .then((data) => {
+        if (data) {
+          if (data.fullName) setFullName(data.fullName)
+          if (data.email) setEmail(data.email)
+          if (data.organization && data.organization !== 'Treki Travels') {
+            updateOrganization({ agencyName: data.organization })
+            if (updateUser) {
+              updateUser({ organizationName: data.organization })
+            }
+          }
+        }
+      })
+      .catch(() => {})
+
+    organizationService
+      .getOrganization()
+      .then((org) => {
+        const orgName = org?.agencyName || org?.name
+        if (orgName && orgName !== 'Treki Travels') {
+          updateOrganization({ agencyName: orgName })
+          if (updateUser) {
+            updateUser({ organizationName: orgName })
+          }
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const initials = (activeFullName || 'User')
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'US'
 
   // Password state
   const [currentPassword, setCurrentPassword] = useState('')
@@ -29,6 +94,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
   const handleSavePersonal = (e: React.FormEvent) => {
     e.preventDefault()
     updateProfile({ fullName, email })
+    if (updateUser) {
+      updateUser({ name: fullName, email })
+    }
     setSavedPersonal(true)
     toast({
       type: 'success',
@@ -101,22 +169,22 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                 <div className="h-28 bg-gradient-to-r from-[#453372] via-[#543b8c] to-[#6366f1] relative">
                   {/* Avatar centered on banner bottom border */}
                   <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-[#453372] text-white ring-4 ring-white flex items-center justify-center font-black text-lg tracking-wide shadow-md">
-                    {profile.fullName.slice(0, 2).toUpperCase()}
+                    {initials}
                   </div>
                 </div>
 
                 {/* User Info */}
                 <div className="pt-11 pb-5 px-6 text-center">
                   <h2 className="text-lg font-black text-slate-800 tracking-tight">
-                    {profile.fullName}
+                    {activeFullName}
                   </h2>
                   <p className="text-xs text-slate-400 font-medium mt-0.5">
-                    {profile.email}
+                    {activeEmail}
                   </p>
 
                   <div className="mt-3">
                     <span className="inline-block text-[11px] font-bold px-3 py-1 rounded-full bg-purple-50 text-[#453372] border border-purple-200">
-                      {profile.role}
+                      {activeRole}
                     </span>
                   </div>
                 </div>
@@ -125,15 +193,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                 <div className="px-6 py-4 border-t border-slate-100 space-y-3.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400 font-medium">Organization</span>
-                    <span className="font-bold text-slate-800">{profile.organization}</span>
+                    <span className="font-bold text-slate-800">{activeOrg}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400 font-medium">Member since</span>
-                    <span className="font-bold text-slate-800">{profile.memberSince}</span>
+                    <span className="font-bold text-slate-800">{activeMemberSince}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400 font-medium">Last sign-in</span>
-                    <span className="font-bold text-slate-800">{profile.lastSignIn}</span>
+                    <span className="font-bold text-slate-800">{activeLastSignIn}</span>
                   </div>
                 </div>
               </div>

@@ -26,7 +26,7 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
   const bioUrl = `https://joinetra.com/bio/${org.agencyName.toLowerCase().replace(/\s+/g, '-')}`
 
   // Bio settings
-  const [bioTitle, setBioTitle] = useState(org.agencyName || 'Treki Travels')
+  const [bioTitle, setBioTitle] = useState(org.agencyName && org.agencyName !== 'Treki Travels' ? org.agencyName : 'GrowMe CRM')
   const [bioTagline, setBioTagline] = useState('Curated Trips, Himalayan Treks & Luxury Getaways ✨')
   const [isSavingProfile, setIsSavingProfile] = useState(false)
 
@@ -50,14 +50,14 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
       {
         id: 'l-2',
         title: '🏔️ Kashmir Winter Wonderland 5D/4N',
-        url: 'https://joinetra.com/treki-travels/kashmir-winter',
+        url: 'https://joinetra.com/growme-crm/kashmir-winter',
         icon: 'package',
         active: true,
       },
       {
         id: 'l-3',
         title: '🏖️ Goa Private Beach Villas',
-        url: 'https://joinetra.com/treki-travels/goa-luxury',
+        url: 'https://joinetra.com/growme-crm/goa-luxury',
         icon: 'package',
         active: true,
       },
@@ -391,7 +391,7 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
 
                   {/* Verified Badge */}
                   <div className="mt-auto pt-6 text-center text-[10px] text-purple-300/50">
-                    Powered by Treki Travels CRM
+                    Powered by GrowMe CRM
                   </div>
                 </div>
               </div>

@@ -21,17 +21,17 @@ const STORAGE_INVITES_KEY = 'treki_crm_team_invites_data'
 const DEFAULT_MEMBERS: TeamMember[] = [
   {
     id: 'tm-1',
-    name: 'Kushal Pareta',
-    email: 'kushal@trekitravels.com',
+    name: 'Workspace Admin',
+    email: 'admin@growmecrm.com',
     role: 'Admin',
     status: 'Active',
-    lastActive: '1 day ago',
+    lastActive: 'Just now',
     isCurrentUser: true,
   },
   {
     id: 'tm-2',
-    name: 'Rahul Verma',
-    email: 'rahul@trekitravels.com',
+    name: 'Sales Executive',
+    email: 'sales@growmecrm.com',
     role: 'Agent',
     status: 'Active',
     lastActive: '3 hours ago',

@@ -46,7 +46,7 @@ const DEFAULT_PACKAGES: TravelPackage[] = [
     whatsappDescription: '🌴 Book Bali 5D/4N with Private Villa & Uluwatu Sunset Tour starting at just ₹13,999! Limited slots available.',
     description: 'Immerse yourself in tropical serenity with our signature Bali 5D/4N holiday package. Enjoy luxury pool villa stays, private airport transfers, Ubud artisan tour, and Nusa Penida island speedboat cruise.',
     contactNumber: '+91-98765-43210',
-    contactEmail: 'hello@trekitravels.com',
+    contactEmail: 'contact@growmecrm.com',
     itineraryDays: [
       {
         id: 'd1-1',
@@ -104,7 +104,7 @@ const DEFAULT_PACKAGES: TravelPackage[] = [
     whatsappDescription: '❄️ Experience heaven on earth! 6 Days Kashmir with Gulmarg Gondola & Dal Lake Houseboat @ ₹24,999.',
     description: 'Explore breathtaking valleys, snow-capped peaks, shikara rides on Dal Lake, and world-class luxury houseboats in Kashmir.',
     contactNumber: '+91-98765-43210',
-    contactEmail: 'hello@trekitravels.com',
+    contactEmail: 'contact@growmecrm.com',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },

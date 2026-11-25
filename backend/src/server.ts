@@ -24,6 +24,7 @@ import campaignRoutes from './routes/campaignRoutes';
 import linkTreeRoutes from './routes/linkTreeRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import webhookRoutes from './routes/webhookRoutes';
+import superAdminRoutes from './routes/superAdminRoutes';
 
 dotenv.config();
 
@@ -84,6 +85,7 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/linktree', linkTreeRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/super-admin', superAdminRoutes);
 
 // Root health check endpoint
 app.get('/api/health', (req, res) => {

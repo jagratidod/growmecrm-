@@ -27,7 +27,8 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({ onRefresh, isLoadi
     return 'Good evening'
   }
 
-  const firstName = user?.name ? user.name.split(' ')[0] : 'Kushal'
+  const firstName = user?.name ? user.name.split(' ')[0] : 'there'
+  const agencyName = user?.organizationName || 'your workspace'
 
   return (
     <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#3e2e68] via-[#453372] to-[#594096] text-white p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm border border-purple-500/20">
@@ -39,7 +40,7 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({ onRefresh, isLoadi
           {getGreeting()}, {firstName} <span className="inline-block animate-wiggle">👋</span>
         </h1>
         <p className="text-xs sm:text-sm text-purple-200/80 font-normal">
-          Here's what's happening at Treki Travels.
+          Here's what's happening at {agencyName}.
         </p>
       </div>
 

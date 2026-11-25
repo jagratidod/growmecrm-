@@ -40,19 +40,32 @@ import { AiAgentPage } from './features/settings/AiAgentPage'
 import { OrganizationPage } from './features/settings/OrganizationPage'
 import { InvoiceDetailPage } from './features/settings/InvoiceDetailPage'
 import { AutomationPage } from './features/settings/AutomationPage'
+import { SuperAdminDashboard } from './features/superAdmin/SuperAdminDashboard'
+import { TenantsPage } from './features/superAdmin/TenantsPage'
+import { SubscriptionsPage } from './features/superAdmin/SubscriptionsPage'
+import { AnnouncementsPage } from './features/superAdmin/AnnouncementsPage'
+import { AuditLogsPage } from './features/superAdmin/AuditLogsPage'
+import { WebhookHealthPage } from './features/superAdmin/WebhookHealthPage'
+import { PlatformSettingsPage } from './features/superAdmin/PlatformSettingsPage'
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
   const { path, navigate } = useRouter()
 
+  const isAuthRoute =
+    path === '/login' ||
+    path === '/signup' ||
+    path === '/register' ||
+    path === '/forgot-password'
+
   useEffect(() => {
     if (isLoading) return
 
-    // Base route enforcement: if not logged in and not on /login, redirect to /login
-    if (!isAuthenticated && path !== '/login') {
+    // Base route enforcement: if not logged in and not on an auth route, redirect to /login
+    if (!isAuthenticated && !isAuthRoute) {
       navigate('/login', { replace: true })
     }
-  }, [isLoading, isAuthenticated, path, navigate])
+  }, [isLoading, isAuthenticated, path, navigate, isAuthRoute])
 
   if (isLoading) {
     return (
@@ -65,10 +78,10 @@ const AppContent: React.FC = () => {
     )
   }
 
-  // Base route is /login: show AuthPage if path is /login or if unauthenticated
-  const isLoginPage = path === '/login' || !isAuthenticated
+  // Show AuthPage if on any auth route or if unauthenticated
+  const showAuthPage = isAuthRoute || !isAuthenticated
 
-  if (isLoginPage) {
+  if (showAuthPage) {
     return <AuthPage onSuccess={() => navigate('/leads')} />
   }
 
@@ -124,6 +137,35 @@ const AppContent: React.FC = () => {
     } else {
       navigate('/leads')
     }
+  }
+
+  // Super Admin Routes:
+  if (path === '/super-admin' || path === '/super-admin/dashboard') {
+    return <SuperAdminDashboard />
+  }
+
+  if (path === '/super-admin/tenants' || path === '/super-admin/admins') {
+    return <TenantsPage />
+  }
+
+  if (path === '/super-admin/subscriptions' || path === '/super-admin/plans') {
+    return <SubscriptionsPage />
+  }
+
+  if (path === '/super-admin/announcements' || path === '/super-admin/broadcasts') {
+    return <AnnouncementsPage />
+  }
+
+  if (path === '/super-admin/audit-logs') {
+    return <AuditLogsPage />
+  }
+
+  if (path === '/super-admin/webhooks') {
+    return <WebhookHealthPage />
+  }
+
+  if (path === '/super-admin/settings') {
+    return <PlatformSettingsPage />
   }
 
   // Authenticated CRM Routes:

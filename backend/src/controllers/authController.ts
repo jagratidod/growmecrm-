@@ -22,7 +22,7 @@ const generateToken = (payload: {
 // 1. REGISTER A NEW AGENCY & OWNER (SaaS Onboarding)
 export const registerAgency = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { agencyName, name, email, password } = req.body;
+    const { agencyName, name, email, phone, password } = req.body;
 
     if (!agencyName?.trim() || !name?.trim() || !email?.trim() || !password) {
       res.status(400).json({ error: 'Agency name, your name, email, and password are required.' });
@@ -71,6 +71,7 @@ export const registerAgency = async (req: Request, res: Response): Promise<void>
       organizationId: organization._id,
       name: name.trim(),
       email: normalizedEmail,
+      phone: phone?.trim() || '',
       password: hashedPassword,
       role: 'OWNER',
       status: 'Active',
@@ -93,6 +94,8 @@ export const registerAgency = async (req: Request, res: Response): Promise<void>
         email: user.email,
         role: user.role.toLowerCase(),
         avatarUrl: user.avatarUrl,
+        organizationId: organization._id,
+        organizationName: organization.name,
       },
       organization: {
         id: organization._id,
@@ -175,6 +178,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         email: user.email,
         role: user.role.toLowerCase(),
         avatarUrl: user.avatarUrl,
+        organizationId: organization._id,
+        organizationName: organization.name,
       },
       organization: {
         id: organization._id,
@@ -215,6 +220,8 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
         email: user.email,
         role: user.role.toLowerCase(),
         avatarUrl: user.avatarUrl,
+        organizationId: organization?._id,
+        organizationName: organization?.name || 'GrowMe CRM',
       },
       organization: organization
         ? {

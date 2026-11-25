@@ -63,7 +63,7 @@ export const getLinkTree = async (req: AuthenticatedRequest, res: Response): Pro
     if (!linkTree) {
       // Find org name if available
       const org = await Organization.findById(organizationId);
-      const defaultTitle = org?.name || 'Treki Travels';
+      const defaultTitle = org?.name || 'GrowMe CRM';
 
       linkTree = await LinkTree.create({
         organizationId: new Types.ObjectId(organizationId),
@@ -226,7 +226,7 @@ export const getPublicLinkTree = async (req: Request, res: Response): Promise<vo
       if (!linkTree) {
         linkTree = await LinkTree.create({
           organizationId: org._id,
-          bioTitle: org.name || 'Treki Travels',
+          bioTitle: org.name || 'GrowMe CRM',
           bioTagline: 'Curated Trips, Himalayan Treks & Luxury Getaways ✨',
           links: DEFAULT_STARTER_LINKS,
         });

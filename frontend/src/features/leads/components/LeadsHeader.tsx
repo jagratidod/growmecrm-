@@ -42,7 +42,7 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({ onOpenMobileMenu }) =>
           )}
           <div>
             <h1 className="text-base sm:text-lg font-bold text-slate-800 tracking-tight flex items-center gap-1.5">
-              Welcome to <span className="text-[#453372] font-black">Treki CRM</span>
+              Welcome to <span className="text-[#453372] font-black">{user?.organizationName || 'GrowMe CRM'}</span>
             </h1>
             <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
               Track and manage every travel enquiry in one place

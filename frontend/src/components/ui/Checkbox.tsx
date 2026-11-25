@@ -5,35 +5,42 @@ export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputE
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, className = '', id, ...props }, ref) => {
+  ({ label, className = '', id, checked, ...props }, ref) => {
     const inputId = id || (props.name ? `checkbox-${props.name}` : undefined)
 
     return (
       <label
         htmlFor={inputId}
-        className="inline-flex items-center gap-2 cursor-pointer select-none group"
+        className="inline-flex items-center gap-2.5 cursor-pointer select-none group"
       >
         <div className="relative flex items-center">
           <input
             id={inputId}
             ref={ref}
             type="checkbox"
+            checked={checked}
             className="peer sr-only"
             {...props}
           />
           <div
-            className={`w-4 h-4 rounded border border-slate-400 bg-white peer-checked:bg-slate-700 peer-checked:border-slate-700 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-1 transition-colors flex items-center justify-center ${className}`}
+            className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${
+              checked
+                ? 'bg-[#453372] border-[#453372] text-white shadow-xs'
+                : 'border-slate-300 bg-white group-hover:border-[#453372]'
+            } ${className}`}
           >
-            <svg
-              className="w-3 h-3 text-white scale-0 peer-checked:scale-100 transition-transform duration-150 stroke-[3]"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
+            {checked && (
+              <svg
+                className="w-3 h-3 text-white stroke-[3]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            )}
           </div>
         </div>
         <span className="text-xs text-slate-600 group-hover:text-slate-800 transition-colors">

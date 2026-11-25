@@ -20,7 +20,7 @@ interface HostPageContextType {
 const STORAGE_KEY = 'treki_crm_host_page_data'
 
 const DEFAULT_HOST_DATA: HostPageData = {
-  websiteUrl: 'https://joinetra.com/treki-travels',
+  websiteUrl: 'https://joinetra.com/growme-crm',
   bannerImage: '',
   aboutUs: '',
   contact: {

@@ -3,9 +3,10 @@ import bcrypt from 'bcryptjs';
 import { UserRole } from '../types';
 
 export interface IUser extends Document {
-  organizationId: Types.ObjectId;
+  organizationId?: Types.ObjectId;
   name: string;
   email: string;
+  phone?: string;
   password: string;
   role: UserRole;
   avatarUrl?: string;
@@ -21,7 +22,7 @@ const UserSchema = new Schema<IUser>(
     organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      required: [true, 'Organization ID is required'],
+      required: false,
       index: true,
     },
     name: {
@@ -36,6 +37,11 @@ const UserSchema = new Schema<IUser>(
       lowercase: true,
       trim: true,
     },
+    phone: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     password: {
       type: String,
       required: [true, 'Password is required'],
@@ -43,7 +49,7 @@ const UserSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['OWNER', 'ADMIN', 'MANAGER', 'AGENT'],
+      enum: ['OWNER', 'ADMIN', 'MANAGER', 'AGENT', 'SUPER_ADMIN'],
       default: 'AGENT',
     },
     avatarUrl: {

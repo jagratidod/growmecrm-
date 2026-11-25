@@ -11,10 +11,17 @@ import {
 } from 'lucide-react'
 import { useHostPage } from '../../../context/HostPageContext'
 import { usePackages } from '../../../context/PackagesContext'
+import { useSettings } from '../../../context/SettingsContext'
+import { useAuth } from '../../../context/AuthContext'
 
 export const PublicWebsitePreviewModal: React.FC = () => {
   const { hostData, isPublicPreviewOpen, setIsPublicPreviewOpen } = useHostPage()
   const { packages } = usePackages()
+  const { organization } = useSettings()
+  const { user } = useAuth()
+
+  const agencyName = user?.organizationName || organization?.agencyName || 'GrowMe CRM'
+  const agencyInitials = agencyName.slice(0, 2).toUpperCase() || 'GM'
 
   if (!isPublicPreviewOpen) return null
 
@@ -50,11 +57,11 @@ export const PublicWebsitePreviewModal: React.FC = () => {
           <header className="bg-white border-b border-slate-100 sticky top-0 z-20 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[#453372] text-white flex items-center justify-center font-black text-sm tracking-wide shadow-xs">
-                TT
+                {agencyInitials}
               </div>
               <div>
                 <h1 className="text-base font-extrabold text-slate-900 leading-tight">
-                  Treki Travels
+                  {agencyName}
                 </h1>
                 <p className="text-[11px] text-[#453372] font-semibold">Verified Travel Host</p>
               </div>
@@ -98,7 +105,7 @@ export const PublicWebsitePreviewModal: React.FC = () => {
                 Handcrafted Journeys & Group Trips
               </span>
               <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white drop-shadow-md">
-                Treki Travels
+                {agencyName}
               </h2>
               <p className="text-xs sm:text-sm text-purple-100 max-w-xl mx-auto drop-shadow-xs">
                 {hostData.aboutUs ||
@@ -240,7 +247,7 @@ export const PublicWebsitePreviewModal: React.FC = () => {
           <footer className="bg-slate-900 text-white py-10 px-6 sm:px-10">
             <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <div className="space-y-1">
-                <h4 className="text-lg font-bold">Treki Travels</h4>
+                <h4 className="text-lg font-bold">{agencyName}</h4>
                 <p className="text-xs text-slate-400">
                   {hostData.contact.address || 'Certified Tour & Travel Partner'}
                 </p>

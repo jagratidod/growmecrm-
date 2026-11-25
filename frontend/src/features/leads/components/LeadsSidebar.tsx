@@ -25,8 +25,10 @@ import {
   FileSpreadsheet,
   LogOut,
   X,
+  Crown,
 } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
+import { useSettings } from '../../../context/SettingsContext'
 import { useRouter } from '../../../context/RouterContext'
 
 interface LeadsSidebarProps {
@@ -74,7 +76,38 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
   ]
 
   const { logout, user } = useAuth()
+  const { organization } = useSettings()
   const { navigate } = useRouter()
+
+  const storedAgency = typeof window !== 'undefined' ? localStorage.getItem('crm_current_agency') : null
+  const rawAgency =
+    user?.organizationName && user.organizationName !== 'Treki Travels'
+      ? user.organizationName
+      : storedAgency && storedAgency !== 'Treki Travels'
+      ? storedAgency
+      : organization?.agencyName && organization.agencyName !== 'Treki Travels'
+      ? organization.agencyName
+      : 'GrowMe CRM'
+
+  const agencyTitle = rawAgency || 'GrowMe CRM'
+  const agencyInitials = agencyTitle
+    .trim()
+    .split(/\s+/)
+    .map((w: string) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'GM'
+
+  const userDisplayName = user?.name || user?.username || 'User'
+  const userInitials = userDisplayName
+    .trim()
+    .split(/\s+/)
+    .map((w: string) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'US'
+
+  const userRole = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Owner'
 
   const handleLogout = async () => {
     await logout()
@@ -158,11 +191,11 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
         <div className="pt-5 pb-4 px-5 flex items-center justify-between border-b border-purple-400/15">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white text-[#453372] flex items-center justify-center font-black text-sm tracking-wide shadow-md shrink-0">
-              TT
+              {agencyInitials}
             </div>
             <div className="min-w-0">
               <h2 className="text-sm font-bold text-white tracking-tight leading-none truncate">
-                Treki Travels
+                {agencyTitle}
               </h2>
               <p className="text-[11px] text-purple-200/70 font-medium mt-1">Travel CRM</p>
             </div>
@@ -238,19 +271,38 @@ export const LeadsSidebar: React.FC<LeadsSidebarProps> = ({
               </div>
             )
           })}
+          {/* Super Admin Quick Link */}
+          <div className="pt-3 pb-1 px-3">
+            <button
+              type="button"
+              onClick={() => {
+                navigate('/super-admin');
+                if (onClose) onClose();
+              }}
+              className="w-full flex items-center justify-between p-2 rounded-xl bg-gradient-to-r from-amber-400/15 to-amber-300/10 hover:from-amber-400/25 hover:to-amber-300/20 border border-amber-400/30 text-amber-300 text-xs font-bold transition shadow-xs"
+            >
+              <div className="flex items-center gap-2">
+                <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <span>Super Admin Panel</span>
+              </div>
+              <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.2 rounded-full">
+                MASTER
+              </span>
+            </button>
+          </div>
         </nav>
 
         {/* Bottom User Profile Footer in Purple Theme */}
         <div className="p-3 border-t border-purple-400/15 bg-[#3a2864]/95 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-white/15 text-white font-semibold text-xs flex items-center justify-center shrink-0">
-              {user ? user.username.slice(0, 2).toUpperCase() : 'KP'}
+              {userInitials}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-white truncate">
-                {user ? user.name : 'Kushal Pareta'}
+                {userDisplayName}
               </p>
-              <p className="text-[10px] text-purple-200/70 truncate">Admin</p>
+              <p className="text-[10px] text-purple-200/70 truncate">{userRole}</p>
             </div>
           </div>
 
