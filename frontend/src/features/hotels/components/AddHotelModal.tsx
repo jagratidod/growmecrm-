@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { X, Image as ImageIcon, Link as LinkIcon, Building2, Plus, Trash2, Percent, BedDouble } from 'lucide-react'
 import { useHotels } from '../../../context/HotelsContext'
 import { useToast } from '../../../components/ui/Toast'
+import { uploadService } from '../../../services/uploadService'
 import type { Hotel, RoomType } from '../../../types/hotel.types'
 
 interface AddHotelModalProps {
@@ -37,6 +38,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
   const [showUrlInput, setShowUrlInput] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
 
   useEffect(() => {
     if (hotelToEdit) {
@@ -70,22 +72,25 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
 
   if (!isOpen) return null
 
-  // Local image file upload
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload image directly to Cloudinary (with automatic fallback)
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       if (photos.length >= 8) {
         toast({ title: 'Maximum 8 photos allowed per hotel', type: 'error' })
         return
       }
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setPhotos((prev) => [...prev, reader.result as string])
-          toast({ title: 'Photo added', type: 'success' })
-        }
+      setIsUploadingPhoto(true)
+      toast({ title: 'Uploading photo to Cloudinary...', type: 'info' })
+      try {
+        const cdnUrl = await uploadService.uploadImage(file, 'hotels')
+        setPhotos((prev) => [...prev, cdnUrl])
+        toast({ title: 'Photo uploaded and stored in Cloudinary!', type: 'success' })
+      } catch (err) {
+        toast({ title: 'Failed to process image file', type: 'error' })
+      } finally {
+        setIsUploadingPhoto(false)
       }
-      reader.readAsDataURL(file)
     }
   }
 
@@ -228,11 +233,21 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                   <input
                     type="file"
                     accept="image/*"
+                    disabled={isUploadingPhoto}
                     onChange={handlePhotoUpload}
-                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
                   />
-                  <ImageIcon className="w-5 h-5 text-[#453372] transition-transform group-hover:scale-110 mb-1" />
-                  <span className="text-[11px] font-bold text-[#453372]">Upload</span>
+                  {isUploadingPhoto ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-[#453372] border-t-transparent rounded-full animate-spin mb-1" />
+                      <span className="text-[10px] font-bold text-[#453372]">Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-5 h-5 text-[#453372] transition-transform group-hover:scale-110 mb-1" />
+                      <span className="text-[11px] font-bold text-[#453372]">Upload</span>
+                    </>
+                  )}
                 </div>
               )}
 

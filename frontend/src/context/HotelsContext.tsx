@@ -116,8 +116,25 @@ export const HotelsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsLoading(true)
     try {
       const data = await hotelsService.getHotels()
-      if (data && data.length > 0) {
-        setHotels(data)
+      if (data && Array.isArray(data)) {
+        // Read any custom hotels from localStorage cache
+        const saved = localStorage.getItem(STORAGE_KEY)
+        const localList: Hotel[] = saved ? JSON.parse(saved) : []
+        const localCustom = localList.filter((h) => h.id && h.id.startsWith('hotel-'))
+
+        // Combine backend hotels with local custom ones that aren't yet on server
+        const merged = [
+          ...localCustom,
+          ...data.filter((d) => !localCustom.some((l) => l.name.toLowerCase() === d.name.toLowerCase())),
+        ]
+
+        const finalList = merged.length > 0 ? merged : (data.length > 0 ? data : DEFAULT_HOTELS)
+        setHotels(finalList)
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(finalList))
+        } catch (e) {
+          console.warn('LocalStorage save failed:', e)
+        }
       }
     } catch (err) {
       console.warn('Backend hotels fetch failed, using local cache:', err)
@@ -151,7 +168,15 @@ export const HotelsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const addHotel = async (data: Omit<Hotel, 'id' | 'createdAt' | 'updatedAt'>): Promise<Hotel> => {
     try {
       const created = await hotelsService.createHotel(data)
-      setHotels((prev) => [created, ...prev])
+      setHotels((prev) => {
+        const updated = [created, ...prev.filter((h) => h.id !== created.id)]
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+        } catch (e) {
+          console.warn('LocalStorage save failed:', e)
+        }
+        return updated
+      })
       return created
     } catch (err) {
       console.warn('Failed to save hotel to backend, falling back to local state:', err)
@@ -161,7 +186,15 @@ export const HotelsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
-      setHotels((prev) => [newHotel, ...prev])
+      setHotels((prev) => {
+        const updated = [newHotel, ...prev]
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+        } catch (e) {
+          console.warn('LocalStorage save failed:', e)
+        }
+        return updated
+      })
       return newHotel
     }
   }

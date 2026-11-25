@@ -3,6 +3,7 @@ import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { useSettings } from '../../context/SettingsContext'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../components/ui/Toast'
+import { uploadService } from '../../services/uploadService'
 import {
   UploadCloud,
   Link as LinkIcon,
@@ -51,17 +52,17 @@ export const OrganizationPage: React.FC<OrganizationPageProps> = ({ onNavigateMe
     setSecondaryColor(organization.secondaryColor || '#0D9488')
   }, [organization, user])
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setLogoUrl(reader.result)
-          toast({ title: 'Logo uploaded successfully', type: 'success' })
-        }
+      toast({ title: 'Uploading logo to Cloudinary...', type: 'info' })
+      try {
+        const cdnUrl = await uploadService.uploadImage(file, 'branding')
+        setLogoUrl(cdnUrl)
+        toast({ title: 'Logo uploaded and stored in Cloudinary', type: 'success' })
+      } catch (err) {
+        toast({ title: 'Failed to process logo image', type: 'error' })
       }
-      reader.readAsDataURL(file)
     }
   }
 

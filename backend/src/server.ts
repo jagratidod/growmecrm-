@@ -25,6 +25,7 @@ import linkTreeRoutes from './routes/linkTreeRoutes';
 import settingsRoutes from './routes/settingsRoutes';
 import webhookRoutes from './routes/webhookRoutes';
 import superAdminRoutes from './routes/superAdminRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 dotenv.config();
 
@@ -60,7 +61,8 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -86,6 +88,7 @@ app.use('/api/linktree', linkTreeRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/super-admin', superAdminRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Root health check endpoint
 app.get('/api/health', (req, res) => {
