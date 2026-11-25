@@ -4,44 +4,6 @@ import { LinkTree, IBioLinkItem } from '../models/LinkTree';
 import { Organization } from '../models/Organization';
 import { Types } from 'mongoose';
 
-const DEFAULT_STARTER_LINKS: IBioLinkItem[] = [
-  {
-    id: 'l-1',
-    title: '💬 Chat on WhatsApp for Instant Itinerary',
-    url: 'https://wa.me/919876543210',
-    icon: 'whatsapp',
-    active: true,
-  },
-  {
-    id: 'l-2',
-    title: '🏔️ Kashmir Winter Wonderland 5D/4N',
-    url: 'https://joinetra.com/treki-travels/kashmir-winter',
-    icon: 'package',
-    active: true,
-  },
-  {
-    id: 'l-3',
-    title: '🏖️ Goa Private Beach Villas',
-    url: 'https://joinetra.com/treki-travels/goa-luxury',
-    icon: 'package',
-    active: true,
-  },
-  {
-    id: 'l-4',
-    title: '⭐ Read Google Reviews (4.9 / 5)',
-    url: 'https://maps.google.com',
-    icon: 'review',
-    active: true,
-  },
-  {
-    id: 'l-5',
-    title: '🌐 Visit Our Official Website',
-    url: 'https://joinetra.com/treki-travels',
-    icon: 'web',
-    active: true,
-  },
-];
-
 const formatLinkTree = (lt: any) => ({
   id: lt._id.toString(),
   bioTitle: lt.bioTitle,
@@ -68,12 +30,15 @@ export const getLinkTree = async (req: AuthenticatedRequest, res: Response): Pro
       linkTree = await LinkTree.create({
         organizationId: new Types.ObjectId(organizationId),
         bioTitle: defaultTitle,
-        bioTagline: 'Curated Trips, Himalayan Treks & Luxury Getaways ✨',
-        links: DEFAULT_STARTER_LINKS,
+        bioTagline: '',
+        links: [],
       });
     }
 
-    res.status(200).json(formatLinkTree(linkTree));
+    const base = process.env.HOSTED_WEBSITE_BASE_URL?.trim().replace(/\/+$/, '');
+    const organization = base ? await Organization.findById(organizationId).select('slug') : null;
+    const publicUrl = organization ? `${base}/bio/${encodeURIComponent(organization.slug)}` : '';
+    res.status(200).json({ ...formatLinkTree(linkTree), publicUrl });
   } catch (error: any) {
     console.error('Error fetching LinkTree:', error);
     res.status(500).json({ error: 'Failed to fetch LinkTree configuration' });
@@ -227,8 +192,8 @@ export const getPublicLinkTree = async (req: Request, res: Response): Promise<vo
         linkTree = await LinkTree.create({
           organizationId: org._id,
           bioTitle: org.name || 'GrowMe CRM',
-          bioTagline: 'Curated Trips, Himalayan Treks & Luxury Getaways ✨',
-          links: DEFAULT_STARTER_LINKS,
+          bioTagline: '',
+          links: [],
         });
       }
     }

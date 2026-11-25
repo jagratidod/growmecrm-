@@ -8,7 +8,7 @@ export const AddEventModal: React.FC = () => {
   const { toast } = useToast()
 
   const [title, setTitle] = useState('')
-  const [date, setDate] = useState('2026-11-19')
+  const [date, setDate] = useState(selectedDate)
   const [notes, setNotes] = useState('')
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export const AddEventModal: React.FC = () => {
               placeholder="Goa group departure briefing"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               autoFocus
             />
           </div>
@@ -90,7 +90,7 @@ export const AddEventModal: React.FC = () => {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
               />
               <CalendarIcon className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -106,7 +106,7 @@ export const AddEventModal: React.FC = () => {
               placeholder="Optional details..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none transition-all"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none transition-all"
             />
           </div>
 
@@ -122,7 +122,7 @@ export const AddEventModal: React.FC = () => {
 
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98]"
+              className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98]"
             >
               Add event
             </button>

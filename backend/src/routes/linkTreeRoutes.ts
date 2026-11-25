@@ -1,3 +1,4 @@
+import { requireModule } from '../platform/access';
 import { Router } from 'express';
 import { authenticate } from '../middleware/authMiddleware';
 import {
@@ -15,7 +16,7 @@ const router = Router();
 router.get('/public/:slug', getPublicLinkTree);
 
 // Protected tenant endpoints
-router.use(authenticate);
+router.use(authenticate, requireModule('websites'));
 
 router.get('/', getLinkTree);
 router.put('/', updateLinkTree);

@@ -1,3 +1,4 @@
+import { useAuth } from './AuthContext'
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { CallLogEntry, CallLogFilters } from '../types/callLog.types'
 import { callLogsService } from '../services/callLogsService'
@@ -15,50 +16,14 @@ interface CallLogContextType {
   refreshCallLogs: () => Promise<void>
 }
 
-const STORAGE_KEY = 'treki_crm_call_logs_data'
-
-const DEFAULT_CALL_LOGS: CallLogEntry[] = [
-  {
-    id: 'call-1',
-    leadName: 'Aarav Mehta',
-    leadPhone: '+91 98201 44521',
-    userName: 'Kushal Pareta',
-    outcome: 'Connected',
-    notes: 'Discussed Bali romantic pool villa package. Client confirmed 4N/5D dates for Dec 10. Sending updated quote with flight options on WhatsApp.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-  },
-  {
-    id: 'call-2',
-    leadName: 'Sneha Kapoor',
-    leadPhone: '+91 97112 88402',
-    userName: 'Kushal Pareta',
-    outcome: 'No answer',
-    notes: 'Followed up on Kashmir winter family package quote. Phone rang but no answer. Sent reminder follow-up text.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-  },
-  {
-    id: 'call-3',
-    leadName: 'Vikram Malhotra',
-    leadPhone: '+91 98190 33410',
-    userName: 'Priya Sharma',
-    outcome: 'Connected',
-    notes: 'Client interested in Goa heritage & beach package with watersports for family of 4. Requested weekend departure.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
-  },
-]
+const STORAGE_PREFIX = 'treki_crm_call_logs_data'
 
 const CallLogContext = createContext<CallLogContextType | undefined>(undefined)
 
 export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [callLogs, setCallLogs] = useState<CallLogEntry[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch (e) {
-      console.error('Failed to parse call logs from localStorage', e)
-    }
-    return DEFAULT_CALL_LOGS
-  })
+  const { user } = useAuth()
+  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
+  const [callLogs, setCallLogs] = useState<CallLogEntry[]>([])
 
   const [filters, setFilters] = useState<CallLogFilters>({
     user: 'All users',
@@ -71,7 +36,7 @@ export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const refreshCallLogs = useCallback(async () => {
     try {
       const res = await callLogsService.getCallLogs()
-      if (res?.callLogs && res.callLogs.length > 0) {
+      if (res?.callLogs) {
         setCallLogs(res.callLogs)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(res.callLogs))
       }

@@ -26,7 +26,7 @@ export const SightseeingGrid: React.FC<SightseeingGridProps> = ({ onEditActivity
         <div
           key={act.id}
           onClick={() => onEditActivity(act)}
-          className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#453372]/30 transition-all cursor-pointer overflow-hidden flex flex-col group"
+          className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand/30 transition-all cursor-pointer overflow-hidden flex flex-col group"
         >
           {/* Cover Photo */}
           <div className="relative h-44 bg-slate-100 overflow-hidden">
@@ -37,7 +37,7 @@ export const SightseeingGrid: React.FC<SightseeingGridProps> = ({ onEditActivity
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-indigo-50 text-[#453372]">
+              <div className="w-full h-full flex items-center justify-center bg-canvas text-copy-muted">
                 <Compass className="w-12 h-12 stroke-[1.5]" />
               </div>
             )}
@@ -51,7 +51,7 @@ export const SightseeingGrid: React.FC<SightseeingGridProps> = ({ onEditActivity
           {/* Content */}
           <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
             <div>
-              <h3 className="font-bold text-slate-900 text-base group-hover:text-[#453372] transition-colors line-clamp-1">
+              <h3 className="font-bold text-slate-900 text-base group-hover:text-brand transition-colors line-clamp-1">
                 {act.name}
               </h3>
               <p className="text-xs text-slate-500 mt-1 line-clamp-3 leading-relaxed">
@@ -68,7 +68,7 @@ export const SightseeingGrid: React.FC<SightseeingGridProps> = ({ onEditActivity
               <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => onEditActivity(act)}
-                  className="p-1.5 text-slate-400 hover:text-[#453372] hover:bg-purple-50 rounded-lg transition-colors"
+                  className="p-1.5 text-slate-400 hover:text-brand hover:bg-purple-50 rounded-lg transition-colors"
                   title="Edit activity"
                 >
                   <Edit3 className="w-4 h-4" />

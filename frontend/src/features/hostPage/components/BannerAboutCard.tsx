@@ -81,7 +81,7 @@ export const BannerAboutCard: React.FC = () => {
               onChange={handleFileUpload}
               className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
             />
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-[#453372] border border-purple-100 flex items-center justify-center mb-3 shadow-2xs pointer-events-none">
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-brand border border-purple-100 flex items-center justify-center mb-3 shadow-2xs pointer-events-none">
               <UploadCloud className="w-6 h-6 stroke-[1.75]" />
             </div>
             <p className="text-sm font-bold text-slate-900 pointer-events-none">Upload image</p>
@@ -97,15 +97,15 @@ export const BannerAboutCard: React.FC = () => {
             <div className="flex items-center gap-2 mt-2">
               <input
                 type="url"
-                placeholder="https://example.com/hero-banner.jpg"
+
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#453372]/20"
+                className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-brand/20"
               />
               <button
                 type="button"
                 onClick={handleApplyUrl}
-                className="px-3 py-1.5 rounded-lg bg-[#453372] text-white text-xs font-semibold"
+                className="px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-semibold"
               >
                 Apply
               </button>
@@ -121,7 +121,7 @@ export const BannerAboutCard: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowUrlInput(true)}
-              className="text-xs text-[#453372] hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+              className="text-xs text-brand hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
             >
               <LinkIcon className="w-3 h-3" />
               <span>or paste an image URL</span>
@@ -143,7 +143,7 @@ export const BannerAboutCard: React.FC = () => {
           placeholder="Tell visitors who you are, what you do and why travellers trust you..."
           value={hostData.aboutUs}
           onChange={(e) => updateAboutUs(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-y"
+          className="w-full px-4 py-3 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-y"
         />
       </div>
     </div>

@@ -1,11 +1,13 @@
 @import "tailwindcss";
+@import "./theme.css";
+@config "./features/marketing/tailwind.config.js";
 
 @layer utilities {
   /* Inverted rounded curve for the active sidebar tab */
   .sidebar-active-tab {
     position: relative;
-    background-color: #f3f4f8;
-    color: #453372;
+    background-color: var(--gm-canvas);
+    color: var(--gm-accent);
     font-weight: 700;
     border-top-left-radius: 1.25rem;
     border-bottom-left-radius: 1.25rem;
@@ -22,7 +24,7 @@
     height: 20px;
     background: transparent;
     border-bottom-right-radius: 20px;
-    box-shadow: 6px 6px 0 0 #f3f4f8;
+    box-shadow: 6px 6px 0 0 var(--gm-canvas);
     pointer-events: none;
   }
 
@@ -35,7 +37,7 @@
     height: 20px;
     background: transparent;
     border-top-right-radius: 20px;
-    box-shadow: 6px -6px 0 0 #f3f4f8;
+    box-shadow: 6px -6px 0 0 var(--gm-canvas);
     pointer-events: none;
   }
 }

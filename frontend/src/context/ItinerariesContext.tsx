@@ -1,3 +1,4 @@
+import { useAuth } from './AuthContext'
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { Itinerary, ItineraryDay, ItineraryFilters } from '../types/itinerary.types'
 import { itinerariesService } from '../services/itinerariesService'
@@ -21,112 +22,14 @@ interface ItinerariesContextType {
   refreshItineraries: () => Promise<void>
 }
 
-const STORAGE_KEY = 'treki_crm_itineraries_data'
-
-const DEFAULT_ITINERARIES: Itinerary[] = [
-  {
-    id: 'itn-1',
-    customerName: 'Aarav Mehta',
-    email: 'aarav.mehta@gmail.com',
-    phone: '+91 98201 44521',
-    destination: 'Bali, Indonesia',
-    status: 'Confirmed',
-    departure: '2026-12-10',
-    returnDate: '2026-12-15',
-    travellers: 2,
-    totalAmount: 185000,
-    amountPaid: 95000,
-    currency: 'INR',
-    package: 'Bali Romantic Escape (5D/4N)',
-    assignedTo: 'Kushal Pareta',
-    notes: 'Honeymoon couple, requested sea-view pool villa in Seminyak.',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    days: [
-      {
-        id: 'day-1',
-        dayNumber: 1,
-        title: 'Arrival at Denpasar & Sunset in Uluwatu',
-        description: 'Airport welcome by private chauffeur, private transfer to Seminyak luxury pool villa. Evening visit to Uluwatu Temple with Kecak dance show.',
-        activities: ['Private Airport Transfer', 'Villa Check-in', 'Uluwatu Sunset Temple Tour', 'Kecak Dance Show'],
-        hotel: 'The Seminyak Beach Resort & Spa',
-        meals: ['Dinner'],
-      },
-      {
-        id: 'day-2',
-        dayNumber: 2,
-        title: 'Ubud Culture & Tegalalang Rice Terraces',
-        description: 'Explore the spiritual heart of Bali. Visit the Sacred Monkey Forest, iconic Ubud Art Market, and the stunning Tegalalang rice terraces.',
-        activities: ['Monkey Forest Sanctuary', 'Bali Swing experience', 'Tegalalang Terrace Walk', 'Coffee Plantation Tasting'],
-        hotel: 'The Seminyak Beach Resort & Spa',
-        meals: ['Breakfast', 'Lunch'],
-      },
-      {
-        id: 'day-3',
-        dayNumber: 3,
-        title: 'Nusa Penida Island Speedboat Day Tour',
-        description: 'Full day excursion to Nusa Penida: visit Kelingking T-Rex cliff, Angel Billabong, Broken Beach, and snorkel at Crystal Bay.',
-        activities: ['Fast Boat to Nusa Penida', 'Kelingking Secret Point', 'Broken Beach & Angel Billabong', 'Snorkeling at Crystal Bay'],
-        hotel: 'The Seminyak Beach Resort & Spa',
-        meals: ['Breakfast', 'Packed Lunch'],
-      },
-    ],
-  },
-  {
-    id: 'itn-2',
-    customerName: 'Sneha Kapoor',
-    email: 'sneha.k@outlook.com',
-    phone: '+91 97112 88402',
-    destination: 'Kashmir, India',
-    status: 'Pending',
-    departure: '2027-01-05',
-    returnDate: '2027-01-11',
-    travellers: 4,
-    totalAmount: 220000,
-    amountPaid: 60000,
-    currency: 'INR',
-    package: 'Kashmir Paradise Tour (6D/5N)',
-    assignedTo: 'Priya Sharma',
-    notes: 'Family trip with 2 seniors. Requires ground floor rooms and heated vehicles.',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    days: [
-      {
-        id: 'day-1',
-        dayNumber: 1,
-        title: 'Arrival in Srinagar & Dal Lake Shikara Ride',
-        description: 'Transfer to Dal Lake deluxe houseboat. Sunset Shikara ride covering floating gardens and Char Chinar.',
-        activities: ['Houseboat check-in', '1-hour Shikara Ride', 'Local craft bazaar walk'],
-        hotel: 'Mascot Deluxe Houseboats Srinagar',
-        meals: ['Dinner'],
-      },
-      {
-        id: 'day-2',
-        dayNumber: 2,
-        title: 'Srinagar to Gulmarg Gondola Cable Car Excursion',
-        description: 'Scenic drive to Gulmarg. Phase 1 & Phase 2 Gondola ride up to Apharwat peak for snow activities.',
-        activities: ['Gulmarg Valley Drive', 'Phase 1 & 2 Gondola Ride', 'Snow sledging'],
-        hotel: 'Khyber Himalayan Resort & Spa',
-        meals: ['Breakfast', 'Dinner'],
-      },
-    ],
-  },
-]
+const STORAGE_PREFIX = 'treki_crm_itineraries_data'
 
 const ItinerariesContext = createContext<ItinerariesContextType | undefined>(undefined)
 
 export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [itineraries, setItineraries] = useState<Itinerary[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        return JSON.parse(saved)
-      }
-    } catch (e) {
-      console.error('Failed to load itineraries from localStorage:', e)
-    }
-    return DEFAULT_ITINERARIES
-  })
+  const { user } = useAuth()
+  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
+  const [itineraries, setItineraries] = useState<Itinerary[]>([])
 
   const [filters, setFilters] = useState<ItineraryFilters>({
     search: '',
@@ -140,7 +43,7 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const refreshItineraries = useCallback(async () => {
     try {
       const res = await itinerariesService.getItineraries()
-      if (res?.itineraries && res.itineraries.length > 0) {
+      if (res?.itineraries) {
         setItineraries(res.itineraries)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(res.itineraries))
       }

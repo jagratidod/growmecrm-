@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Copy, ExternalLink, Globe, Check } from 'lucide-react'
+import { Copy, ExternalLink, Check } from 'lucide-react'
 import { useHostPage } from '../../../context/HostPageContext'
 import { useToast } from '../../../components/ui/Toast'
 
@@ -32,7 +32,8 @@ export const WebsiteLinkCard: React.FC = () => {
             type="text"
             readOnly
             value={hostData.websiteUrl}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#453372]/20 cursor-text select-all"
+            placeholder="Public link not configured"
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-text select-all"
           />
         </div>
 
@@ -40,6 +41,7 @@ export const WebsiteLinkCard: React.FC = () => {
           <button
             type="button"
             onClick={handleCopy}
+            disabled={!hostData.websiteUrl}
             className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-colors active:scale-[0.98] cursor-pointer"
           >
             {copied ? (
@@ -58,21 +60,14 @@ export const WebsiteLinkCard: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsPublicPreviewOpen(true)}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-semibold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
           >
             <ExternalLink className="w-4 h-4" />
-            <span>Open</span>
+            <span>Preview</span>
           </button>
         </div>
       </div>
 
-      {/* Helper text matching screenshot 1 */}
-      <div className="flex items-start gap-2 pt-1 text-xs text-slate-500">
-        <Globe className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-        <p className="leading-relaxed">
-          Every package your org has appears automatically. Logo, colours, bio and Instagram come from Organization settings.
-        </p>
-      </div>
     </div>
   )
 }

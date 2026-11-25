@@ -10,11 +10,11 @@ import { AuthenticatedRequest } from '../types';
 
 const generateToken = (payload: {
   userId: string;
-  organizationId: string;
+  organizationId?: string;
   role: string;
   email: string;
 }): string => {
-  const secret = process.env.JWT_SECRET || 'fallback_secret';
+  const secret = process.env.JWT_SECRET!;
   const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
   return jwt.sign(payload, secret, { expiresIn: expiresIn as any });
 };
@@ -126,7 +126,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Match by email or name
     const user = await User.findOne({
-      $or: [{ email: identifier }, { name: new RegExp(`^${identifier}$`, 'i') }],
+      $or: [{ email: identifier }, { name: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }],
     });
 
     if (!user) {
@@ -142,6 +142,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       res.status(401).json({ error: 'Invalid username/email or password.' });
+      return;
+    }
+
+    if (user.role === 'SUPER_ADMIN') {
+      const token = generateToken({ userId: user.id, role: user.role, email: user.email });
+      res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: 'super_admin' } });
       return;
     }
 
@@ -211,7 +217,11 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    const organization = await Organization.findById(user.organizationId);
+    const organization = user.organizationId ? await Organization.findById(user.organizationId) : null;
+    if (user.role !== 'SUPER_ADMIN' && (!organization || organization.status === 'SUSPENDED')) {
+      res.status(403).json({ error: 'This workspace is unavailable.' });
+      return;
+    }
 
     res.status(200).json({
       user: {
@@ -387,6 +397,11 @@ export const acceptInvite = async (req: Request, res: Response): Promise<void> =
 
     if (!token || !name?.trim() || !password) {
       res.status(400).json({ error: 'Invite token, name, and password are required.' });
+      return;
+    }
+
+    if (typeof password !== 'string' || password.length < 12) {
+      res.status(400).json({ error: 'Use a password with at least 12 characters.' });
       return;
     }
 

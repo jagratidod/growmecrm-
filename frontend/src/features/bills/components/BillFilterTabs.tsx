@@ -41,7 +41,7 @@ export const BillFilterTabs: React.FC = () => {
               onClick={() => updateFilter('status', tab.id)}
               className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 ${
                 isSelected
-                  ? 'bg-[#453372] text-white shadow-xs'
+                  ? 'bg-brand text-white shadow-xs'
                   : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >

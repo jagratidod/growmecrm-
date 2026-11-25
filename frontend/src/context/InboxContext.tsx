@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
-import type { ChannelType, ChatFilterType, ChatConversation, ChatMessage } from '../types/inbox.types'
+import type { ChannelType, ChatFilterType, ChatConversation } from '../types/inbox.types'
 import { useToast } from '../components/ui/Toast'
 import { inboxService } from '../services/inboxService'
+import { useAuth } from './AuthContext'
 
 interface InboxContextType {
   activeChannel: ChannelType
@@ -21,28 +22,17 @@ interface InboxContextType {
   startNewChat: (data: { contactName: string; contactPhone?: string; contactHandle?: string; initialMessage?: string }) => Promise<void>
   isNewChatModalOpen: boolean
   setIsNewChatModalOpen: (open: boolean) => void
-  loadDemoConversations: () => Promise<void>
-  clearAllConversations: () => void
   refreshConversations: () => Promise<void>
   loading: boolean
 }
-
-const STORAGE_KEY = 'treki_crm_inbox_data'
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined)
 
 export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast()
+  const { user } = useAuth()
 
-  const [conversations, setConversations] = useState<ChatConversation[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch (e) {
-      console.error('Failed to parse inbox conversations', e)
-    }
-    return []
-  })
+  const [conversations, setConversations] = useState<ChatConversation[]>([])
 
   const [activeChannel, setActiveChannel] = useState<ChannelType>('whatsapp')
   const [selectedChat, setSelectedChat] = useState<ChatConversation | null>(null)
@@ -51,15 +41,6 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedStage, setSelectedStage] = useState('All stages')
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-
-  // Persist to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations))
-    } catch (e) {
-      console.error('Failed to save inbox data', e)
-    }
-  }, [conversations])
 
   // Fetch from backend
   const refreshConversations = useCallback(async () => {
@@ -76,7 +57,7 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
     } catch (err) {
-      console.warn('Could not load inbox from backend, using cached state:', err)
+      console.warn('Could not load inbox:', err)
     } finally {
       setLoading(false)
     }
@@ -113,7 +94,7 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Filter tabs
       if (filterType === 'Unread' && c.unreadCount === 0) return false
       if (filterType === 'Favourites' && !c.isFavourite) return false
-      if (filterType === 'Mine' && !c.assignedTo?.toLowerCase().includes('kushal')) return false
+      if (filterType === 'Mine' && (!user?.name || c.assignedTo !== user.name)) return false
       if (filterType === 'Unassigned' && c.assignedTo && c.assignedTo !== 'Unassigned') return false
 
       // Stage filter
@@ -123,161 +104,43 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       return true
     })
-  }, [conversations, activeChannel, searchQuery, filterType, selectedStage])
+  }, [conversations, activeChannel, searchQuery, filterType, selectedStage, user?.name])
+
+  const updateConversation = (conversation: ChatConversation) => {
+    setConversations((previous) => previous.map((item) => item.id === conversation.id ? conversation : item))
+    setSelectedChat((current) => current?.id === conversation.id ? conversation : current)
+  }
 
   const sendMessage = async (chatId: string, content: string) => {
     if (!content.trim()) return
-
-    const timestamp = new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-    }).format(new Date())
-
-    const optimisticMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'agent',
-      content: content.trim(),
-      timestamp,
-      status: 'delivered',
-    }
-
-    // Optimistic UI update
-    setConversations((prev) =>
-      prev.map((c) => {
-        if (c.id === chatId) {
-          const updatedMessages = [...c.messages, optimisticMsg]
-          const updatedChat = {
-            ...c,
-            lastMessage: optimisticMsg.content,
-            lastMessageTime: optimisticMsg.timestamp,
-            messages: updatedMessages,
-          }
-          if (selectedChat?.id === chatId) {
-            setSelectedChat(updatedChat)
-          }
-          return updatedChat
-        }
-        return c
-      })
-    )
-
     try {
-      const res = await inboxService.sendMessage(chatId, content)
-      if (res.conversation) {
-        setConversations((prev) =>
-          prev.map((c) => (c.id === chatId ? { ...c, ...res.conversation } : c))
-        )
-      }
-    } catch (err) {
-      console.error('Failed to sync message to server:', err)
+      const { conversation } = await inboxService.sendMessage(chatId, content)
+      updateConversation(conversation)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not save message', description: (error as Error).message })
+      throw error
     }
   }
 
   const toggleFavourite = async (chatId: string) => {
-    // Optimistic
-    setConversations((prev) =>
-      prev.map((c) => {
-        if (c.id === chatId) {
-          const updated = { ...c, isFavourite: !c.isFavourite }
-          if (selectedChat?.id === chatId) {
-            setSelectedChat(updated)
-          }
-          return updated
-        }
-        return c
-      })
-    )
-
     try {
-      await inboxService.toggleFavourite(chatId)
-    } catch (err) {
-      console.error('Failed to toggle favourite on server:', err)
+      updateConversation(await inboxService.toggleFavourite(chatId))
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not update conversation', description: (error as Error).message })
     }
   }
 
-  const startNewChat = async (data: {
-    contactName: string
-    contactPhone?: string
-    contactHandle?: string
-    initialMessage?: string
-  }) => {
-    const timestamp = new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-    }).format(new Date())
-
-    const initialMessages: ChatMessage[] = data.initialMessage
-      ? [
-          {
-            id: `msg-${Date.now()}`,
-            sender: 'agent',
-            content: data.initialMessage,
-            timestamp,
-            status: 'delivered',
-          },
-        ]
-      : []
-
-    const optimisticChat: ChatConversation = {
-      id: `chat-${Date.now()}`,
-      channel: activeChannel,
-      contactName: data.contactName,
-      contactPhone: data.contactPhone,
-      contactHandle: data.contactHandle,
-      lastMessage: data.initialMessage || 'Conversation started',
-      lastMessageTime: timestamp,
-      unreadCount: 0,
-      stage: 'New',
-      isFavourite: false,
-      assignedTo: 'Kushal Pareta',
-      messages: initialMessages,
-    }
-
-    setConversations((prev) => [optimisticChat, ...prev])
-    setSelectedChat(optimisticChat)
-    setIsNewChatModalOpen(false)
-    toast({ title: 'New chat started', type: 'success' })
-
+  const startNewChat: InboxContextType['startNewChat'] = async (data) => {
     try {
-      const created = await inboxService.createConversation({
-        contactName: data.contactName,
-        contactPhone: data.contactPhone,
-        contactHandle: data.contactHandle,
-        channel: activeChannel,
-        initialMessage: data.initialMessage,
-        assignedTo: 'Kushal Pareta',
-      })
-      if (created) {
-        setConversations((prev) =>
-          prev.map((c) => (c.id === optimisticChat.id ? created : c))
-        )
-        setSelectedChat(created)
-      }
-    } catch (err) {
-      console.error('Failed to persist new chat to server:', err)
+      const created = await inboxService.createConversation({ ...data, channel: activeChannel })
+      setConversations((previous) => [created, ...previous])
+      setSelectedChat(created)
+      setIsNewChatModalOpen(false)
+      toast({ title: 'Conversation created', type: 'success' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not create conversation', description: (error as Error).message })
+      throw error
     }
-  }
-
-  const loadDemoConversations = async () => {
-    try {
-      const data = await inboxService.seedDemoConversations()
-      setConversations(data)
-      if (data.length > 0) {
-        setSelectedChat(data[0])
-      }
-      toast({ title: 'Demo conversations loaded from server', type: 'info' })
-    } catch (err) {
-      console.warn('Failed to seed demo conversations on server, fallback to local:', err)
-      toast({ title: 'Demo conversations loaded', type: 'info' })
-    }
-  }
-
-  const clearAllConversations = () => {
-    setConversations([])
-    setSelectedChat(null)
-    toast({ title: 'Conversations cleared', type: 'info' })
   }
 
   return (
@@ -300,8 +163,6 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         startNewChat,
         isNewChatModalOpen,
         setIsNewChatModalOpen,
-        loadDemoConversations,
-        clearAllConversations,
         refreshConversations,
         loading,
       }}

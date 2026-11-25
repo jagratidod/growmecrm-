@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plus, Search, Filter } from 'lucide-react'
+import { Plus, Search, Sparkles, Filter } from 'lucide-react'
 import { useItineraries } from '../../../context/ItinerariesContext'
 import type { ItineraryStatus } from '../../../types/itinerary.types'
 
@@ -11,7 +11,7 @@ export const ItinerariesHeader: React.FC<ItinerariesHeaderProps> = ({ onOpenNewM
   const { filters, setSearch, setStatusFilter } = useItineraries()
 
   const statusTabs: { label: string; value: ItineraryStatus | 'All'; countColor: string }[] = [
-    { label: 'All itineraries', value: 'All', countColor: 'bg-purple-100 text-[#453372]' },
+    { label: 'All itineraries', value: 'All', countColor: 'bg-purple-100 text-brand' },
     { label: 'Confirmed', value: 'Confirmed', countColor: 'bg-emerald-100 text-emerald-700' },
     { label: 'Pending', value: 'Pending', countColor: 'bg-amber-100 text-amber-700' },
     { label: 'Draft', value: 'Draft', countColor: 'bg-slate-100 text-slate-700' },
@@ -33,8 +33,9 @@ export const ItinerariesHeader: React.FC<ItinerariesHeaderProps> = ({ onOpenNewM
 
         <button
           onClick={onOpenNewModal}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] shrink-0"
         >
+          <Sparkles className="w-4 h-4 text-purple-200" />
           <Plus className="w-4 h-4" />
           <span>New itinerary</span>
         </button>
@@ -50,7 +51,7 @@ export const ItinerariesHeader: React.FC<ItinerariesHeaderProps> = ({ onOpenNewM
             placeholder="Search customer or destination..."
             value={filters.search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all shadow-xs"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all shadow-xs"
           />
         </div>
 
@@ -65,7 +66,7 @@ export const ItinerariesHeader: React.FC<ItinerariesHeaderProps> = ({ onOpenNewM
                 onClick={() => setStatusFilter(tab.value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                   isActive
-                    ? 'bg-[#453372] text-white shadow-xs'
+                    ? 'bg-brand text-white shadow-xs'
                     : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >

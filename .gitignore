@@ -70,3 +70,7 @@ coverage/
 [Ee]hthumbs.db
 [Dd]esktop.ini
 config.bat
+
+# Server credentials and local MongoDB data
+.env
+/backend/.local-mongo/

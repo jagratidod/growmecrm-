@@ -13,7 +13,7 @@ export const PackageReviewStep: React.FC<PackageReviewStepProps> = ({ onBack, on
   const { toast } = useToast()
 
   const [isPublishToggled, setIsPublishToggled] = useState<boolean>(
-    activePackage?.status === 'PUBLISHED' || true
+    activePackage?.status === 'PUBLISHED'
   )
   const [showOnLinkTree, setShowOnLinkTree] = useState<boolean>(
     activePackage?.showOnLinkTree !== undefined ? activePackage.showOnLinkTree : true
@@ -107,7 +107,7 @@ export const PackageReviewStep: React.FC<PackageReviewStepProps> = ({ onBack, on
           type="button"
           onClick={() => setIsPublishToggled(!isPublishToggled)}
           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-            isPublishToggled ? 'bg-[#453372]' : 'bg-slate-300'
+            isPublishToggled ? 'bg-brand' : 'bg-slate-300'
           }`}
         >
           <span
@@ -166,7 +166,7 @@ export const PackageReviewStep: React.FC<PackageReviewStepProps> = ({ onBack, on
           type="button"
           onClick={handleCreatePackage}
           disabled={isSubmitting}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98] disabled:opacity-60"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98] disabled:opacity-60"
         >
           <Save className="w-4 h-4 text-purple-200" />
           <span>{isSubmitting ? 'Creating package...' : 'Create package'}</span>

@@ -83,7 +83,7 @@ const HostPageSchema = new Schema<IHostPage>(
     tagline: {
       type: String,
       trim: true,
-      default: 'Handcrafted Journeys & Group Trips',
+      default: '',
     },
     aboutUs: {
       type: String,
@@ -100,7 +100,7 @@ const HostPageSchema = new Schema<IHostPage>(
     },
     isPublished: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     viewCount: {
       type: Number,

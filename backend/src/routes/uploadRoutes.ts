@@ -1,3 +1,4 @@
+import { authenticate } from '../middleware/authMiddleware';
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { uploadBufferToCloudinary } from '../utils/cloudinary';
@@ -22,6 +23,7 @@ const upload = multer({
 // POST /api/upload/image
 router.post(
   '/image',
+  authenticate,
   upload.single('file'),
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -30,7 +32,7 @@ router.post(
         return;
       }
 
-      const folderName = req.body.folder || 'growme_crm/general';
+      const folderName = 'growme_crm/general';
       const cdnUrl = await uploadBufferToCloudinary(req.file.buffer, folderName);
 
       if (!cdnUrl) {

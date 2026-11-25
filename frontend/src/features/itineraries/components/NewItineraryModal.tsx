@@ -1,8 +1,10 @@
+import { usePackages } from '../../../context/PackagesContext'
+import { useTeam } from '../../../context/TeamContext'
 import React, { useState } from 'react'
-import { X, MapPin, Zap } from 'lucide-react'
+import { X, MapPin, Sparkles } from 'lucide-react'
 import { useItineraries } from '../../../context/ItinerariesContext'
 import { useToast } from '../../../components/ui/Toast'
-import type { ItineraryStatus, ItineraryDay } from '../../../types/itinerary.types'
+import type { ItineraryStatus } from '../../../types/itinerary.types'
 
 interface NewItineraryModalProps {
   isOpen: boolean
@@ -10,167 +12,13 @@ interface NewItineraryModalProps {
   onCreated?: (itineraryId: string) => void
 }
 
-const PACKAGE_TEMPLATES: Record<
-  string,
-  { destination: string; totalAmount: number; days: ItineraryDay[] }
-> = {
-  'Bali Romantic Escape (5D/4N)': {
-    destination: 'Bali, Indonesia',
-    totalAmount: 185000,
-    days: [
-      {
-        id: 'pkg-b1',
-        dayNumber: 1,
-        title: 'Arrival in Denpasar & Uluwatu Cliff Temple',
-        description: 'Chauffeur pickup at Ngurah Rai Airport, check-in to private pool villa in Seminyak. Sunset tour of Uluwatu Temple & Kecak Dance.',
-        activities: ['Airport pickup', 'Villa check-in', 'Uluwatu Sunset Tour', 'Kecak Dance Show'],
-        hotel: 'Seminyak Lagoon Villa',
-        meals: ['Dinner'],
-      },
-      {
-        id: 'pkg-b2',
-        dayNumber: 2,
-        title: 'Ubud Artisans & Tegalalang Rice Terraces',
-        description: 'Private day tour to Ubud. Explore Monkey Forest, traditional market, and swing over the green terraces.',
-        activities: ['Monkey Forest', 'Bali Swing', 'Tegalalang Terrace walk'],
-        hotel: 'Seminyak Lagoon Villa',
-        meals: ['Breakfast', 'Lunch'],
-      },
-      {
-        id: 'pkg-b3',
-        dayNumber: 3,
-        title: 'Nusa Penida Island Speedboat Day Excursion',
-        description: 'Catamaran cruise to Nusa Penida island. Visit Kelingking Beach, Broken Beach, and snorkel with manta rays at Manta Point.',
-        activities: ['Speedboat Cruise', 'Kelingking Viewpoint', 'Snorkeling'],
-        hotel: 'Seminyak Lagoon Villa',
-        meals: ['Breakfast', 'Lunch'],
-      },
-      {
-        id: 'pkg-b4',
-        dayNumber: 4,
-        title: 'Leisure Day & Jimbaran Seafood Dinner',
-        description: 'Spa wellness massage in the morning, followed by a beachfront seafood candlelight dinner in Jimbaran Bay.',
-        activities: ['Balinese Spa Treatment', 'Beach walk', 'Candlelight Seafood Dinner'],
-        hotel: 'Seminyak Lagoon Villa',
-        meals: ['Breakfast', 'Dinner'],
-      },
-      {
-        id: 'pkg-b5',
-        dayNumber: 5,
-        title: 'Souvenir Shopping & Airport Departure',
-        description: 'Check-out from villa. Last-minute souvenir shopping at Krisna Oleh-Oleh before airport drop-off.',
-        activities: ['Check-out', 'Souvenir shopping', 'Airport drop-off'],
-        meals: ['Breakfast'],
-      },
-    ],
-  },
-  'Kashmir Paradise Tour (6D/5N)': {
-    destination: 'Kashmir, India',
-    totalAmount: 220000,
-    days: [
-      {
-        id: 'pkg-k1',
-        dayNumber: 1,
-        title: 'Arrival in Srinagar & Dal Lake Shikara',
-        description: 'Pickup from Sheikh ul-Alam Airport, check-in to luxury houseboat on Dal Lake. Evening 1-hour sunset Shikara ride.',
-        activities: ['Airport Pickup', 'Houseboat Check-in', 'Dal Lake Shikara'],
-        hotel: 'Deluxe Heritage Houseboat',
-        meals: ['Dinner'],
-      },
-      {
-        id: 'pkg-k2',
-        dayNumber: 2,
-        title: 'Srinagar to Gulmarg Meadow of Flowers',
-        description: 'Full day excursion to Gulmarg. Take the world-famous Gondola ride to Phase 1 & 2 for snow vistas.',
-        activities: ['Gulmarg scenic drive', 'Gondola Cable Car Ride', 'Snow activities'],
-        hotel: 'The Khyber Himalayan Resort',
-        meals: ['Breakfast', 'Dinner'],
-      },
-      {
-        id: 'pkg-k3',
-        dayNumber: 3,
-        title: 'Pahalgam Valley & Betaab Valley Excursion',
-        description: 'Drive along saffron fields to Pahalgam. Visit Betaab Valley, Aru Valley, and Lidder River banks.',
-        activities: ['Saffron fields visit', 'Betaab Valley sightseeing', 'Lidder river walk'],
-        hotel: 'Pine N Peak Pahalgam',
-        meals: ['Breakfast', 'Dinner'],
-      },
-      {
-        id: 'pkg-k4',
-        dayNumber: 4,
-        title: 'Sonamarg Gateway to Ladakh Glacier',
-        description: 'Day trip to Sonamarg. Enjoy horse ride to Thajiwas Glacier with stunning mountain peaks.',
-        activities: ['Sonamarg valley drive', 'Thajiwas Glacier pony ride'],
-        hotel: 'Pine N Peak Pahalgam',
-        meals: ['Breakfast', 'Dinner'],
-      },
-      {
-        id: 'pkg-k5',
-        dayNumber: 5,
-        title: 'Srinagar Mughal Gardens & Old City Bazaar',
-        description: 'Visit Shalimar Bagh, Nishat Bagh, and explore the historic Lal Chowk spice & pashmina market.',
-        activities: ['Mughal Gardens Tour', 'Old City Handicrafts Walk'],
-        hotel: 'Radisson Srinagar',
-        meals: ['Breakfast', 'Dinner'],
-      },
-      {
-        id: 'pkg-k6',
-        dayNumber: 6,
-        title: 'Departure from Srinagar',
-        description: 'Breakfast with scenic mountain backdrop, transfer to Srinagar airport for departure.',
-        activities: ['Check-out', 'Airport drop'],
-        meals: ['Breakfast'],
-      },
-    ],
-  },
-  'Goa Beach & Heritage (4D/3N)': {
-    destination: 'Goa, India',
-    totalAmount: 65000,
-    days: [
-      {
-        id: 'pkg-g1',
-        dayNumber: 1,
-        title: 'Arrival in North Goa & Beach Sunset',
-        description: 'Airport arrival, check-in to boutique beach resort in Candolim. Evening stroll at sunset.',
-        activities: ['Airport transfer', 'Resort check-in', 'Candolim sunset walk'],
-        hotel: 'Taj Holiday Village Resort',
-        meals: ['Dinner'],
-      },
-      {
-        id: 'pkg-g2',
-        dayNumber: 2,
-        title: 'Old Goa Churches & Panjim Latin Quarter',
-        description: 'Explore UNESCO heritage Basilica of Bom Jesus, Se Cathedral, followed by a photo walk in Fontainhas latin quarter.',
-        activities: ['Old Goa Churches tour', 'Fontainhas colorful street walk', 'Mandovi river cruise'],
-        hotel: 'Taj Holiday Village Resort',
-        meals: ['Breakfast'],
-      },
-      {
-        id: 'pkg-g3',
-        dayNumber: 3,
-        title: 'South Goa Beaches & Watersports',
-        description: 'Watersports at Palolem beach and quiet lunch by the sea. Sunset dolphin spotting trip.',
-        activities: ['Jet ski & parasailing', 'Palolem beach chill', 'Dolphin boat cruise'],
-        hotel: 'Taj Holiday Village Resort',
-        meals: ['Breakfast', 'Dinner'],
-      },
-      {
-        id: 'pkg-g4',
-        dayNumber: 4,
-        title: 'Leisure & Goa Airport Transfer',
-        description: 'Relaxed pool morning, check-out, transfer to Dabolim or Mopa airport.',
-        activities: ['Pool time', 'Airport drop-off'],
-        meals: ['Breakfast'],
-      },
-    ],
-  },
-}
-
 export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
   isOpen,
   onClose,
   onCreated,
 }) => {
+  const { members } = useTeam()
+  const { packages } = usePackages()
   const { addItinerary } = useItineraries()
   const { toast } = useToast()
 
@@ -194,11 +42,8 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
 
   const handlePackageChange = (pkgName: string) => {
     setSelectedPackage(pkgName)
-    if (pkgName !== 'No package' && PACKAGE_TEMPLATES[pkgName]) {
-      const template = PACKAGE_TEMPLATES[pkgName]
-      if (!destination) setDestination(template.destination)
-      if (totalAmount === 0) setTotalAmount(template.totalAmount)
-    }
+    const travelPackage = packages.find(({ name }) => name === pkgName)
+    if (!destination && travelPackage?.destination) setDestination(travelPackage.destination)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -216,10 +61,15 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
 
     setIsSubmitting(true)
     try {
-      const packageDays =
-        selectedPackage !== 'No package' && PACKAGE_TEMPLATES[selectedPackage]
-          ? PACKAGE_TEMPLATES[selectedPackage].days
-          : undefined
+      const packageDays = packages.find(({ name }) => name === selectedPackage)?.itineraryDays?.map((day) => ({
+        id: day.id,
+        dayNumber: day.dayNumber,
+        title: day.title,
+        description: day.dayPlan,
+        hotel: day.stay || undefined,
+        activities: day.activities?.split(',').map((item) => item.trim()).filter(Boolean),
+        meals: day.meals?.split(',').map((item) => item.trim()).filter(Boolean),
+      }))
 
       const created = await addItinerary({
         customerName: customerName.trim(),
@@ -281,10 +131,10 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
             <input
               type="text"
               required
-              placeholder="e.g. Rahul Sharma"
+
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
             />
           </div>
 
@@ -294,10 +144,10 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">Email</label>
               <input
                 type="email"
-                placeholder="customer@example.com"
+
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
 
@@ -305,10 +155,10 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">Phone</label>
               <input
                 type="tel"
-                placeholder="+91 98765 43210"
+
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
           </div>
@@ -324,10 +174,10 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Bali, Indonesia"
+
                   value={destination}
                   onChange={(e) => setDestination(e.target.value)}
-                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
                 />
               </div>
             </div>
@@ -337,7 +187,7 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ItineraryStatus)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               >
                 <option value="Pending">Pending</option>
                 <option value="Confirmed">Confirmed</option>
@@ -356,7 +206,7 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
                   type="date"
                   value={departure}
                   onChange={(e) => setDeparture(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
                 />
               </div>
             </div>
@@ -368,7 +218,7 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
                   type="date"
                   value={returnDate}
                   onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
                 />
               </div>
             </div>
@@ -381,7 +231,7 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
                 placeholder="2"
                 value={travellers}
                 onChange={(e) => setTravellers(parseInt(e.target.value) || 1)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
           </div>
@@ -396,7 +246,7 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
                 placeholder="0"
                 value={totalAmount || ''}
                 onChange={(e) => setTotalAmount(parseFloat(e.target.value) || 0)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
 
@@ -408,7 +258,7 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
                 placeholder="0"
                 value={amountPaid || ''}
                 onChange={(e) => setAmountPaid(parseFloat(e.target.value) || 0)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
 
@@ -417,7 +267,7 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               >
                 <option value="INR">INR (₹)</option>
                 <option value="USD">USD ($)</option>
@@ -433,20 +283,18 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-semibold text-slate-700">Package</label>
                 {selectedPackage !== 'No package' && (
-                  <span className="text-[11px] text-[#453372] font-semibold flex items-center gap-1">
-                    <Zap className="w-3 h-3" /> Auto-fills plan
+                  <span className="text-[11px] text-brand font-semibold flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> Auto-fills plan
                   </span>
                 )}
               </div>
               <select
                 value={selectedPackage}
                 onChange={(e) => handlePackageChange(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               >
                 <option value="No package">No package</option>
-                <option value="Bali Romantic Escape (5D/4N)">Bali Romantic Escape (5D/4N)</option>
-                <option value="Kashmir Paradise Tour (6D/5N)">Kashmir Paradise Tour (6D/5N)</option>
-                <option value="Goa Beach & Heritage (4D/3N)">Goa Beach & Heritage (4D/3N)</option>
+                {packages.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
               </select>
             </div>
 
@@ -455,12 +303,10 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
               <select
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               >
                 <option value="Unassigned">Unassigned</option>
-                <option value="Kushal Pareta">Kushal Pareta (Admin)</option>
-                <option value="Priya Sharma">Priya Sharma (Agent)</option>
-                <option value="Rahul Verma">Rahul Verma (Operations)</option>
+                {members.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
               </select>
             </div>
           </div>
@@ -473,7 +319,7 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
               placeholder="Anything useful about this trip..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all resize-none"
             />
           </div>
 
@@ -489,8 +335,9 @@ export const NewItineraryModal: React.FC<NewItineraryModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-sm font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50"
             >
+              <Sparkles className="w-4 h-4 text-purple-200" />
               <span>{isSubmitting ? 'Creating...' : 'Create itinerary'}</span>
             </button>
           </div>

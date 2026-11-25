@@ -69,9 +69,4 @@ export const inboxService = {
     });
   },
 
-  async seedDemoConversations(): Promise<ChatConversation[]> {
-    return request<ChatConversation[]>('/inbox/seed-demo', {
-      method: 'POST',
-    });
-  },
 };

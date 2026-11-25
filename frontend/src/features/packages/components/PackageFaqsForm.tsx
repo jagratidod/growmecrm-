@@ -13,23 +13,7 @@ export const PackageFaqsForm: React.FC<PackageFaqsFormProps> = ({ onNext, onBack
   const { activePackage, savePackage } = usePackages()
   const { toast } = useToast()
 
-  const [faqs, setFaqs] = useState<PackageFaq[]>(() => {
-    if (activePackage?.faqs && activePackage.faqs.length > 0) {
-      return activePackage.faqs
-    }
-    return [
-      {
-        id: `faq-${Date.now()}-1`,
-        question: 'Are flights included in this price?',
-        answer: 'Yes, return economy flights from designated departure airports are included.',
-      },
-      {
-        id: `faq-${Date.now()}-2`,
-        question: 'What is the visa policy for Indian passport holders?',
-        answer: 'Visa on arrival / electronic visa assistance is provided by our operations team.',
-      },
-    ]
-  })
+  const [faqs, setFaqs] = useState<PackageFaq[]>(activePackage?.faqs ?? [])
 
   const handleUpdateFaq = (id: string, field: 'question' | 'answer', value: string) => {
     setFaqs((prev) => prev.map((f) => (f.id === id ? { ...f, [field]: value } : f)))
@@ -91,10 +75,10 @@ export const PackageFaqsForm: React.FC<PackageFaqsFormProps> = ({ onNext, onBack
                 <div className="flex-1">
                   <input
                     type="text"
-                    placeholder="Question — e.g. Are flights included?"
+
                     value={faq.question}
                     onChange={(e) => handleUpdateFaq(faq.id, 'question', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] bg-white transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white transition-all"
                   />
                 </div>
 
@@ -115,7 +99,7 @@ export const PackageFaqsForm: React.FC<PackageFaqsFormProps> = ({ onNext, onBack
                   placeholder="Answer..."
                   value={faq.answer}
                   onChange={(e) => handleUpdateFaq(faq.id, 'answer', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
                 />
               </div>
             </div>
@@ -127,7 +111,7 @@ export const PackageFaqsForm: React.FC<PackageFaqsFormProps> = ({ onNext, onBack
           <button
             type="button"
             onClick={handleAddFaq}
-            className="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#453372]/60 hover:bg-purple-50/20 text-slate-600 hover:text-[#453372] font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
+            className="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand/60 hover:bg-purple-50/20 text-slate-600 hover:text-brand font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
           >
             <Plus className="w-4 h-4" />
             <span>Add FAQ</span>
@@ -149,7 +133,7 @@ export const PackageFaqsForm: React.FC<PackageFaqsFormProps> = ({ onNext, onBack
         <button
           type="button"
           onClick={handleProceed}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
         >
           <span>Next: Extra</span>
           <ArrowRight className="w-4 h-4" />

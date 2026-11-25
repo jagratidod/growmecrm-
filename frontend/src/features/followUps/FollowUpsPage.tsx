@@ -38,44 +38,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], [])
 
-  const [followUps, setFollowUps] = useState<FollowUpItem[]>(() => {
-    const saved = localStorage.getItem('treki_crm_follow_ups')
-    if (saved) {
-      try {
-        return JSON.parse(saved)
-      } catch {}
-    }
-    return [
-      {
-        id: 'fu-1',
-        title: 'Call Priya about the Bali quote',
-        leadId: 'lead-1',
-        leadName: 'Amit Sharma',
-        phone: '+91 98765 43210',
-        destination: 'Kashmir Holiday Package',
-        dueDate: todayStr,
-        dueTime: '10:00',
-        type: 'follow-up',
-        assignedToName: 'Unassigned',
-        note: 'Send revised hotel quotation for 4-star Dal Lake houseboat upgrade.',
-        status: 'pending',
-      },
-      {
-        id: 'fu-2',
-        title: 'Follow up on booking advance payment confirmation link',
-        leadId: 'lead-2',
-        leadName: 'Pooja Verma',
-        phone: '+91 98111 22334',
-        destination: 'Goa Weekend Trip',
-        dueDate: '2026-11-19',
-        dueTime: '04:00 PM',
-        type: 'call',
-        assignedToName: 'Rahul Verma',
-        note: 'Check if advance token was credited.',
-        status: 'overdue',
-      },
-    ]
-  })
+  const [followUps, setFollowUps] = useState<FollowUpItem[]>([])
 
   const [serverStats, setServerStats] = useState({
     total: 0,
@@ -370,7 +333,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
   }, [followUps, serverStats, todayStr])
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
@@ -403,14 +366,14 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
               <button
                 onClick={fetchFollowUps}
                 disabled={isLoading}
-                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#453372] hover:bg-purple-50 transition cursor-pointer"
+                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-brand hover:bg-purple-50 transition cursor-pointer"
                 title="Refresh from server"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#453372] text-white font-semibold text-xs shadow-md hover:bg-[#382860] transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand text-white font-semibold text-xs shadow-md hover:bg-brand-hover transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add follow-up</span>
@@ -423,7 +386,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
             <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-slate-500">Due Today</span>
-                <div className="w-7 h-7 rounded-lg bg-purple-50 text-[#453372] flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-purple-50 text-brand flex items-center justify-center">
                   <Clock className="w-4 h-4" />
                 </div>
               </div>
@@ -470,7 +433,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                 placeholder="Search by client or note..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#453372] transition"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand transition"
               />
             </div>
 
@@ -481,7 +444,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   onClick={() => setFilter(tab)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize whitespace-nowrap transition cursor-pointer ${
                     filter === tab
-                      ? 'bg-[#453372] text-white shadow-xs'
+                      ? 'bg-brand text-white shadow-xs'
                       : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -519,7 +482,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                       className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition cursor-pointer ${
                         item.status === 'completed'
                           ? 'bg-emerald-500 border-emerald-500 text-white'
-                          : 'border-slate-300 hover:border-[#453372]'
+                          : 'border-slate-300 hover:border-brand'
                       }`}
                     >
                       {item.status === 'completed' && <CheckCircle2 className="w-4 h-4" />}
@@ -539,7 +502,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                           </span>
                         )}
                         {item.assignedToName && item.assignedToName !== 'Unassigned' && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-[#453372] flex items-center gap-1">
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-brand flex items-center gap-1">
                             <UserIcon className="w-3 h-3" />
                             {item.assignedToName}
                           </span>
@@ -581,7 +544,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                     </a>
                     <a
                       href={`tel:${item.phone}`}
-                      className="p-2 rounded-xl bg-purple-50 text-[#453372] hover:bg-purple-100 transition"
+                      className="p-2 rounded-xl bg-purple-50 text-brand hover:bg-purple-100 transition"
                       title="Call Client"
                     >
                       <Phone className="w-4 h-4" />
@@ -589,7 +552,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(item)}
-                      className="p-2 rounded-xl bg-slate-50 text-slate-600 hover:text-[#453372] hover:bg-purple-50 transition cursor-pointer"
+                      className="p-2 rounded-xl bg-slate-50 text-slate-600 hover:text-brand hover:bg-purple-50 transition cursor-pointer"
                       title="Edit Follow-up"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -642,8 +605,8 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   required
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  placeholder="Call Priya about the Bali quote"
-                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400 text-slate-800 transition"
+
+                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400 text-slate-800 transition"
                   autoFocus
                 />
               </div>
@@ -659,7 +622,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                     <select
                       value={taskType}
                       onChange={(e) => setTaskType(e.target.value as any)}
-                      className="w-full appearance-none px-3.5 py-2.5 pr-8 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 bg-white text-slate-800 transition cursor-pointer"
+                      className="w-full appearance-none px-3.5 py-2.5 pr-8 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 bg-white text-slate-800 transition cursor-pointer"
                     >
                       <option value="follow-up">Follow-up</option>
                       <option value="call">Call</option>
@@ -682,7 +645,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                       required
                       value={taskDate}
                       onChange={(e) => setTaskDate(e.target.value)}
-                      className="w-full px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
+                      className="w-full px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
                     />
                     <Calendar className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
@@ -699,7 +662,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                       value={taskTime}
                       onChange={(e) => setTaskTime(e.target.value)}
                       placeholder="10:00"
-                      className="w-full px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
+                      className="w-full px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
                     />
                     <Clock className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
@@ -715,7 +678,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   <select
                     value={taskAssignee}
                     onChange={(e) => setTaskAssignee(e.target.value)}
-                    className="w-full appearance-none px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 bg-white text-slate-800 transition cursor-pointer"
+                    className="w-full appearance-none px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 bg-white text-slate-800 transition cursor-pointer"
                   >
                     <option value="unassigned">Unassigned</option>
                     {members.map((m) => (
@@ -738,7 +701,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   value={taskNotes}
                   onChange={(e) => setTaskNotes(e.target.value)}
                   placeholder="Optional context..."
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400 text-slate-800 transition"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400 text-slate-800 transition"
                 />
               </div>
 
@@ -753,7 +716,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#4f46e5] hover:bg-[#4338ca] rounded-xl shadow-md shadow-indigo-500/20 transition cursor-pointer"
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-brand hover:bg-[#4338ca] rounded-xl shadow-md shadow-indigo-500/20 transition cursor-pointer"
                 >
                   Schedule task
                 </button>
@@ -794,7 +757,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   placeholder="Task description"
-                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
+                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
                 />
               </div>
 
@@ -807,7 +770,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                     <select
                       value={editType}
                       onChange={(e) => setEditType(e.target.value as any)}
-                      className="w-full appearance-none px-3.5 py-2.5 pr-8 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 bg-white text-slate-800 transition cursor-pointer"
+                      className="w-full appearance-none px-3.5 py-2.5 pr-8 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 bg-white text-slate-800 transition cursor-pointer"
                     >
                       <option value="follow-up">Follow-up</option>
                       <option value="call">Call</option>
@@ -829,7 +792,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                       required
                       value={editDueDate}
                       onChange={(e) => setEditDueDate(e.target.value)}
-                      className="w-full px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
+                      className="w-full px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
                     />
                     <Calendar className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
@@ -845,7 +808,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                       value={editDueTime}
                       onChange={(e) => setEditDueTime(e.target.value)}
                       placeholder="10:00"
-                      className="w-full px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
+                      className="w-full px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 text-slate-800 transition"
                     />
                     <Clock className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
@@ -860,7 +823,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   <select
                     value={editAssignee}
                     onChange={(e) => setEditAssignee(e.target.value)}
-                    className="w-full appearance-none px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 bg-white text-slate-800 transition cursor-pointer"
+                    className="w-full appearance-none px-3.5 py-2.5 pr-9 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 bg-white text-slate-800 transition cursor-pointer"
                   >
                     <option value="unassigned">Unassigned</option>
                     {members.map((m) => (
@@ -882,7 +845,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   value={editNote}
                   onChange={(e) => setEditNote(e.target.value)}
                   placeholder="Optional context..."
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-[#4f46e5] focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400 text-slate-800 transition"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:border-brand focus:ring-4 focus:ring-indigo-500/10 placeholder:text-slate-400 text-slate-800 transition"
                 />
               </div>
 
@@ -896,7 +859,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#4f46e5] hover:bg-[#4338ca] rounded-xl shadow-md shadow-indigo-500/20 transition cursor-pointer"
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-brand hover:bg-[#4338ca] rounded-xl shadow-md shadow-indigo-500/20 transition cursor-pointer"
                 >
                   Save changes
                 </button>

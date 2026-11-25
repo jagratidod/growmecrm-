@@ -29,7 +29,7 @@ export const PackageBuilderHeader: React.FC<PackageBuilderHeaderProps> = ({
 
         {/* Package Icon & Name */}
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-[#1e1b4b] text-white flex items-center justify-center shadow-xs shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-brand-soft text-brand flex items-center justify-center shadow-xs shrink-0">
             <Package className="w-5 h-5 stroke-[1.8]" />
           </div>
 
@@ -50,7 +50,7 @@ export const PackageBuilderHeader: React.FC<PackageBuilderHeaderProps> = ({
       <button
         onClick={onSave}
         disabled={isSaving}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] disabled:opacity-60"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] disabled:opacity-60"
       >
         {isSaving ? (
           <>

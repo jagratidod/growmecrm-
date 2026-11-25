@@ -43,7 +43,7 @@ export interface SubscriptionPlan {
   _id?: string;
   id?: string;
   name: string;
-  code: 'STARTER' | 'PRO' | 'ENTERPRISE' | 'CUSTOM' | string;
+  code: 'STARTER' | 'PRO' | 'ENTERPRISE' | 'CUSTOM';
   tagline: string;
   priceMonthly: number;
   priceYearly: number;
@@ -51,9 +51,9 @@ export interface SubscriptionPlan {
   maxSeats: number;
   maxLeads: number;
   features: string[];
+  modules?: string[];
   isPopular: boolean;
   isActive: boolean;
-  createdAt?: string;
 }
 
 export interface PlatformSettings {
@@ -103,8 +103,8 @@ export interface AuditLogItem {
 export interface WebhookServiceHealth {
   name: string;
   endpoint: string;
-  status: 'OPERATIONAL' | 'DEGRADED' | 'DOWN';
-  latencyMs: number;
-  lastReceived: string;
+  status: 'OPERATIONAL' | 'DEGRADED' | 'DOWN' | 'UNVERIFIED';
+  latencyMs: number | null;
+  lastReceived: string | null;
   description: string;
 }

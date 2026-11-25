@@ -38,8 +38,8 @@ export const BillsTable: React.FC = () => {
     },
     Partial: {
       bg: 'bg-purple-50 border-purple-200',
-      text: 'text-[#453372]',
-      dot: 'bg-[#453372]',
+      text: 'text-brand',
+      dot: 'bg-brand',
     },
     Unpaid: {
       bg: 'bg-amber-50 border-amber-200',
@@ -71,7 +71,7 @@ export const BillsTable: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-700 border-collapse">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-[#f3f4f8] text-[#453372] font-bold uppercase tracking-wider text-[11px]">
+            <tr className="border-b border-slate-200/80 bg-canvas text-brand font-bold uppercase tracking-wider text-[11px]">
               <th className="py-3 px-4">Vendor & Category</th>
               <th className="py-3 px-4">Linked Trip</th>
               <th className="py-3 px-4">Bill Date</th>
@@ -96,7 +96,7 @@ export const BillsTable: React.FC = () => {
                   {/* Vendor & Category Column */}
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#453372] flex items-center justify-center shrink-0 shadow-xs">
+                      <div className="w-9 h-9 rounded-xl bg-purple-50 text-brand flex items-center justify-center shrink-0 shadow-xs">
                         <CategoryIcon className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
@@ -146,7 +146,7 @@ export const BillsTable: React.FC = () => {
                           percentPaid === 100
                             ? 'bg-[#22c55e]'
                             : percentPaid > 0
-                            ? 'bg-[#453372]'
+                            ? 'bg-brand'
                             : 'bg-slate-200'
                         }`}
                         style={{ width: `${percentPaid}%` }}
@@ -183,7 +183,7 @@ export const BillsTable: React.FC = () => {
                             setPayingBillId(bill.id)
                             setPayAmount(String(balanceDue))
                           }}
-                          className="px-2.5 py-1 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-[#453372] text-xs font-bold transition flex items-center gap-1"
+                          className="px-2.5 py-1 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-brand text-xs font-bold transition flex items-center gap-1"
                         >
                           <CreditCard className="w-3 h-3" />
                           <span>Pay</span>

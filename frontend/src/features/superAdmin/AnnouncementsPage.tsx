@@ -100,7 +100,7 @@ export const AnnouncementsPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#38285e] text-white text-xs font-extrabold shadow-md transition"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-extrabold shadow-md transition"
         >
           <Plus className="w-4 h-4" />
           <span>New Broadcast</span>
@@ -133,7 +133,7 @@ export const AnnouncementsPage: React.FC = () => {
               ? 'text-amber-900'
               : isSuccess
               ? 'text-emerald-900'
-              : 'text-[#453372]';
+              : 'text-brand';
 
             const Icon = isCritical
               ? AlertCircle
@@ -209,10 +209,10 @@ export const AnnouncementsPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. ⚡ System Update Completed or 🚀 New WhatsApp Features"
+
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-[#453372] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-brand focus:outline-none"
                 />
               </div>
 
@@ -222,7 +222,7 @@ export const AnnouncementsPage: React.FC = () => {
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-[#453372] focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-brand focus:outline-none"
                   >
                     <option value="info">Info (Purple)</option>
                     <option value="success">Success (Green)</option>
@@ -235,7 +235,7 @@ export const AnnouncementsPage: React.FC = () => {
                   <select
                     value={targetAudience}
                     onChange={(e) => setTargetAudience(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-[#453372] focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-semibold focus:border-brand focus:outline-none"
                   >
                     <option value="ALL">All Users (Staff + Owners)</option>
                     <option value="OWNERS">Agency Owners Only</option>
@@ -252,7 +252,7 @@ export const AnnouncementsPage: React.FC = () => {
                   placeholder="Enter details of the announcement shown on agency workspaces..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-normal focus:border-[#453372] focus:outline-none resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-normal focus:border-brand focus:outline-none resize-none"
                 />
               </div>
 
@@ -266,7 +266,7 @@ export const AnnouncementsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#453372] hover:bg-[#38285e] text-white font-extrabold shadow-md transition flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white font-extrabold shadow-md transition flex items-center gap-1.5"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Send Broadcast</span>

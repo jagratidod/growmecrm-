@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISubscriptionPlan extends Document {
   name: string;
-  code: string;
+  code: 'STARTER' | 'PRO' | 'ENTERPRISE' | 'CUSTOM';
   tagline: string;
   priceMonthly: number;
   priceYearly: number;
@@ -25,8 +25,8 @@ const SubscriptionPlanSchema = new Schema<ISubscriptionPlan>(
       type: String,
       required: true,
       unique: true,
+      enum: ['STARTER', 'PRO', 'ENTERPRISE', 'CUSTOM'],
       uppercase: true,
-      trim: true,
     },
     tagline: { type: String, default: '' },
     priceMonthly: { type: Number, required: true, default: 0 },

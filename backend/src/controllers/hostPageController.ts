@@ -4,25 +4,10 @@ import { HostPage, IHostPage } from '../models/HostPage';
 import { Organization } from '../models/Organization';
 import { TravelPackageModel, ITravelPackage } from '../models/Package';
 
-// Default starter reviews for initial setup
-const DEFAULT_REVIEWS = [
-  {
-    id: 'rev-1',
-    name: 'Pooja Verma',
-    rating: 5,
-    quote: 'Our Kashmir trip with Treki was magical! Gulmarg gondola tickets and houseboat were seamless.',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
-    createdAt: new Date(),
-  },
-  {
-    id: 'rev-2',
-    name: 'Rahul Singhania',
-    rating: 5,
-    quote: 'Best Bali itinerary ever. Nusa Penida speedboat tour was the highlight of our vacation.',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-    createdAt: new Date(),
-  },
-];
+const publicWebsiteUrl = (slug: string) => {
+  const base = process.env.HOSTED_WEBSITE_BASE_URL?.trim().replace(/\/+$/, '');
+  return base ? `${base}/${encodeURIComponent(slug)}` : '';
+};
 
 const formatHostPage = (doc: IHostPage) => {
   const obj = doc.toObject();
@@ -50,24 +35,18 @@ export const getHostPage = async (req: AuthenticatedRequest, res: Response): Pro
     if (!hostPage) {
       const org = await Organization.findById(organizationId);
       const slug = org?.slug || `agency-${Math.floor(1000 + Math.random() * 9000)}`;
-      const websiteUrl = `https://joinetra.com/${slug}`;
+      const websiteUrl = publicWebsiteUrl(slug);
 
       hostPage = await HostPage.create({
         organizationId,
         websiteSlug: slug,
         websiteUrl,
-        bannerImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1600&q=80',
-        tagline: 'Handcrafted Journeys & Group Trips',
-        aboutUs: `Welcome to ${org?.name || 'our agency'}! We craft unforgettable holiday experiences, custom tour packages, and guided expeditions.`,
-        contact: {
-          phone: '+91 98765 43210',
-          email: 'hello@travelagency.com',
-          address: 'Main Market Square, Tourism District',
-          whatsapp: '+91 98765 43210',
-          instagram: '@trekitravels',
-        },
-        reviews: DEFAULT_REVIEWS,
-        isPublished: true,
+        bannerImage: '',
+        tagline: '',
+        aboutUs: '',
+        contact: {},
+        reviews: [],
+        isPublished: false,
       });
     }
 
@@ -104,7 +83,7 @@ export const updateHostPage = async (req: AuthenticatedRequest, res: Response): 
       hostPage = new HostPage({
         organizationId,
         websiteSlug: slug,
-        websiteUrl: `https://joinetra.com/${slug}`,
+        websiteUrl: publicWebsiteUrl(slug),
       });
     }
 
@@ -129,7 +108,7 @@ export const updateHostPage = async (req: AuthenticatedRequest, res: Response): 
       });
       if (!collision) {
         hostPage.websiteSlug = cleanSlug;
-        hostPage.websiteUrl = `https://joinetra.com/${cleanSlug}`;
+        hostPage.websiteUrl = publicWebsiteUrl(cleanSlug);
       }
     }
 
@@ -241,7 +220,7 @@ export const getPublicHostPage = async (req: Request, res: Response): Promise<vo
       }
     }
 
-    if (!hostPage) {
+    if (!hostPage?.isPublished) {
       res.status(404).json({ error: 'Travel agency website not found' });
       return;
     }

@@ -13,13 +13,10 @@ export const ImportCsvModal: React.FC = () => {
 
   if (!isImportModalOpen) return null
 
-  const sampleCsv = `Name,Phone,Email,Destination,Budget,Travelers,CustomerType,Status,Temperature
-Rohan Kapoor,+91 9988776655,rohan@example.com,Maldives,250000,2,B2C,New,Hot
-Ananya Sharma,+91 9876543210,ananya@travel.org,Switzerland,450000,3,B2C,Contacted,Warm
-Zenith Tech Outings,+91 9811223344,admin@zenithtech.com,Manali,350000,15,B2B,Qualified,Hot`
+  const csvHeader = "Name,Phone,Email,Destination,Budget,Travelers,CustomerType,Status,Temperature\n"
 
   const handleDownloadTemplate = () => {
-    const blob = new Blob([sampleCsv], { type: 'text/csv' })
+    const blob = new Blob([csvHeader], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -91,10 +88,11 @@ Zenith Tech Outings,+91 9811223344,admin@zenithtech.com,Manali,350000,15,B2B,Qua
     setErrorCount(errors)
   }
 
-  const handleImportSubmit = () => {
+  const handleImportSubmit = async () => {
     if (parsedRows.length === 0) return
 
-    const count = importLeads(parsedRows)
+    const count = await importLeads(parsedRows)
+    if (count === undefined) return
     toast({
       type: 'success',
       title: 'CSV Import Completed',
@@ -146,20 +144,10 @@ Zenith Tech Outings,+91 9811223344,admin@zenithtech.com,Manali,350000,15,B2B,Qua
             <div className="mt-4 flex items-center justify-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  parseCsvContent(sampleCsv)
-                }}
-                className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition"
-              >
-                Load Sample CSV
-              </button>
-
-              <button
-                type="button"
                 onClick={handleDownloadTemplate}
                 className="text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1"
               >
-                <Download className="w-3.5 h-3.5" /> Template
+                <Download className="w-3.5 h-3.5" /> Download CSV template
               </button>
             </div>
           </div>

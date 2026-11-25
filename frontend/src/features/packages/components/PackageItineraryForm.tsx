@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import {
   GripVertical,
   Trash2,
-  Wand2,
   MapPin,
   Plus,
   ArrowRight,
@@ -52,7 +51,6 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
 
   const [activeUrlDayId, setActiveUrlDayId] = useState<string | null>(null)
   const [photoUrlInput, setPhotoUrlInput] = useState('')
-  const [generatingAiDayId, setGeneratingAiDayId] = useState<string | null>(null)
 
   // Update a single day's field
   const handleUpdateDay = (dayId: string, field: keyof PackageItineraryDay, value: any) => {
@@ -126,78 +124,6 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
       .map((d, index) => ({ ...d, dayNumber: index + 1 }))
     setDays(remaining)
     toast({ title: 'Day removed', type: 'info' })
-  }
-
-  // AI Generation for a day
-  const handleAiGenerateDay = (day: PackageItineraryDay) => {
-    setGeneratingAiDayId(day.id)
-    const destination = activePackage?.destination || 'Destination'
-
-    setTimeout(() => {
-      let aiTitle = ''
-      let aiPlan = ''
-      let aiStay = ''
-      let aiActivities = ''
-      let aiMeals = 'Breakfast, Dinner'
-      let aiDistance = '45 Kms'
-      let aiNotes = 'Standard check-in time is 1:00 PM.'
-
-      if (day.dayNumber === 1) {
-        aiTitle = `Arrival in ${destination} & Leisure Sunset`
-        aiPlan = `Airport pickup by private chauffeur and welcome assistance.\nTransfer to hotel or resort; smooth check-in.\nAfternoon relaxation by the pool or beachfront.\nEvening scenic sunset orientation walk followed by a welcome dinner.`
-        aiStay = `${destination} Grand Resort`
-        aiActivities = 'Airport transfer, Sunset walk, Welcome dinner'
-        aiMeals = 'Dinner'
-        aiDistance = '25 Kms'
-      } else if (day.dayNumber === 2) {
-        aiTitle = `Cultural Highlights & Iconic Sightseeing`
-        aiPlan = `Breakfast at hotel.\nFull day guided excursion covering historic temples, viewpoints, and artisan craft markets.\nTraditional local lunch at a scenic panorama restaurant.\nEvening cultural performance and leisure time.`
-        aiStay = `${destination} Grand Resort`
-        aiActivities = 'Guided temple tour, Panoramic viewpoint, Cultural dance'
-        aiMeals = 'Breakfast, Lunch'
-        aiDistance = '65 Kms'
-        aiNotes = 'Modest clothing required for temple visits.'
-      } else if (day.dayNumber === 3) {
-        aiTitle = `Island Speedboat Adventure & Watersports`
-        aiPlan = `Early morning breakfast.\nDepart on high-speed catamaran cruise to outer islands.\nSnorkeling with marine life, swimming at white sand beaches, and cliff viewpoints.\nBarbecue lunch on the beach.\nReturn to mainland by late afternoon.`
-        aiStay = `${destination} Luxury Beachfront Villa`
-        aiActivities = 'Speedboat cruise, Snorkeling, Beach BBQ'
-        aiMeals = 'Breakfast, Lunch'
-        aiDistance = '80 Kms (boat)'
-        aiNotes = 'Carry swimwear, sunscreen, and dry bags.'
-      } else {
-        aiTitle = `Hidden Gems, Shopping & Farewell Dinner`
-        aiPlan = `Buffet breakfast with scenic mountain / ocean views.\nVisit local spices, tea, and handicraft souvenirs bazaar.\nOptional spa treatment and relaxation.\nGrand celebratory farewell dinner under the stars.`
-        aiStay = `${destination} Luxury Beachfront Villa`
-        aiActivities = 'Souvenir shopping, Spa wellness, Farewell dinner'
-        aiMeals = 'Breakfast, Dinner'
-        aiDistance = '30 Kms'
-        aiNotes = 'Pack luggage for departure next morning.'
-      }
-
-      setDays((prev) =>
-        prev.map((d) =>
-          d.id === day.id
-            ? {
-                ...d,
-                title: d.title || aiTitle,
-                dayPlan: d.dayPlan || aiPlan,
-                stay: d.stay || aiStay,
-                activities: d.activities || aiActivities,
-                meals: d.meals || aiMeals,
-                distance: d.distance || aiDistance,
-                notes: d.notes || aiNotes,
-              }
-            : d
-        )
-      )
-
-      setGeneratingAiDayId(null)
-      toast({
-        title: `AI generated plan for Day ${day.dayNumber}`,
-        type: 'success',
-      })
-    }, 700)
   }
 
   // Handle local photo upload
@@ -279,7 +205,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
             {/* Day Title Row matching screenshot 1 */}
             <div className="flex items-center gap-3">
               {/* Day Number Badge */}
-              <div className="w-8 h-8 rounded-full bg-[#453372] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                 {day.dayNumber}
               </div>
 
@@ -287,10 +213,10 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
               <div className="flex-1">
                 <input
                   type="text"
-                  placeholder={`Day ${day.dayNumber} title — e.g. Arrival & beach sunset`}
+                  placeholder={`Day ${day.dayNumber} title`}
                   value={day.title}
                   onChange={(e) => handleUpdateDay(day.id, 'title', e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200/90 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] bg-white transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200/90 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white transition-all"
                 />
               </div>
 
@@ -347,7 +273,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                       e.target.value = ''
                     }}
                     defaultValue=""
-                    className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#453372] border border-purple-200 cursor-pointer focus:outline-none transition-all shadow-2xs"
+                    className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-brand border border-purple-200 cursor-pointer focus:outline-none transition-all shadow-2xs"
                   >
                     <option value="" disabled>+ Add activity from Sightseeing library</option>
                     {sightseeingActivities.map((act) => (
@@ -359,16 +285,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={() => handleAiGenerateDay(day)}
-                disabled={generatingAiDayId === day.id}
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200/90 hover:bg-purple-50/50 hover:border-[#453372]/30 text-xs font-semibold text-slate-700 hover:text-[#453372] transition-all shadow-2xs shrink-0 active:scale-[0.98]"
-              >
-                <Wand2 className="w-3.5 h-3.5 text-[#453372]" />
-                <span>{generatingAiDayId === day.id ? 'Generating...' : 'Generate with AI'}</span>
-              </button>
-            </div>
+              </div>
 
             {/* Day Plan Textarea */}
             <div>
@@ -377,7 +294,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                 placeholder="Day plan — pickup time, transfers, what happens today... (one point per line)"
                 value={day.dayPlan}
                 onChange={(e) => handleUpdateDay(day.id, 'dayPlan', e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
               />
             </div>
 
@@ -385,7 +302,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-[#453372]" />
+                  <Building2 className="w-3.5 h-3.5 text-brand" />
                   <span>Accommodation & Stay</span>
                 </label>
                 {partnerHotels.length > 0 && (
@@ -397,7 +314,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                         e.target.value = ''
                       }
                     }}
-                    className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-[#453372] border border-purple-200 cursor-pointer focus:outline-none transition-all shadow-2xs"
+                    className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-brand border border-purple-200 cursor-pointer focus:outline-none transition-all shadow-2xs"
                   >
                     <option value="" disabled>🏨 Choose from Partner Hotels directory</option>
                     {partnerHotels.map((h) => (
@@ -414,7 +331,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                   <select
                     value={day.hotelType || 'No hotel / custom stay'}
                     onChange={(e) => handleUpdateDay(day.id, 'hotelType', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
                   >
                     <option value="No hotel / custom stay">No hotel / custom stay</option>
                     <option value="3-Star Deluxe Hotel">3-Star Deluxe Hotel</option>
@@ -429,10 +346,10 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                 <div>
                   <input
                     type="text"
-                    placeholder="Stay — e.g. The Grand Bali Resort, Ubud"
+
                     value={day.stay || ''}
                     onChange={(e) => handleUpdateDay(day.id, 'stay', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
                   />
                 </div>
               </div>
@@ -446,17 +363,17 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                   placeholder="Activities — rafting, bonfire, trek... (comma separated)"
                   value={day.activities || ''}
                   onChange={(e) => handleUpdateDay(day.id, 'activities', e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
                 />
               </div>
 
               <div>
                 <input
                   type="text"
-                  placeholder="Meals — e.g. Breakfast, Dinner"
+
                   value={day.meals || ''}
                   onChange={(e) => handleUpdateDay(day.id, 'meals', e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
                 />
               </div>
             </div>
@@ -466,20 +383,20 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
               <div className="sm:col-span-1">
                 <input
                   type="text"
-                  placeholder="Distance — e.g. 225 Kms"
+
                   value={day.distance || ''}
                   onChange={(e) => handleUpdateDay(day.id, 'distance', e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
                 />
               </div>
 
               <div className="sm:col-span-2">
                 <textarea
                   rows={2}
-                  placeholder="Notes for this day (one per line) — e.g. Standard check-in time is 1:00 PM"
+
                   value={day.notes || ''}
                   onChange={(e) => handleUpdateDay(day.id, 'notes', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
                 />
               </div>
             </div>
@@ -511,15 +428,15 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                   ))}
 
                 {/* Upload dashed square box matching screenshot */}
-                <div className="relative w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#453372]/50 hover:bg-purple-50/20 transition-all flex flex-col items-center justify-center cursor-pointer group/upload">
+                <div className="relative w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand/50 hover:bg-purple-50/20 transition-all flex flex-col items-center justify-center cursor-pointer group/upload">
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => handlePhotoUpload(e, day.id)}
                     className="absolute inset-0 opacity-0 cursor-pointer z-10"
                   />
-                  <ImageIcon className="w-5 h-5 text-slate-400 group-hover/upload:text-[#453372] transition-colors mb-1" />
-                  <span className="text-[11px] font-semibold text-slate-600 group-hover/upload:text-[#453372]">
+                  <ImageIcon className="w-5 h-5 text-slate-400 group-hover/upload:text-brand transition-colors mb-1" />
+                  <span className="text-[11px] font-semibold text-slate-600 group-hover/upload:text-brand">
                     Upload
                   </span>
                 </div>
@@ -529,7 +446,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                   <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
                     <input
                       type="url"
-                      placeholder="https://example.com/photo.jpg"
+
                       value={photoUrlInput}
                       onChange={(e) => setPhotoUrlInput(e.target.value)}
                       className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 w-48"
@@ -537,7 +454,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                     <button
                       type="button"
                       onClick={() => handleAddPhotoUrl(day.id)}
-                      className="px-2.5 py-1 text-xs font-semibold bg-[#453372] text-white rounded-lg"
+                      className="px-2.5 py-1 text-xs font-semibold bg-brand text-white rounded-lg"
                     >
                       Add
                     </button>
@@ -553,7 +470,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
                   <button
                     type="button"
                     onClick={() => setActiveUrlDayId(day.id)}
-                    className="text-[11px] text-slate-400 hover:text-[#453372] flex items-center gap-1 font-medium"
+                    className="text-[11px] text-slate-400 hover:text-brand flex items-center gap-1 font-medium"
                   >
                     <LinkIcon className="w-3 h-3" />
                     <span>paste URL</span>
@@ -570,7 +487,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
         <button
           type="button"
           onClick={handleAddDay}
-          className="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#453372]/60 hover:bg-purple-50/20 text-slate-600 hover:text-[#453372] font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
+          className="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand/60 hover:bg-purple-50/20 text-slate-600 hover:text-brand font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
         >
           <Plus className="w-4 h-4" />
           <span>Add day</span>
@@ -591,7 +508,7 @@ export const PackageItineraryForm: React.FC<PackageItineraryFormProps> = ({ onNe
         <button
           type="button"
           onClick={handleProceed}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
         >
           <span>Next: Logistics</span>
           <ArrowRight className="w-4 h-4" />

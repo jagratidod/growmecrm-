@@ -7,6 +7,7 @@ import {
   Trash2,
   Share2,
   ChevronRight,
+  Sparkles,
   PackageCheck,
 } from 'lucide-react'
 import { useItineraries } from '../../../context/ItinerariesContext'
@@ -73,7 +74,7 @@ export const ItinerariesTable: React.FC<ItinerariesTableProps> = ({ onOpenDetail
                   {/* Customer */}
                   <td className="py-4 px-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#453372] border border-purple-100 flex items-center justify-center font-bold text-xs shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-purple-50 text-brand border border-purple-100 flex items-center justify-center font-bold text-xs shrink-0">
                         {itn.customerName
                           .split(' ')
                           .map((n) => n[0])
@@ -82,7 +83,7 @@ export const ItinerariesTable: React.FC<ItinerariesTableProps> = ({ onOpenDetail
                           .toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-semibold text-slate-900 group-hover:text-[#453372] transition-colors">
+                        <div className="font-semibold text-slate-900 group-hover:text-brand transition-colors">
                           {itn.customerName}
                         </div>
                         <div className="text-xs text-slate-400 mt-0.5">
@@ -113,7 +114,7 @@ export const ItinerariesTable: React.FC<ItinerariesTableProps> = ({ onOpenDetail
                       <span>{itn.departure}</span>
                       {itn.returnDate && <span>→ {itn.returnDate}</span>}
                     </div>
-                    <div className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-[#453372] bg-purple-50 px-2 py-0.5 rounded-md w-fit">
+                    <div className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-brand bg-purple-50 px-2 py-0.5 rounded-md w-fit">
                       <Route className="w-3 h-3" />
                       <span>{dayCount} {dayCount === 1 ? 'Day Plan' : 'Days Plan'}</span>
                     </div>
@@ -156,10 +157,10 @@ export const ItinerariesTable: React.FC<ItinerariesTableProps> = ({ onOpenDetail
                     <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => onOpenDetails(itn)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#453372]/10 text-[#453372] hover:bg-[#453372] hover:text-white transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-brand/10 text-brand hover:bg-brand hover:text-white transition-colors"
                         title="Open Day-by-Day Plan"
                       >
-                        <Route className="w-3 h-3" />
+                        <Sparkles className="w-3 h-3" />
                         <span>Plan</span>
                       </button>
 
@@ -179,7 +180,7 @@ export const ItinerariesTable: React.FC<ItinerariesTableProps> = ({ onOpenDetail
                         <Trash2 className="w-4 h-4" />
                       </button>
 
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#453372] transition-colors ml-1" />
+                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-brand transition-colors ml-1" />
                     </div>
                   </td>
                 </tr>
@@ -222,7 +223,7 @@ export const ItinerariesTable: React.FC<ItinerariesTableProps> = ({ onOpenDetail
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
                   <span>{itn.departure}</span>
                 </div>
-                <div className="font-semibold text-[#453372]">
+                <div className="font-semibold text-brand">
                   {dayCount} {dayCount === 1 ? 'Day Plan' : 'Days'}
                 </div>
                 <div className="font-bold text-slate-900">
@@ -236,9 +237,9 @@ export const ItinerariesTable: React.FC<ItinerariesTableProps> = ({ onOpenDetail
                     e.stopPropagation()
                     onOpenDetails(itn)
                   }}
-                  className="text-xs font-semibold text-[#453372] flex items-center gap-1"
+                  className="text-xs font-semibold text-brand flex items-center gap-1"
                 >
-                  <Route className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   <span>Design Day-by-day</span>
                 </button>
 

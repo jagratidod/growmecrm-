@@ -1,3 +1,4 @@
+import { useTeam } from '../../../context/TeamContext'
 import React, { useState, useRef, useEffect } from 'react'
 import { Plus, Search, ChevronDown, Check } from 'lucide-react'
 import { useCallLog } from '../../../context/CallLogContext'
@@ -11,7 +12,8 @@ export const CallLogHeader: React.FC<CallLogHeaderProps> = ({ onOpenLogModal }) 
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const usersList = ['All users', 'Kushal Pareta', 'Priya Sharma', 'Rahul Verma']
+  const { members } = useTeam()
+  const usersList = ['All users', ...new Set(members.map(({ name }) => name))]
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -38,7 +40,7 @@ export const CallLogHeader: React.FC<CallLogHeaderProps> = ({ onOpenLogModal }) 
 
         <button
           onClick={onOpenLogModal}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-semibold text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Log a call</span>
@@ -75,12 +77,12 @@ export const CallLogHeader: React.FC<CallLogHeaderProps> = ({ onOpenLogModal }) 
                       }}
                       className={`w-full px-4 py-2 text-xs sm:text-sm text-left flex items-center justify-between transition-colors ${
                         isSelected
-                          ? 'bg-purple-50/60 text-[#453372] font-bold'
+                          ? 'bg-purple-50/60 text-brand font-bold'
                           : 'text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       <span>{u}</span>
-                      {isSelected && <Check className="w-4 h-4 text-[#453372]" />}
+                      {isSelected && <Check className="w-4 h-4 text-brand" />}
                     </button>
                   )
                 })}
@@ -99,7 +101,7 @@ export const CallLogHeader: React.FC<CallLogHeaderProps> = ({ onOpenLogModal }) 
               placeholder="Search leads by name or phone..."
               value={filters.searchLead}
               onChange={(e) => setSearchLead(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] shadow-2xs transition-all"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand shadow-2xs transition-all"
             />
           </div>
         </div>

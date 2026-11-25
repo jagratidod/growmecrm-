@@ -25,7 +25,7 @@ export const InviteTeammateModal: React.FC = () => {
     setCopied(false)
   }
 
-  const handleSubmitStep1 = (e: React.FormEvent) => {
+  const handleSubmitStep1 = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) {
       setError('Email is required')
@@ -36,7 +36,8 @@ export const InviteTeammateModal: React.FC = () => {
       return
     }
 
-    const invite = createInvite(email.trim(), role)
+    const invite = await createInvite(email.trim(), role)
+    if (!invite) return
     setCreatedInvite(invite)
     setStep(2)
   }
@@ -71,7 +72,7 @@ export const InviteTeammateModal: React.FC = () => {
         {/* Header */}
         <div className="p-6 pb-3 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#453372] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-purple-50 text-brand flex items-center justify-center shrink-0">
               <Mail className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
@@ -106,13 +107,13 @@ export const InviteTeammateModal: React.FC = () => {
               <input
                 type="email"
                 required
-                placeholder="teammate@agency.com"
+
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value)
                   if (error) setError('')
                 }}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
               {error && (
                 <p className="text-[11px] text-[#ff7675] mt-1 font-medium">{error}</p>
@@ -125,7 +126,7 @@ export const InviteTeammateModal: React.FC = () => {
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as TeamRole)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition cursor-pointer"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition cursor-pointer"
               >
                 <option value="Agent">Agent — works leads</option>
                 <option value="Admin">Admin — full access</option>
@@ -144,7 +145,7 @@ export const InviteTeammateModal: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#382760] text-white text-xs sm:text-sm font-semibold shadow-sm shadow-[#453372]/30 transition active:scale-[0.99]"
+                className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99]"
               >
                 Create invite
               </button>
@@ -156,7 +157,7 @@ export const InviteTeammateModal: React.FC = () => {
         {step === 2 && createdInvite && (
           <div className="p-6 pt-3 space-y-4">
             {/* Callout Notice Box */}
-            <div className="p-4 rounded-2xl bg-[#f3f4f8]/80 border border-slate-200/80 text-xs text-slate-600 leading-relaxed">
+            <div className="p-4 rounded-2xl bg-canvas/80 border border-slate-200/80 text-xs text-slate-600 leading-relaxed">
               Email delivery arrives in a later phase. For now, share this secure link with{' '}
               <strong className="text-slate-900 font-bold">{createdInvite.email}</strong> so they
               can set up their account.
@@ -180,7 +181,7 @@ export const InviteTeammateModal: React.FC = () => {
                   className={`p-2.5 rounded-xl border transition flex items-center justify-center shrink-0 ${
                     copied
                       ? 'border-[#22c55e] bg-emerald-50 text-[#22c55e]'
-                      : 'border-[#453372] text-[#453372] hover:bg-purple-50'
+                      : 'border-brand text-brand hover:bg-purple-50'
                   }`}
                   title="Copy link"
                 >
@@ -201,7 +202,7 @@ export const InviteTeammateModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#382760] text-white text-xs sm:text-sm font-semibold shadow-sm shadow-[#453372]/30 transition active:scale-[0.99]"
+                className="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99]"
               >
                 Done
               </button>

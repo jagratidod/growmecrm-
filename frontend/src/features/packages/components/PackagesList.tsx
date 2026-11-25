@@ -6,6 +6,7 @@ import {
   MapPin,
   Edit3,
   Trash2,
+  Sparkles,
 } from 'lucide-react'
 import { usePackages } from '../../../context/PackagesContext'
 import { useToast } from '../../../components/ui/Toast'
@@ -54,8 +55,9 @@ export const PackagesList: React.FC = () => {
 
         <button
           onClick={startNewPackage}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-sm shadow-sm hover:shadow transition-all active:scale-[0.98] shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-semibold text-sm shadow-sm hover:shadow transition-all active:scale-[0.98] shrink-0"
         >
+          <Sparkles className="w-4 h-4 text-purple-200" />
           <Plus className="w-4 h-4" />
           <span>New package</span>
         </button>
@@ -70,7 +72,7 @@ export const PackagesList: React.FC = () => {
             placeholder="Search package name, destination, category..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] shadow-2xs"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand shadow-2xs"
           />
         </div>
 
@@ -81,7 +83,7 @@ export const PackagesList: React.FC = () => {
               onClick={() => setStatusFilter(st)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 statusFilter === st
-                  ? 'bg-[#453372] text-white'
+                  ? 'bg-brand text-white'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -101,7 +103,7 @@ export const PackagesList: React.FC = () => {
           </p>
           <button
             onClick={startNewPackage}
-            className="px-4 py-2 rounded-xl bg-[#453372] text-white text-xs font-semibold"
+            className="px-4 py-2 rounded-xl bg-brand text-white text-xs font-semibold"
           >
             + Create New Package
           </button>
@@ -112,7 +114,7 @@ export const PackagesList: React.FC = () => {
             <div
               key={pkg.id}
               onClick={() => editPackage(pkg)}
-              className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#453372]/30 transition-all cursor-pointer overflow-hidden flex flex-col group"
+              className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand/30 transition-all cursor-pointer overflow-hidden flex flex-col group"
             >
               {/* Card Banner Image */}
               <div className="relative h-44 bg-slate-100 overflow-hidden">
@@ -123,7 +125,7 @@ export const PackagesList: React.FC = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-indigo-50 text-[#453372]">
+                  <div className="w-full h-full flex items-center justify-center bg-canvas text-copy-muted">
                     <PackageIcon className="w-12 h-12 stroke-[1.5]" />
                   </div>
                 )}
@@ -138,7 +140,7 @@ export const PackagesList: React.FC = () => {
                   >
                     {pkg.status}
                   </span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/90 text-[#453372] shadow-2xs">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/90 text-brand shadow-2xs">
                     {pkg.brochureDesign} design
                   </span>
                 </div>
@@ -156,7 +158,7 @@ export const PackagesList: React.FC = () => {
                     <span className="truncate">{pkg.destination}</span>
                   </div>
 
-                  <h3 className="font-bold text-slate-900 text-base group-hover:text-[#453372] transition-colors line-clamp-1">
+                  <h3 className="font-bold text-slate-900 text-base group-hover:text-brand transition-colors line-clamp-1">
                     {pkg.name}
                   </h3>
 
@@ -205,7 +207,7 @@ export const PackagesList: React.FC = () => {
                   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => editPackage(pkg)}
-                      className="p-2 text-slate-500 hover:text-[#453372] hover:bg-purple-50 rounded-lg transition-colors"
+                      className="p-2 text-slate-500 hover:text-brand hover:bg-purple-50 rounded-lg transition-colors"
                       title="Edit Package"
                     >
                       <Edit3 className="w-4 h-4" />

@@ -113,7 +113,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
   // Room type handlers
   const handleAddRoomType = () => {
     if (!newRoomName.trim()) {
-      toast({ title: 'Enter room category name (e.g. Deluxe Suite)', type: 'error' })
+      toast({ title: 'Enter a room category name', type: 'error' })
       return
     }
     const price = Number(newRoomPrice) || pricePerNight || 0
@@ -229,7 +229,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
 
               {/* Upload Box */}
               {photos.length < 8 && (
-                <div className="relative w-24 h-24 rounded-2xl border-2 border-dashed border-[#453372]/40 bg-purple-50/15 hover:bg-purple-50/30 transition-all flex flex-col items-center justify-center cursor-pointer group">
+                <div className="relative w-24 h-24 rounded-2xl border-2 border-dashed border-brand/40 bg-purple-50/15 hover:bg-purple-50/30 transition-all flex flex-col items-center justify-center cursor-pointer group">
                   <input
                     type="file"
                     accept="image/*"
@@ -239,13 +239,13 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                   />
                   {isUploadingPhoto ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-[#453372] border-t-transparent rounded-full animate-spin mb-1" />
-                      <span className="text-[10px] font-bold text-[#453372]">Saving...</span>
+                      <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin mb-1" />
+                      <span className="text-[10px] font-bold text-brand">Saving...</span>
                     </>
                   ) : (
                     <>
-                      <ImageIcon className="w-5 h-5 text-[#453372] transition-transform group-hover:scale-110 mb-1" />
-                      <span className="text-[11px] font-bold text-[#453372]">Upload</span>
+                      <ImageIcon className="w-5 h-5 text-brand transition-transform group-hover:scale-110 mb-1" />
+                      <span className="text-[11px] font-bold text-brand">Upload</span>
                     </>
                   )}
                 </div>
@@ -256,7 +256,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                 <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
                   <input
                     type="url"
-                    placeholder="https://example.com/hotel.jpg"
+
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
                     className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 w-44"
@@ -264,7 +264,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                   <button
                     type="button"
                     onClick={handleAddUrl}
-                    className="px-2.5 py-1 text-xs font-semibold bg-[#453372] text-white rounded-lg"
+                    className="px-2.5 py-1 text-xs font-semibold bg-brand text-white rounded-lg"
                   >
                     Add
                   </button>
@@ -281,7 +281,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowUrlInput(true)}
-                    className="text-[11px] text-slate-500 hover:text-[#453372] flex items-center gap-1 font-medium ml-1"
+                    className="text-[11px] text-slate-500 hover:text-brand flex items-center gap-1 font-medium ml-1"
                   >
                     <LinkIcon className="w-3 h-3" />
                     <span>paste URL</span>
@@ -303,10 +303,10 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
               <input
                 type="text"
                 required
-                placeholder="The Grand Bali Resort"
+
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
 
@@ -320,7 +320,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                 placeholder="Ubud"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
           </div>
@@ -333,7 +333,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
               placeholder="Street, area..."
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
             />
           </div>
 
@@ -348,7 +348,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                 placeholder="3"
                 value={stars}
                 onChange={(e) => setStars(parseInt(e.target.value) || 3)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all text-center"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-center"
               />
             </div>
 
@@ -360,7 +360,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                 placeholder="0"
                 value={pricePerNight || ''}
                 onChange={(e) => setPricePerNight(parseFloat(e.target.value) || 0)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
 
@@ -369,7 +369,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               >
                 <option value="INR">INR (₹)</option>
                 <option value="USD">USD ($)</option>
@@ -380,7 +380,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1">
-                <Percent className="w-3 h-3 text-[#453372]" />
+                <Percent className="w-3 h-3 text-brand" />
                 <span>Agency Comm. %</span>
               </label>
               <input
@@ -390,7 +390,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                 placeholder="10"
                 value={commissionRate}
                 onChange={(e) => setCommissionRate(parseFloat(e.target.value) || 0)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all text-center"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-center"
               />
             </div>
           </div>
@@ -401,10 +401,10 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
               <label className="block text-xs font-bold text-slate-800 mb-1.5">Phone</label>
               <input
                 type="tel"
-                placeholder="+91-XXXX-XXXX"
+
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
 
@@ -415,7 +415,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                 placeholder="reservations@hotel.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
           </div>
@@ -423,7 +423,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
           {/* Room Categories & Tiers Section */}
           <div className="p-4 rounded-xl bg-purple-50/40 border border-purple-100/80 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#453372] flex items-center gap-1.5 uppercase tracking-wider">
+              <label className="text-xs font-bold text-brand flex items-center gap-1.5 uppercase tracking-wider">
                 <BedDouble className="w-4 h-4" />
                 <span>Room Categories & Contract Tiers</span>
               </label>
@@ -441,7 +441,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
                     <div>
                       <strong className="text-slate-800 font-semibold">{room.name}</strong>
                       <span className="text-slate-400 mx-1.5">•</span>
-                      <span className="text-[#453372] font-bold">
+                      <span className="text-brand font-bold">
                         ₹{room.pricePerNight?.toLocaleString('en-IN')} / night
                       </span>
                       {room.inclusions && (
@@ -465,30 +465,30 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
               <input
                 type="text"
-                placeholder="Tier e.g. Pool Villa"
+
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
-                className="px-3 py-1.5 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-[#453372]"
+                className="px-3 py-1.5 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-brand"
               />
               <input
                 type="number"
                 placeholder="Rate / night"
                 value={newRoomPrice}
                 onChange={(e) => setNewRoomPrice(e.target.value ? parseFloat(e.target.value) : '')}
-                className="px-3 py-1.5 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-[#453372]"
+                className="px-3 py-1.5 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-brand"
               />
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Inclusions e.g. Breakfast"
+
                   value={newRoomInclusions}
                   onChange={(e) => setNewRoomInclusions(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-[#453372]"
+                  className="w-full px-3 py-1.5 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:border-brand"
                 />
                 <button
                   type="button"
                   onClick={handleAddRoomType}
-                  className="px-3 py-1.5 bg-[#453372] text-white rounded-lg text-xs font-semibold shrink-0 hover:bg-[#38275d] flex items-center gap-1 shadow-2xs"
+                  className="px-3 py-1.5 bg-brand text-white rounded-lg text-xs font-semibold shrink-0 hover:bg-brand-hover flex items-center gap-1 shadow-2xs"
                 >
                   <Plus className="w-3 h-3" />
                   <span>Add</span>
@@ -505,7 +505,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
               placeholder="Contract rates, sales manager direct line, seasonal discount terms..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all resize-none"
             />
           </div>
 
@@ -521,7 +521,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-sm font-semibold shadow-xs hover:shadow transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-xs hover:shadow transition-all disabled:opacity-50"
             >
               <Building2 className="w-4 h-4 text-purple-200" />
               <span>{isSubmitting ? 'Saving...' : hotelToEdit ? 'Save changes' : 'Add hotel'}</span>

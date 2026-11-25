@@ -27,8 +27,8 @@ export const BookingsTable: React.FC = () => {
     },
     Ongoing: {
       bg: 'bg-purple-50 border-purple-200',
-      text: 'text-[#453372]',
-      dot: 'bg-[#453372]',
+      text: 'text-brand',
+      dot: 'bg-brand',
     },
     Completed: {
       bg: 'bg-emerald-50 border-emerald-200',
@@ -57,7 +57,7 @@ export const BookingsTable: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-700 border-collapse">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-[#f3f4f8] text-[#453372] font-bold uppercase tracking-wider text-[11px]">
+            <tr className="border-b border-slate-200/80 bg-canvas text-brand font-bold uppercase tracking-wider text-[11px]">
               <th className="py-3 px-4">Customer</th>
               <th className="py-3 px-4">Destination & Package</th>
               <th className="py-3 px-4">Dates</th>
@@ -85,11 +85,11 @@ export const BookingsTable: React.FC = () => {
                   {/* Customer Column */}
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#453372]/10 text-[#453372] font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                      <div className="w-9 h-9 rounded-full bg-brand/10 text-brand font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
                         {booking.customerName.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <span className="font-bold text-slate-800 block truncate group-hover:text-[#453372] transition-colors">
+                        <span className="font-bold text-slate-800 block truncate group-hover:text-brand transition-colors">
                           {booking.customerName}
                         </span>
                         <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
@@ -126,7 +126,7 @@ export const BookingsTable: React.FC = () => {
                   {/* Travel Dates Column */}
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-                      <Calendar className="w-3.5 h-3.5 text-[#453372] shrink-0" />
+                      <Calendar className="w-3.5 h-3.5 text-brand shrink-0" />
                       <span>{formatDate(booking.departure)}</span>
                     </div>
                     {booking.returnDate && (
@@ -162,7 +162,7 @@ export const BookingsTable: React.FC = () => {
                             ? 'bg-[#22c55e]'
                             : percentPaid > 50
                             ? 'bg-[#ffb800]'
-                            : 'bg-[#453372]'
+                            : 'bg-brand'
                         }`}
                         style={{ width: `${percentPaid}%` }}
                       />
@@ -199,7 +199,7 @@ export const BookingsTable: React.FC = () => {
                         type="button"
                         onClick={() => setSelectedBooking(booking)}
                         title="View Booking Details"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-[#453372] hover:bg-purple-50 transition"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-brand hover:bg-purple-50 transition"
                       >
                         <Eye className="w-4 h-4" />
                       </button>

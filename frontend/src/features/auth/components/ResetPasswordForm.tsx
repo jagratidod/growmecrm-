@@ -222,7 +222,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
           variant="primary"
           size="lg"
           fullWidth
-          className="bg-[#453372] hover:bg-[#382760] py-3.5 text-sm font-semibold rounded-xl tracking-wide shadow-md shadow-[#453372]/20"
+          className="bg-brand hover:bg-brand-hover py-3.5 text-sm font-semibold rounded-xl tracking-wide shadow-md shadow-brand/20"
         >
           Sign in to CRM
         </Button>
@@ -236,7 +236,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
       <button
         type="button"
         onClick={onNavigateLogin}
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#453372] transition-colors mb-6 focus:outline-none group"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-brand transition-colors mb-6 focus:outline-none group"
       >
         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
         Back to Sign in
@@ -282,7 +282,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
               size="lg"
               fullWidth
               isLoading={isLoading}
-              className="bg-[#453372] hover:bg-[#382760] py-3.5 text-sm font-semibold rounded-xl tracking-wide shadow-md shadow-[#453372]/20 active:scale-[0.99]"
+              className="bg-brand hover:bg-brand-hover py-3.5 text-sm font-semibold rounded-xl tracking-wide shadow-md shadow-brand/20 active:scale-[0.99]"
             >
               Send Verification Code
             </Button>
@@ -290,7 +290,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
 
           <div className="pt-3 text-center">
             <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-[#453372]" />
+              <ShieldCheck className="w-4 h-4 text-brand" />
               Secured with Gmail SMTP & Instant OTP Delivery
             </p>
           </div>
@@ -319,7 +319,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
                   className={`w-11 sm:w-12 h-12 text-center text-lg font-bold rounded-xl bg-[#f3f4f6] text-slate-800 transition-all border ${
                     errors.otp
                       ? 'border-red-400 ring-2 ring-red-100 bg-red-50/20'
-                      : 'border-transparent focus:border-[#453372] focus:bg-white focus:ring-2 focus:ring-[#453372]/20'
+                      : 'border-transparent focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20'
                   } focus:outline-none`}
                 />
               ))}
@@ -340,7 +340,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
                 onClick={() => handleRequestOtp()}
                 className={`text-xs font-semibold flex items-center gap-1 transition-colors ${
                   canResend && !isLoading
-                    ? 'text-[#453372] hover:underline cursor-pointer'
+                    ? 'text-brand hover:underline cursor-pointer'
                     : 'text-slate-400 cursor-not-allowed'
                 }`}
               >
@@ -412,7 +412,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
               size="lg"
               fullWidth
               isLoading={isLoading}
-              className="bg-[#453372] hover:bg-[#382760] py-3.5 text-sm font-semibold rounded-xl tracking-wide shadow-md shadow-[#453372]/20 active:scale-[0.99]"
+              className="bg-brand hover:bg-brand-hover py-3.5 text-sm font-semibold rounded-xl tracking-wide shadow-md shadow-brand/20 active:scale-[0.99]"
             >
               Reset Password
             </Button>

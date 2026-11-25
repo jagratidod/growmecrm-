@@ -18,7 +18,7 @@ export const CalendarHeader: React.FC = () => {
 
       <button
         onClick={() => setIsAddEventModalOpen(true)}
-        className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-xs sm:text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0 cursor-pointer"
+        className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-semibold text-xs sm:text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0 cursor-pointer"
       >
         <Plus className="w-4 h-4" />
         <span>Add event</span>

@@ -21,7 +21,7 @@ export const TemperatureChips: React.FC = () => {
               onClick={() => updateFilter('temperature', chip)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                 isSelected
-                  ? 'bg-[#453372] text-white shadow-xs font-semibold'
+                  ? 'bg-brand text-white shadow-xs font-semibold'
                   : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >

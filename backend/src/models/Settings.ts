@@ -71,20 +71,18 @@ const SettingsSchema = new Schema<ISettings>(
       whatsappConnected: { type: Boolean, default: false },
       instagramConnected: { type: Boolean, default: false },
       emailConnected: { type: Boolean, default: false },
-      emailFromAddress: { type: String, default: 'bookings@youragency.com' },
-      emailApiKey: { type: String, default: 're_xxxxxxxxxxxx' },
+      emailFromAddress: { type: String, default: '' },
+      emailApiKey: { type: String, default: '' },
     },
     aiAgent: {
-      tone: { type: String, default: 'Friendly, warm and professional' },
+      tone: { type: String, default: '' },
       systemPrompt: {
         type: String,
-        default:
-          'You are the assistant for Wander & Co. Travel — always mention our 24/7 support line if asked about emergencies...',
+        default: '',
       },
       keyFacts: {
         type: String,
-        default:
-          'We specialise in Kashmir, Ladakh and Himachal packages. Payment: 30% advance, balance before departure.',
+        default: '',
       },
     },
     automation: {
@@ -92,8 +90,7 @@ const SettingsSchema = new Schema<ISettings>(
       nudgeAfterHours: { type: Number, default: 48 },
       nudgeMessage: {
         type: String,
-        default:
-          'Just checking in — happy to help if you still have questions about your trip! Let us know.',
+        default: '',
       },
       logs: [AutomationLogSchema],
     },

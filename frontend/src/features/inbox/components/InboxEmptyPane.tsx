@@ -1,12 +1,10 @@
 import React from 'react'
-import { MessageCircle, Send, Plus, Zap } from 'lucide-react'
+import { MessageCircle, Send, Plus } from 'lucide-react'
 import { useInbox } from '../../../context/InboxContext'
 
 export const InboxEmptyPane: React.FC = () => {
-  const { activeChannel, setIsNewChatModalOpen, loadDemoConversations, conversations } =
+  const { activeChannel, setIsNewChatModalOpen } =
     useInbox()
-
-  const channelConversations = conversations.filter((c) => c.channel === activeChannel)
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white">
@@ -22,8 +20,7 @@ export const InboxEmptyPane: React.FC = () => {
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-500 max-w-md mt-2 mb-6 leading-relaxed">
-            Pick a chat to reply. Messages go out from your connected WhatsApp Business number — the
-            bot, quick replies and AI suggestions work right here.
+            Select a conversation to view messages.
           </p>
 
           <div className="flex items-center gap-3">
@@ -35,17 +32,6 @@ export const InboxEmptyPane: React.FC = () => {
               <Plus className="w-4 h-4" />
               <span>Start new WhatsApp chat</span>
             </button>
-
-            {channelConversations.length === 0 && (
-              <button
-                type="button"
-                onClick={loadDemoConversations}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-all cursor-pointer"
-              >
-                <Zap className="w-4 h-4 text-amber-500" />
-                <span>Load demo conversations</span>
-              </button>
-            )}
           </div>
         </>
       ) : (
@@ -60,7 +46,7 @@ export const InboxEmptyPane: React.FC = () => {
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-500 max-w-sm mt-2 mb-6 leading-relaxed">
-            Pick a chat to reply to your Instagram DMs.
+            Select a conversation to view messages.
           </p>
 
           <div className="flex items-center gap-3">
@@ -72,17 +58,6 @@ export const InboxEmptyPane: React.FC = () => {
               <Plus className="w-4 h-4" />
               <span>Send Instagram message</span>
             </button>
-
-            {channelConversations.length === 0 && (
-              <button
-                type="button"
-                onClick={loadDemoConversations}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-all cursor-pointer"
-              >
-                <Zap className="w-4 h-4 text-amber-500" />
-                <span>Load demo conversations</span>
-              </button>
-            )}
           </div>
         </>
       )}

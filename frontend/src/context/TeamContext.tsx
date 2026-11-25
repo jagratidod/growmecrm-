@@ -1,185 +1,59 @@
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react'
-import type { TeamMember, PendingInvite, TeamStats, TeamRole } from '../types/team.types'
+import { createContext, useContext, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useToast } from '../components/ui/Toast'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
+import { teamService } from '../services/teamService'
+import type { TeamApiResponse } from '../services/teamService'
+import type { PendingInvite, TeamRole } from '../types/team.types'
 
-interface TeamContextType {
-  members: TeamMember[]
-  pendingInvites: PendingInvite[]
-  stats: TeamStats
+interface TeamContextType extends TeamApiResponse {
   isInviteModalOpen: boolean
   setIsInviteModalOpen: (open: boolean) => void
-  createInvite: (email: string, role: TeamRole) => PendingInvite
-  revokeInvite: (inviteId: string) => void
-  deleteMember: (memberId: string) => void
-  updateMemberRole: (memberId: string, newRole: TeamRole) => void
-  loadDemoData: () => void
-  clearAllTeam: () => void
+  createInvite: (email: string, role: TeamRole) => Promise<PendingInvite | undefined>
+  revokeInvite: (id: string) => void
+  deleteMember: (id: string) => void
+  updateMemberRole: (id: string, role: TeamRole) => void
 }
-
-const STORAGE_MEMBERS_KEY = 'treki_crm_team_members_data'
-const STORAGE_INVITES_KEY = 'treki_crm_team_invites_data'
-
-const DEFAULT_MEMBERS: TeamMember[] = [
-  {
-    id: 'tm-1',
-    name: 'Workspace Admin',
-    email: 'admin@growmecrm.com',
-    role: 'Admin',
-    status: 'Active',
-    lastActive: 'Just now',
-    isCurrentUser: true,
-  },
-  {
-    id: 'tm-2',
-    name: 'Sales Executive',
-    email: 'sales@growmecrm.com',
-    role: 'Agent',
-    status: 'Active',
-    lastActive: '3 hours ago',
-  },
-]
-
-const DEFAULT_INVITES: PendingInvite[] = [
-  {
-    id: 'inv-1',
-    email: 'dodjagrati@gmail.com',
-    role: 'Agent',
-    token: 'VZxV0nAje82mK91pQ',
-    inviteLink: 'https://joinetra.com/accept-invite?token=VZxV0nAje82mK91pQ',
-    expiresAt: '26 Nov 2026',
-    invitedAt: new Date().toISOString(),
-    status: 'Invited',
-  },
-]
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined)
+const empty: TeamApiResponse = { members: [], pendingInvites: [], stats: { members: 0, admins: 0, pendingInvites: 0 } }
 
-export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [members, setMembers] = useState<TeamMember[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_MEMBERS_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch {
-      // ignore
-    }
-    return DEFAULT_MEMBERS
-  })
-
-  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_INVITES_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch {
-      // ignore
-    }
-    return DEFAULT_INVITES
-  })
-
+export function TeamProvider({ children }: { children: ReactNode }) {
+  const [team, setTeam] = useState(empty)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
-
-  // Sync to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_MEMBERS_KEY, JSON.stringify(members))
-    } catch {
-      // ignore
-    }
-  }, [members])
+  const { toast } = useToast()
+  const { access } = useWorkspace()
+  const enabled = access?.modules.includes('team')
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_INVITES_KEY, JSON.stringify(pendingInvites))
-    } catch {
-      // ignore
-    }
-  }, [pendingInvites])
-
-  // Dynamic stats calculation matching Screenshot 2
-  const stats = useMemo<TeamStats>(() => {
-    const adminCount = members.filter((m) => m.role === 'Admin').length
-    return {
-      members: members.length,
-      admins: adminCount,
-      pendingInvites: pendingInvites.length,
-    }
-  }, [members, pendingInvites])
-
-  const createInvite = (email: string, role: TeamRole): PendingInvite => {
-    // Generate secure randomized token
-    const token = 'VZxV' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36)
-    const inviteLink = `https://joinetra.com/accept-invite?token=${token}`
-
-    // Calculate expiry date (7 days from now)
-    const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-    const formattedExpiry = expiry.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-
-    const newInvite: PendingInvite = {
-      id: 'inv-' + Date.now(),
-      email: email.trim(),
-      role,
-      token,
-      inviteLink,
-      expiresAt: formattedExpiry,
-      invitedAt: new Date().toISOString(),
-      status: 'Invited',
-    }
-
-    setPendingInvites((prev) => [newInvite, ...prev])
-    return newInvite
-  }
-
-  const revokeInvite = (inviteId: string) => {
-    setPendingInvites((prev) => prev.filter((inv) => inv.id !== inviteId))
-  }
-
-  const deleteMember = (memberId: string) => {
-    setMembers((prev) => prev.filter((m) => m.id !== memberId))
-  }
-
-  const updateMemberRole = (memberId: string, newRole: TeamRole) => {
-    setMembers((prev) =>
-      prev.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
+    if (!enabled) return
+    let active = true
+    teamService.getTeam().then(
+      (value) => { if (active) setTeam(value) },
+      (error: Error) => { if (active) toast({ type: 'error', title: 'Could not load team', description: error.message }) },
     )
-  }
+    return () => { active = false }
+  }, [enabled, toast])
 
-  const loadDemoData = () => {
-    setMembers(DEFAULT_MEMBERS)
-    setPendingInvites(DEFAULT_INVITES)
+  async function update<T>(operation: () => Promise<T>): Promise<T | undefined> {
+    try {
+      const value = await operation()
+      setTeam(await teamService.getTeam())
+      return value
+    } catch (error) {
+      toast({ type: 'error', title: 'Team update failed', description: (error as Error).message })
+    }
   }
-
-  const clearAllTeam = () => {
-    setMembers(DEFAULT_MEMBERS.slice(0, 1)) // keep current user
-    setPendingInvites([])
-  }
-
-  return (
-    <TeamContext.Provider
-      value={{
-        members,
-        pendingInvites,
-        stats,
-        isInviteModalOpen,
-        setIsInviteModalOpen,
-        createInvite,
-        revokeInvite,
-        deleteMember,
-        updateMemberRole,
-        loadDemoData,
-        clearAllTeam,
-      }}
-    >
-      {children}
-    </TeamContext.Provider>
-  )
+  return <TeamContext.Provider value={{ ...team, isInviteModalOpen, setIsInviteModalOpen,
+    createInvite: (email, role) => update(() => teamService.createInvite(email, role)),
+    revokeInvite: (id) => { void update(() => teamService.revokeInvite(id)) },
+    deleteMember: (id) => { void update(() => teamService.deleteMember(id)) },
+    updateMemberRole: (id, role) => { void update(() => teamService.updateMemberRole(id, role)) },
+  }}>{children}</TeamContext.Provider>
 }
 
-export const useTeam = (): TeamContextType => {
-  const context = useContext(TeamContext)
-  if (!context) {
-    throw new Error('useTeam must be used within a TeamProvider')
-  }
-  return context
+export function useTeam() {
+  const team = useContext(TeamContext)
+  if (!team) throw new Error('useTeam must be used within a TeamProvider')
+  return team
 }

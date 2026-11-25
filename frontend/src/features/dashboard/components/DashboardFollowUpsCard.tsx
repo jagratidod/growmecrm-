@@ -27,7 +27,7 @@ export const DashboardFollowUpsCard: React.FC<DashboardFollowUpsCardProps> = ({
             Follow-ups due
           </h3>
           {(followUpsData?.dueTodayCount ?? 0) > 0 && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-[#453372]">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-brand">
               {followUpsData?.dueTodayCount} today
             </span>
           )}
@@ -39,7 +39,7 @@ export const DashboardFollowUpsCard: React.FC<DashboardFollowUpsCardProps> = ({
         </div>
         <button
           onClick={onViewAll}
-          className="text-xs font-semibold text-[#453372] hover:text-[#322353] transition-colors cursor-pointer hover:underline"
+          className="text-xs font-semibold text-brand hover:text-brand-hover transition-colors cursor-pointer hover:underline"
         >
           View all
         </button>
@@ -88,7 +88,7 @@ export const DashboardFollowUpsCard: React.FC<DashboardFollowUpsCardProps> = ({
                 </a>
                 <a
                   href={`tel:${item.phone}`}
-                  className="p-1.5 rounded-lg bg-purple-50 text-[#453372] hover:bg-purple-100 transition"
+                  className="p-1.5 rounded-lg bg-purple-50 text-brand hover:bg-purple-100 transition"
                   title="Call"
                 >
                   <Phone className="w-3.5 h-3.5" />

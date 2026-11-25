@@ -105,15 +105,4 @@ export const botFlowsService = {
     });
   },
 
-  // 7. Test / simulate trigger
-  async testBotFlow(
-    id: string
-  ): Promise<{ message: string; flowName: string; sampleResponse: string }> {
-    return request<{ message: string; flowName: string; sampleResponse: string }>(
-      `/bot-flows/${id}/test`,
-      {
-        method: 'POST',
-      }
-    );
-  },
 };

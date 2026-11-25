@@ -1,7 +1,11 @@
-import express from 'express';
+import 'dotenv/config';
+import express, { ErrorRequestHandler } from 'express';
+import { authenticate } from './middleware/authMiddleware';
+import { Module, requireModule } from './platform/access';
+import { platformAdmin, workspaceRouter, publicWebsites } from './platform/routes';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { connectDB } from './config/db';
+import { seedDefaultUsers } from './config/seedDefaults';
 import authRoutes from './routes/authRoutes';
 import leadRoutes from './routes/leadRoutes';
 import packageRoutes from './routes/packageRoutes';
@@ -27,7 +31,7 @@ import webhookRoutes from './routes/webhookRoutes';
 import superAdminRoutes from './routes/superAdminRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 
-dotenv.config();
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -48,42 +52,43 @@ app.use(
       // Check explicit allowed origins or any vercel.app deployment preview
       const isAllowed =
         allowedOrigins.includes(origin) ||
-        origin.endsWith('.vercel.app') ||
-        origin.includes('localhost');
+        origin.endsWith('.vercel.app');
 
-      if (isAllowed) {
-        callback(null, true);
-      } else {
-        // Fallback: allow to prevent production blockages
-        callback(null, true);
-      }
+      callback(null, isAllowed);
     },
     credentials: true,
   })
 );
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '50mb', verify: (req, _res, buffer) => {
+  if (req.url?.startsWith('/api/webhooks/')) (req as typeof req & { rawBody?: Buffer }).rawBody = buffer;
+} }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+const gate = (name: Module) => [authenticate, requireModule(name)];
+app.use('/api/platform', platformAdmin);
+app.use('/api/workspace', workspaceRouter);
+app.use('/api/public/websites', cors({ origin: '*' }), publicWebsites);
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/leads', leadRoutes);
+app.use('/api/leads', ...gate('leads'), leadRoutes);
 app.use('/api/packages', packageRoutes);
-app.use('/api/team', teamRoutes);
+app.use('/api/team', ...gate('team'), teamRoutes);
 app.use('/api/organization', organizationRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/hotels', hotelRoutes);
-app.use('/api/follow-ups', followUpRoutes);
-app.use('/api/sightseeing', sightseeingRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/bookings', ...gate('bookings'), bookingRoutes);
+app.use('/api/hotels', ...gate('catalog'), hotelRoutes);
+app.use('/api/follow-ups', ...gate('leads'), followUpRoutes);
+app.use('/api/sightseeing', ...gate('catalog'), sightseeingRoutes);
+app.use('/api/dashboard', authenticate, requireModule('leads', 'bookings', 'team'), dashboardRoutes);
 app.use('/api/host-page', hostPageRoutes);
-app.use('/api/bot-flows', botFlowRoutes);
-app.use('/api/bills', billRoutes);
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/call-logs', callLogRoutes);
-app.use('/api/calendar/events', calendarRoutes);
-app.use('/api/itineraries', itineraryRoutes);
-app.use('/api/inbox', inboxRoutes);
-app.use('/api/campaigns', campaignRoutes);
+app.use('/api/bot-flows', ...gate('communications'), botFlowRoutes);
+app.use('/api/bills', ...gate('finance'), billRoutes);
+app.use('/api/invoices', ...gate('finance'), invoiceRoutes);
+app.use('/api/call-logs', ...gate('communications'), callLogRoutes);
+app.use('/api/calendar/events', ...gate('calendar'), calendarRoutes);
+app.use('/api/itineraries', ...gate('catalog'), itineraryRoutes);
+app.use('/api/inbox', ...gate('communications'), inboxRoutes);
+app.use('/api/campaigns', ...gate('communications'), campaignRoutes);
 app.use('/api/linktree', linkTreeRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/webhooks', webhookRoutes);
@@ -95,9 +100,27 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'GrowMe CRM Multi-Tenant API' });
 });
 
+const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
+  if (res.headersSent) return next(error);
+  const knownStatus = error?.status;
+  if (knownStatus === 400 || error?.name === 'CastError') {
+    res.status(400).json({ error: 'Invalid request.' });
+  } else if (error?.code === 11000) {
+    res.status(409).json({ error: 'A record with this value already exists.' });
+  } else if (error?.code === 'LIMIT_FILE_SIZE') {
+    res.status(413).json({ error: 'Choose an image under 8 MB.' });
+  } else {
+    console.error('[GrowMe API]', error?.name || 'Error');
+    res.status(500).json({ error: 'GrowMe could not complete the request.' });
+  }
+};
+app.use(errorHandler);
+
 // Start Server and Connect Database
 const start = async () => {
+  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
   await connectDB();
+  await seedDefaultUsers();
   app.listen(PORT, () => {
     console.log(`[GrowMe CRM Backend] Server running at http://localhost:${PORT}`);
   });

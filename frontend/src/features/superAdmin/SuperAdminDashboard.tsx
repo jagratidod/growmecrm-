@@ -8,7 +8,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   Clock,
-  Crown,
+  Sparkles,
   RefreshCw,
 } from 'lucide-react';
 import { SuperAdminLayout } from './SuperAdminLayout';
@@ -61,18 +61,18 @@ export const SuperAdminDashboard: React.FC = () => {
       subtitle="Real-time multi-tenant health, global subscriptions, and platform metrics."
     >
       {/* Top Welcome Banner with Refined Purple Palette */}
-      <div className="rounded-3xl bg-gradient-to-r from-[#3e2e68] via-[#453372] to-[#594096] text-white p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm border border-purple-400/20">
+      <div className="rounded-3xl bg-[image:var(--gm-overview-gradient)] text-ink p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm border border-line">
         <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-amber-300 text-xs font-semibold">
-            <Crown className="w-3.5 h-3.5" />
-            GrowMe Multi-Tenant SaaS Master Controls
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-soft text-blue-ink text-xs font-semibold">
+            <Sparkles className="w-3.5 h-3.5" />
+            Platform overview
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
             Welcome back, Super Admin 👋
           </h2>
-          <p className="text-xs sm:text-sm text-purple-200/90 font-normal max-w-xl">
-            Currently monitoring <strong className="text-white">{metrics.totalAgencies} tenant agencies</strong> and{' '}
-            <strong className="text-white">{metrics.totalLeads.toLocaleString()} leads</strong> across all workspaces.
+          <p className="text-xs sm:text-sm text-copy-muted font-normal max-w-xl">
+            Currently monitoring <strong className="text-ink">{metrics.totalAgencies} tenant agencies</strong> and{' '}
+            <strong className="text-ink">{metrics.totalLeads.toLocaleString()} leads</strong> across all workspaces.
           </p>
         </div>
 
@@ -80,14 +80,14 @@ export const SuperAdminDashboard: React.FC = () => {
           <button
             onClick={loadData}
             disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold backdrop-blur-sm transition disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-canvas text-ink border border-line text-xs font-bold backdrop-blur-sm transition disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
           <button
             onClick={() => navigate('/super-admin/tenants')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-black shadow-md transition"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-black shadow-md transition"
           >
             <span>Manage Agencies</span>
             <ArrowUpRight className="w-4 h-4" />
@@ -123,7 +123,7 @@ export const SuperAdminDashboard: React.FC = () => {
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               Workspaces / Agencies
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-[#453372] flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-brand flex items-center justify-center font-bold">
               <Building2 className="w-5 h-5" />
             </div>
           </div>
@@ -191,7 +191,7 @@ export const SuperAdminDashboard: React.FC = () => {
             </div>
             <button
               onClick={() => navigate('/super-admin/subscriptions')}
-              className="text-xs text-[#453372] font-bold hover:underline"
+              className="text-xs text-brand font-bold hover:underline"
             >
               Configure Plans →
             </button>
@@ -214,11 +214,11 @@ export const SuperAdminDashboard: React.FC = () => {
             <div>
               <div className="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
                 <span>Growth Pro Plan (₹3,999/mo)</span>
-                <span className="text-[#453372] font-black">{planDist.PRO || 0} Agencies</span>
+                <span className="text-brand font-black">{planDist.PRO || 0} Agencies</span>
               </div>
               <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-[#453372] h-full rounded-full transition-all duration-500"
+                  className="bg-brand h-full rounded-full transition-all duration-500"
                   style={{ width: `${Math.max(12, ((planDist.PRO || 0) / (metrics.totalAgencies || 1)) * 100)}%` }}
                 />
               </div>
@@ -248,7 +248,7 @@ export const SuperAdminDashboard: React.FC = () => {
             </div>
             <button
               onClick={() => navigate('/super-admin/webhooks')}
-              className="text-xs text-[#453372] font-bold hover:underline"
+              className="text-xs text-brand font-bold hover:underline"
             >
               Health Monitor →
             </button>
@@ -312,7 +312,7 @@ export const SuperAdminDashboard: React.FC = () => {
           </div>
           <button
             onClick={() => navigate('/super-admin/audit-logs')}
-            className="text-xs text-[#453372] font-bold hover:underline"
+            className="text-xs text-brand font-bold hover:underline"
           >
             Full Audit Logs →
           </button>
@@ -322,7 +322,7 @@ export const SuperAdminDashboard: React.FC = () => {
           {(data?.recentAudit || []).slice(0, 4).map((log: any, idx: number) => (
             <div key={log.id || idx} className="py-3.5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#453372] flex items-center justify-center shrink-0 font-bold">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 text-brand flex items-center justify-center shrink-0 font-bold">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">

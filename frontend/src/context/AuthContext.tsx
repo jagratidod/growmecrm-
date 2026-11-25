@@ -3,6 +3,7 @@ import type { User, LoginCredentials, RegisterData, AuthState } from '../types/a
 import { authService } from '../services/authService'
 
 interface AuthContextType extends AuthState {
+  isRestoringSession: boolean
   login: (credentials: LoginCredentials) => Promise<void>
   register: (data: RegisterData) => Promise<void>
   updateUser: (updates: Partial<User>) => void
@@ -15,21 +16,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isRestoringSession, setIsRestoringSession] = useState(true)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Rehydrate session
+    const controller = new AbortController()
     const { user: storedUser, token: storedToken } = authService.getStoredSession()
-    if (storedUser && storedToken) {
-      setUser(storedUser)
-      setToken(storedToken)
+    if (!storedUser || !storedToken) {
+      setIsRestoringSession(false)
+      return
     }
-    setIsLoading(false)
+
+    const useSession = (verifiedUser: Partial<User>) => {
+      if (controller.signal.aborted) return
+      setUser({ ...storedUser, ...verifiedUser })
+      setToken(storedToken)
+      setIsRestoringSession(false)
+    }
+
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(6000)])
+    authService.verifySession(storedToken, signal).then(async (verifiedUser) => {
+      if (controller.signal.aborted) return
+      if (verifiedUser) {
+        useSession(verifiedUser)
+      } else {
+        await authService.logout()
+        setIsRestoringSession(false)
+      }
+    }, () => {
+      // Keep the saved session during temporary API outages.
+      useSession(storedUser)
+    })
+    return () => controller.abort()
   }, [])
 
   const login = async (credentials: LoginCredentials) => {
-    setIsLoading(true)
+    setIsProcessing(true)
     setError(null)
     try {
       const response = await authService.login(credentials)
@@ -40,12 +63,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(msg)
       throw err
     } finally {
-      setIsLoading(false)
+      setIsProcessing(false)
     }
   }
 
   const register = async (data: RegisterData) => {
-    setIsLoading(true)
+    setIsProcessing(true)
     setError(null)
     try {
       const response = await authService.register(data)
@@ -56,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(msg)
       throw err
     } finally {
-      setIsLoading(false)
+      setIsProcessing(false)
     }
   }
 
@@ -72,13 +95,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const logout = async () => {
-    setIsLoading(true)
+    setIsProcessing(true)
     try {
       await authService.logout()
       setUser(null)
       setToken(null)
     } finally {
-      setIsLoading(false)
+      setIsProcessing(false)
     }
   }
 
@@ -90,7 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         token,
         isAuthenticated: !!user,
-        isLoading,
+        isLoading: isRestoringSession || isProcessing,
+        isRestoringSession,
         error,
         login,
         register,

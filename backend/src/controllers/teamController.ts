@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { Response } from 'express';
 import { AuthenticatedRequest, UserRole } from '../types';
 import { User } from '../models/User';
@@ -26,9 +27,10 @@ export const getTeam = async (req: AuthenticatedRequest, res: Response): Promise
 
     const { organizationId, userId: currentUserId } = req.user;
 
+    const canManage = ['OWNER', 'ADMIN'].includes(req.user.role);
     const [users, invites] = await Promise.all([
       User.find({ organizationId }).select('-password').sort({ createdAt: 1 }),
-      TeamInvite.find({ organizationId, status: 'Invited' }).sort({ createdAt: -1 }),
+      canManage ? TeamInvite.find({ organizationId, status: 'Invited', expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }) : [],
     ]);
 
     const formattedMembers = users.map((u) => {
@@ -134,7 +136,7 @@ export const createTeamInvite = async (req: AuthenticatedRequest, res: Response)
     const internalRole: UserRole = role === 'Admin' ? 'ADMIN' : role === 'Manager' ? 'MANAGER' : 'AGENT';
 
     // Generate secure randomized token
-    const token = 'VZxV' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+    const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
     const invite = await TeamInvite.create({

@@ -111,7 +111,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       {/* Sidebar with active Invoice Detail tab cutout */}
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}
@@ -131,7 +131,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#453372] text-white flex items-center justify-center font-bold text-xs">
+            <div className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xs">
               TT
             </div>
             <span className="font-bold text-sm text-slate-900">Invoice Detail</span>
@@ -156,7 +156,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
               {/* Card Header */}
               <div className="space-y-1.5 pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-purple-50 text-[#453372] border border-purple-200 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-md bg-purple-50 text-brand border border-purple-200 flex items-center justify-center">
                     <Receipt className="w-3.5 h-3.5 stroke-[2.2]" />
                   </div>
                   <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
@@ -181,8 +181,8 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={secondPhone}
                     onChange={(e) => setSecondPhone(e.target.value)}
-                    placeholder="+91 98765 43210"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                   <p className="text-xs text-slate-400">
                     Shown alongside your main phone in the header.
@@ -197,8 +197,8 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="email"
                     value={secondEmail}
                     onChange={(e) => setSecondEmail(e.target.value)}
-                    placeholder="accounts@agency.com"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                 </div>
               </div>
@@ -213,8 +213,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
-                    placeholder="Maharashtra"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                   <p className="text-xs text-slate-400">
                     Used as the Place of Supply on every invoice.
@@ -229,8 +228,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={stateCode}
                     onChange={(e) => setStateCode(e.target.value)}
-                    placeholder="27"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                 </div>
               </div>
@@ -245,8 +243,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
-                    placeholder="HDFC Bank, Andheri branch"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                 </div>
 
@@ -258,8 +255,8 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={bankAccountNumber}
                     onChange={(e) => setBankAccountNumber(e.target.value)}
-                    placeholder="50100123456789"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                 </div>
               </div>
@@ -274,8 +271,8 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={ifscCode}
                     onChange={(e) => setIfscCode(e.target.value)}
-                    placeholder="HDFC0001234"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 uppercase focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 uppercase focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                 </div>
 
@@ -287,8 +284,8 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={gstin}
                     onChange={(e) => setGstin(e.target.value)}
-                    placeholder="27AAAAA0000A1Z5"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 uppercase focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 uppercase focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                 </div>
               </div>
@@ -303,8 +300,8 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={pan}
                     onChange={(e) => setPan(e.target.value)}
-                    placeholder="AAAAA0000A"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 uppercase focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 uppercase focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                 </div>
 
@@ -316,8 +313,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={hsnSacCode}
                     onChange={(e) => setHsnSacCode(e.target.value)}
-                    placeholder="998552"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                 </div>
               </div>
@@ -364,7 +360,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                         onChange={handleFileUpload}
                         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                       />
-                      <div className="w-10 h-10 rounded-2xl bg-purple-50 text-[#453372] border border-purple-100 flex items-center justify-center mb-2 shadow-2xs pointer-events-none">
+                      <div className="w-10 h-10 rounded-2xl bg-purple-50 text-brand border border-purple-100 flex items-center justify-center mb-2 shadow-2xs pointer-events-none">
                         <UploadCloud className="w-5 h-5 stroke-[1.75]" />
                       </div>
                       <p className="text-xs font-bold text-slate-900 pointer-events-none">
@@ -381,15 +377,15 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                       <div className="flex items-center gap-2 mt-1.5">
                         <input
                           type="url"
-                          placeholder="https://example.com/signature.png"
+
                           value={urlInput}
                           onChange={(e) => setUrlInput(e.target.value)}
-                          className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#453372]/20"
+                          className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-brand/20"
                         />
                         <button
                           type="button"
                           onClick={handleApplyUrl}
-                          className="px-3 py-1.5 rounded-lg bg-[#453372] text-white text-xs font-semibold"
+                          className="px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-semibold"
                         >
                           Apply
                         </button>
@@ -405,7 +401,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                       <button
                         type="button"
                         onClick={() => setShowUrlInput(true)}
-                        className="text-xs text-[#453372] hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+                        className="text-xs text-brand hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
                       >
                         <LinkIcon className="w-3 h-3" />
                         <span>or paste an image URL</span>
@@ -425,10 +421,8 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                     type="text"
                     value={signatoryTitle}
                     onChange={(e) => setSignatoryTitle(e.target.value)}
-                    placeholder="Director"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
-                  <p className="text-xs text-slate-400">e.g. "Director", "Proprietor"</p>
                 </div>
               </div>
 
@@ -441,8 +435,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                   rows={4}
                   value={termsAndConditions}
                   onChange={(e) => setTermsAndConditions(e.target.value)}
-                  placeholder="We declare that there is no tax payable under reverse charge mechanism..."
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white resize-y"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white resize-y"
                 />
                 <p className="text-xs text-slate-400">
                   Printed at the bottom of every Tax Invoice — kept separate from your package
@@ -454,7 +447,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
               <div className="flex justify-end pt-4 border-t border-slate-100">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer"
                 >
                   {isSaved ? (
                     <>

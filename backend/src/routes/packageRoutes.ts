@@ -1,3 +1,4 @@
+import { requireModule } from '../platform/access';
 import { Router } from 'express';
 import {
   getPackages,
@@ -16,7 +17,7 @@ const router = Router();
 router.get('/public/:agencySlug/:packageSlug', getPublicPackage);
 
 // Protected CRM Endpoints
-router.use(authenticate);
+router.use(authenticate, requireModule('catalog'));
 
 router.get('/', getPackages);
 router.post('/', createPackage);

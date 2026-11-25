@@ -39,8 +39,11 @@ export const sendPasswordResetOtpEmail = async (
   recipientName?: string
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
   try {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      return { success: false, error: 'Password reset email is not configured.' };
+    }
     const transporter = createTransporter();
-    const fromAddress = process.env.EMAIL_FROM || '"Weekend Escapes" <admin.growme@gmail.com>';
+    const fromAddress = process.env.EMAIL_FROM || { name: 'GrowMe', address: process.env.SMTP_USER };
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -48,7 +51,7 @@ export const sendPasswordResetOtpEmail = async (
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password Reset OTP - Weekend Escapes CRM</title>
+  <title>Password Reset OTP - GrowMe</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1E293B;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 40px 15px;">
@@ -58,7 +61,7 @@ export const sendPasswordResetOtpEmail = async (
           <!-- Header Banner -->
           <tr>
             <td style="background: linear-gradient(135deg, #43336B 0%, #2A1D4E 100%); padding: 32px 30px; text-align: center;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #FFFFFF; letter-spacing: 0.5px;">Weekend Escapes</h1>
+              <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #FFFFFF; letter-spacing: 0.5px;">GrowMe</h1>
               <p style="margin: 6px 0 0; font-size: 13px; color: #E9D5FF; text-transform: uppercase; letter-spacing: 1.5px;">GrowMe CRM Security</p>
             </td>
           </tr>
@@ -97,7 +100,7 @@ export const sendPasswordResetOtpEmail = async (
           <tr>
             <td style="border-top: 1px solid #F1F5F9; padding: 20px 32px; background-color: #FAFAFA; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #94A3B8;">
-                &copy; ${new Date().getFullYear()} Weekend Escapes CRM. All rights reserved.
+                &copy; ${new Date().getFullYear()} GrowMe. All rights reserved.
               </p>
             </td>
           </tr>
@@ -112,8 +115,8 @@ export const sendPasswordResetOtpEmail = async (
     const info = await transporter.sendMail({
       from: fromAddress,
       to: toEmail,
-      subject: `${otp} is your Weekend Escapes CRM password reset code`,
-      text: `Your Weekend Escapes CRM password reset verification code is: ${otp}. It will expire in 10 minutes. If you did not request this, please ignore this email.`,
+      subject: `${otp} is your GrowMe password reset code`,
+      text: `Your GrowMe password reset verification code is: ${otp}. It will expire in 10 minutes. If you did not request this, please ignore this email.`,
       html: htmlContent,
     });
 

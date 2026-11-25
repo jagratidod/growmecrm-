@@ -39,6 +39,7 @@ export interface ILeadActivity {
 
 export interface ILead extends Document {
   organizationId: Types.ObjectId;
+  websiteId?: Types.ObjectId;
   name: string;
   email?: string;
   phone: string;
@@ -79,6 +80,7 @@ const LeadSchema = new Schema<ILead>(
       required: true,
       index: true,
     },
+    websiteId: { type: Schema.Types.ObjectId, ref: 'GrowMeWebsite' },
     name: { type: String, required: [true, 'Lead name is required'], trim: true },
     email: { type: String, trim: true, lowercase: true },
     phone: { type: String, required: [true, 'Phone number is required'], trim: true },

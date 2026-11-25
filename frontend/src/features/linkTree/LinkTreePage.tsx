@@ -23,76 +23,26 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const bioUrl = `https://joinetra.com/bio/${org.agencyName.toLowerCase().replace(/\s+/g, '-')}`
+  const [bioUrl, setBioUrl] = useState('')
 
   // Bio settings
-  const [bioTitle, setBioTitle] = useState(org.agencyName && org.agencyName !== 'Treki Travels' ? org.agencyName : 'GrowMe CRM')
-  const [bioTagline, setBioTagline] = useState('Curated Trips, Himalayan Treks & Luxury Getaways ✨')
+  const [bioTitle, setBioTitle] = useState(org.agencyName)
+  const [bioTagline, setBioTagline] = useState('')
   const [isSavingProfile, setIsSavingProfile] = useState(false)
 
-  const [links, setLinks] = useState<BioLinkItem[]>(() => {
-    const saved = localStorage.getItem('treki_crm_linktree_items')
-    if (saved) {
-      try {
-        return JSON.parse(saved)
-      } catch {
-        // fallback
-      }
-    }
-    return [
-      {
-        id: 'l-1',
-        title: '💬 Chat on WhatsApp for Instant Itinerary',
-        url: 'https://wa.me/919876543210',
-        icon: 'whatsapp',
-        active: true,
-      },
-      {
-        id: 'l-2',
-        title: '🏔️ Kashmir Winter Wonderland 5D/4N',
-        url: 'https://joinetra.com/growme-crm/kashmir-winter',
-        icon: 'package',
-        active: true,
-      },
-      {
-        id: 'l-3',
-        title: '🏖️ Goa Private Beach Villas',
-        url: 'https://joinetra.com/growme-crm/goa-luxury',
-        icon: 'package',
-        active: true,
-      },
-      {
-        id: 'l-4',
-        title: '⭐ Read Google Reviews (4.9 / 5)',
-        url: 'https://maps.google.com',
-        icon: 'review',
-        active: true,
-      },
-      {
-        id: 'l-5',
-        title: '🌐 Visit Our Official Website',
-        url: 'https://joinetra.com/treki-travels',
-        icon: 'web',
-        active: true,
-      },
-    ]
-  })
+  const [links, setLinks] = useState<BioLinkItem[]>([])
 
   // Load from server on mount
   useEffect(() => {
     const fetchLinkTree = async () => {
       try {
         const data = await linkTreeService.getLinkTree()
-        if (data) {
-          if (data.bioTitle) setBioTitle(data.bioTitle)
-          if (data.bioTagline) setBioTagline(data.bioTagline)
-          if (Array.isArray(data.links) && data.links.length > 0) {
-            setLinks(data.links)
-            localStorage.setItem('treki_crm_linktree_items', JSON.stringify(data.links))
-          }
-        }
-      } catch (err) {
-        console.warn('Could not load LinkTree from server, using local cache:', err)
+        setBioTitle(data.bioTitle)
+        setBioTagline(data.bioTagline)
+        setLinks(data.links)
+        setBioUrl(data.publicUrl || '')
+      } catch (error) {
+        toast({ type: 'error', title: 'Could not load links', description: (error as Error).message })
       }
     }
     fetchLinkTree()
@@ -100,11 +50,6 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
 
   const [newTitle, setNewTitle] = useState('')
   const [newUrl, setNewUrl] = useState('')
-
-  const saveLinks = (updated: BioLinkItem[]) => {
-    setLinks(updated)
-    localStorage.setItem('treki_crm_linktree_items', JSON.stringify(updated))
-  }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(bioUrl)
@@ -135,69 +80,42 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
 
   const handleAddLink = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTitle.trim()) return
-    const formattedUrl = newUrl.startsWith('http') ? newUrl : `https://${newUrl || 'joinetra.com'}`
-    const newLink: BioLinkItem = {
-      id: `l-${Date.now()}`,
-      title: newTitle.trim(),
-      url: formattedUrl,
-      icon: 'web',
-      active: true,
-    }
-    const updated = [...links, newLink]
-    saveLinks(updated)
-    const titleToAdd = newTitle.trim()
-    setNewTitle('')
-    setNewUrl('')
-    toast({
-      type: 'success',
-      title: 'Link Added',
-      description: 'New link added to your bio page.',
-    })
-
+    const title = newTitle.trim()
+    const rawUrl = newUrl.trim()
+    if (!title || !rawUrl) return
     try {
-      const res = await linkTreeService.addLink({
-        title: titleToAdd,
-        url: formattedUrl,
-        icon: 'web',
-      })
-      if (res.linkTree?.links) {
-        saveLinks(res.linkTree.links)
-      }
-    } catch (err) {
-      console.error('Failed to sync link addition to server:', err)
+      const url = new URL(/^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`)
+      const { linkTree } = await linkTreeService.addLink({ title, url: url.href, icon: 'web' })
+      setLinks(linkTree.links)
+      setNewTitle('')
+      setNewUrl('')
+      toast({ type: 'success', title: 'Link added' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not add link', description: (error as Error).message })
     }
   }
 
   const handleDeleteLink = async (id: string) => {
-    const updated = links.filter((l) => l.id !== id)
-    saveLinks(updated)
-    toast({
-      type: 'info',
-      title: 'Link Removed',
-      description: 'Link deleted from bio page.',
-    })
-
     try {
-      await linkTreeService.deleteLink(id)
-    } catch (err) {
-      console.error('Failed to delete link on server:', err)
+      const updated = await linkTreeService.deleteLink(id)
+      setLinks(updated.links)
+      toast({ type: 'success', title: 'Link removed' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not delete link', description: (error as Error).message })
     }
   }
 
   const handleToggleLink = async (id: string) => {
-    const updated = links.map((l) => (l.id === id ? { ...l, active: !l.active } : l))
-    saveLinks(updated)
-
     try {
-      await linkTreeService.toggleLink(id)
-    } catch (err) {
-      console.error('Failed to toggle link on server:', err)
+      const updated = await linkTreeService.toggleLink(id)
+      setLinks(updated.links)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not update link', description: (error as Error).message })
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
@@ -226,7 +144,7 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {bioUrl && <div className="flex items-center gap-2">
               <button
                 onClick={handleCopy}
                 className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-xs shadow-xs hover:bg-slate-50 transition cursor-pointer"
@@ -238,12 +156,12 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
                 href={bioUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#453372] text-white font-semibold text-xs shadow-md hover:bg-[#382860] transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand text-white font-semibold text-xs shadow-md hover:bg-brand-hover transition cursor-pointer"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span>Open link</span>
               </a>
-            </div>
+            </div>}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -261,7 +179,7 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
                       type="text"
                       value={bioTitle}
                       onChange={(e) => setBioTitle(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                     />
                   </div>
                   <div>
@@ -272,7 +190,7 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
                       type="text"
                       value={bioTagline}
                       onChange={(e) => setBioTagline(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                     />
                   </div>
                   <div className="pt-2 flex justify-end">
@@ -280,7 +198,7 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
                       type="button"
                       onClick={handleSaveProfile}
                       disabled={isSavingProfile}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#453372] text-white font-semibold text-xs hover:bg-[#382860] transition disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand text-white font-semibold text-xs hover:bg-brand-hover transition disabled:opacity-50"
                     >
                       <Save className="w-3.5 h-3.5" />
                       <span>{isSavingProfile ? 'Saving...' : 'Save Profile'}</span>
@@ -296,23 +214,23 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
                   <div>
                     <input
                       type="text"
-                      placeholder="Link title (e.g. 🏝️ Book Maldives Package)"
+
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                     />
                   </div>
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="URL (e.g. https://... or wa.me/...)"
+
                       value={newUrl}
                       onChange={(e) => setNewUrl(e.target.value)}
-                      className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                      className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-[#453372] text-white rounded-xl text-xs font-semibold hover:bg-[#382860] transition cursor-pointer"
+                      className="px-4 py-2 bg-brand text-white rounded-xl text-xs font-semibold hover:bg-brand-hover transition cursor-pointer"
                     >
                       Add Link
                     </button>
@@ -336,7 +254,7 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
                       <button
                         onClick={() => handleToggleLink(item.id)}
                         className={`w-8 h-4 rounded-full transition-colors relative cursor-pointer ${
-                          item.active ? 'bg-[#453372]' : 'bg-slate-300'
+                          item.active ? 'bg-brand' : 'bg-slate-300'
                         }`}
                       >
                         <div
@@ -366,7 +284,7 @@ export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) =>
                 {/* Phone Screen */}
                 <div className="bg-gradient-to-b from-[#2b1f47] to-[#1a122c] rounded-[34px] p-5 text-white min-h-[500px] flex flex-col items-center">
                   {/* Agency Avatar */}
-                  <div className="w-16 h-16 rounded-full bg-white text-[#453372] flex items-center justify-center font-black text-xl shadow-lg mb-3">
+                  <div className="w-16 h-16 rounded-full bg-white text-brand flex items-center justify-center font-black text-xl shadow-lg mb-3">
                     {bioTitle.slice(0, 2).toUpperCase()}
                   </div>
 

@@ -15,16 +15,16 @@ export const LeadStatsCards: React.FC = () => {
       shortTitle: 'Overall Leads',
       value: stats.overall,
       icon: Calendar,
-      barColor: '#ff7675',
-      iconBg: 'bg-[#ff7675]/12 text-[#ff7675]',
+      barColor: 'var(--gm-blue)',
+      iconBg: 'bg-blue-soft text-blue-ink',
     },
     {
       title: "Today's Enquiries",
       shortTitle: "Today's Leads",
       value: stats.today,
       icon: Users,
-      barColor: '#453372',
-      iconBg: 'bg-[#453372]/12 text-[#453372]',
+      barColor: 'var(--gm-accent)',
+      iconBg: 'bg-brand-soft text-brand',
     },
     {
       title: 'Active In Pipeline',
@@ -32,7 +32,7 @@ export const LeadStatsCards: React.FC = () => {
       value: inPipelineCount,
       icon: TrendingUp,
       barColor: '#ffb800',
-      iconBg: 'bg-[#ffb800]/15 text-[#ffb800]',
+      iconBg: 'bg-amber-50 text-amber-700',
     },
     {
       title: 'Leads Converted',
@@ -40,7 +40,7 @@ export const LeadStatsCards: React.FC = () => {
       value: stats.converted,
       icon: CheckCircle2,
       barColor: '#22c55e',
-      iconBg: 'bg-[#22c55e]/15 text-[#22c55e]',
+      iconBg: 'bg-emerald-50 text-emerald-700',
     },
   ]
 
@@ -66,7 +66,7 @@ export const LeadStatsCards: React.FC = () => {
 
             {/* Right Metric Label & Count */}
             <div className="text-right">
-              <span className="text-[11px] sm:text-xs font-semibold text-slate-400 block tracking-wide">
+              <span className="text-[11px] sm:text-xs font-semibold text-copy-muted block tracking-wide">
                 {card.shortTitle}
               </span>
               <span className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight block mt-0.5">

@@ -53,7 +53,7 @@ export const AuditLogsPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search audit trail by actor, action, or agency..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition"
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition"
           />
         </div>
 
@@ -104,7 +104,7 @@ export const AuditLogsPage: React.FC = () => {
                         <span className="block text-[10px] text-slate-400 font-normal">{log.actorRole}</span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="font-mono text-[10px] font-bold bg-purple-50 text-[#453372] px-2 py-0.5 rounded-md border border-purple-200">
+                        <span className="font-mono text-[10px] font-bold bg-purple-50 text-brand px-2 py-0.5 rounded-md border border-purple-200">
                           {log.action}
                         </span>
                       </td>

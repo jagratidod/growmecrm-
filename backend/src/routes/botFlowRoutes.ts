@@ -7,7 +7,6 @@ import {
   updateBotFlow,
   toggleBotFlow,
   deleteBotFlow,
-  testBotFlow,
 } from '../controllers/botFlowController';
 
 const router = Router();
@@ -21,6 +20,5 @@ router.post('/', createBotFlow);
 router.put('/:id', updateBotFlow);
 router.patch('/:id/toggle', toggleBotFlow);
 router.delete('/:id', deleteBotFlow);
-router.post('/:id/test', testBotFlow);
 
 export default router;

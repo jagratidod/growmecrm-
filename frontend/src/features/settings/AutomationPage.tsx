@@ -68,7 +68,7 @@ export const AutomationPage: React.FC<AutomationPageProps> = ({ onNavigateMenu }
   const isOver24Hours = Number(nudgeAfterHours) > 24
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       {/* Sidebar with active Automation tab cutout under SETTINGS */}
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}
@@ -88,7 +88,7 @@ export const AutomationPage: React.FC<AutomationPageProps> = ({ onNavigateMenu }
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#453372] text-white flex items-center justify-center font-bold text-xs">
+            <div className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xs">
               TT
             </div>
             <span className="font-bold text-sm text-slate-900">Automation</span>
@@ -113,7 +113,7 @@ export const AutomationPage: React.FC<AutomationPageProps> = ({ onNavigateMenu }
               {/* Top Row: Title, Icon and Toggle Switch */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-[#453372] border border-purple-200 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-brand border border-purple-200 flex items-center justify-center shrink-0 mt-0.5">
                     <Zap className="w-4 h-4 fill-current stroke-[1.5]" />
                   </div>
                   <div>
@@ -132,7 +132,7 @@ export const AutomationPage: React.FC<AutomationPageProps> = ({ onNavigateMenu }
                   type="button"
                   onClick={handleToggleEnabled}
                   className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer shrink-0 ${
-                    enabled ? 'bg-[#453372]' : 'bg-slate-200'
+                    enabled ? 'bg-brand' : 'bg-slate-200'
                   }`}
                   role="switch"
                   aria-checked={enabled}
@@ -158,7 +158,7 @@ export const AutomationPage: React.FC<AutomationPageProps> = ({ onNavigateMenu }
                     value={nudgeAfterHours}
                     onChange={(e) => setNudgeAfterHours(Number(e.target.value) || 0)}
                     placeholder="48"
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white"
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white"
                   />
                 </div>
                 <p className="text-xs text-slate-400">
@@ -196,8 +196,7 @@ export const AutomationPage: React.FC<AutomationPageProps> = ({ onNavigateMenu }
                   rows={3}
                   value={nudgeMessage}
                   onChange={(e) => setNudgeMessage(e.target.value)}
-                  placeholder="Just checking in — happy to help if you still have questions about your trip! Let us know."
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all bg-white resize-y"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all bg-white resize-y"
                 />
               </div>
 
@@ -205,7 +204,7 @@ export const AutomationPage: React.FC<AutomationPageProps> = ({ onNavigateMenu }
               <div>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer"
                 >
                   {isSaved ? (
                     <>
@@ -249,7 +248,7 @@ export const AutomationPage: React.FC<AutomationPageProps> = ({ onNavigateMenu }
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : log.status === 'Skipped'
                             ? 'bg-slate-100 text-slate-600'
-                            : 'bg-purple-50 text-[#453372] border border-purple-200'
+                            : 'bg-purple-50 text-brand border border-purple-200'
                         }`}
                       >
                         {log.status}

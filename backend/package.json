@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "nodemon --watch src --exec ts-node src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "create:super-admin": "ts-node src/scripts/createSuperAdmin.ts",
+    "seed:defaults": "ts-node src/scripts/seedDefaultUsers.ts",
+    "db:reset": "ts-node src/scripts/resetDatabase.ts"
   },
   "dependencies": {
     "@types/multer": "^2.3.0",

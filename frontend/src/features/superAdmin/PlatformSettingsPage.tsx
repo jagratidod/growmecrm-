@@ -20,9 +20,6 @@ export const PlatformSettingsPage: React.FC = () => {
     maintenanceMode: false,
     maintenanceMessage: 'GrowMe CRM is undergoing scheduled maintenance. We will be back online shortly.',
     allowNewRegistrations: true,
-    razorpayKeyId: '',
-    razorpayKeySecret: '',
-    stripePublishableKey: '',
     smtpHost: '',
     smtpPort: 587,
     smtpUser: '',
@@ -106,7 +103,7 @@ export const PlatformSettingsPage: React.FC = () => {
                   rows={2}
                   value={settings.maintenanceMessage}
                   onChange={(e) => setSettings({ ...settings, maintenanceMessage: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-normal focus:border-[#453372] focus:outline-none resize-none bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-normal focus:border-brand focus:outline-none resize-none bg-white"
                 />
               </div>
             )}
@@ -126,7 +123,7 @@ export const PlatformSettingsPage: React.FC = () => {
                   onChange={(e) => setSettings({ ...settings, allowNewRegistrations: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#453372]" />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand" />
               </label>
             </div>
           </div>
@@ -135,7 +132,7 @@ export const PlatformSettingsPage: React.FC = () => {
         {/* Section 2: General SaaS Branding */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xs space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-[#453372] flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-brand flex items-center justify-center font-bold">
               <Globe className="w-5 h-5" />
             </div>
             <div>
@@ -151,7 +148,7 @@ export const PlatformSettingsPage: React.FC = () => {
                 type="text"
                 value={settings.platformName}
                 onChange={(e) => setSettings({ ...settings, platformName: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
               />
             </div>
 
@@ -161,7 +158,7 @@ export const PlatformSettingsPage: React.FC = () => {
                 type="email"
                 value={settings.supportEmail}
                 onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
               />
             </div>
 
@@ -171,7 +168,7 @@ export const PlatformSettingsPage: React.FC = () => {
                 type="text"
                 value={settings.contactPhone}
                 onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
               />
             </div>
 
@@ -183,55 +180,26 @@ export const PlatformSettingsPage: React.FC = () => {
                 max="90"
                 value={settings.defaultTrialDays}
                 onChange={(e) => setSettings({ ...settings, defaultTrialDays: Number(e.target.value) })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
               />
             </div>
           </div>
         </div>
 
-        {/* Section 3: Payment Processors (Razorpay & Stripe) */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xs space-y-6">
+        <section className="gm-card gm-row">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <CreditCard className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-extrabold text-slate-900 tracking-tight">Payment Gateway Integrations</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Collect subscription payments via Razorpay (INR) and Stripe (Global)</p>
-            </div>
+            <span className="gm-card-icon"><CreditCard size={18} /></span>
+            <div><h2>GrowMe subscription checkout</h2><p>Assign a GrowMe payment link and record confirmed payments in each client’s Billing tab.</p></div>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
-            <div className="space-y-1.5">
-              <label className="font-bold text-slate-700 block">Razorpay Key ID (Live / Test)</label>
-              <input
-                type="text"
-                placeholder="rzp_live_xxxxxxxxxx"
-                value={settings.razorpayKeyId || ''}
-                onChange={(e) => setSettings({ ...settings, razorpayKeyId: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-mono focus:border-[#453372] focus:outline-none bg-white"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="font-bold text-slate-700 block">Stripe Publishable Key</label>
-              <input
-                type="text"
-                placeholder="pk_live_xxxxxxxxxx"
-                value={settings.stripePublishableKey || ''}
-                onChange={(e) => setSettings({ ...settings, stripePublishableKey: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-mono focus:border-[#453372] focus:outline-none bg-white"
-              />
-            </div>
-          </div>
-        </div>
+          <a className="gm-button secondary" href="/super-admin/clients">Open clients</a>
+        </section>
 
         {/* Save Bar */}
         <div className="flex items-center justify-end">
           <button
             type="submit"
             disabled={isSaving}
-            className="flex items-center gap-2 px-7 py-3 rounded-2xl bg-[#453372] hover:bg-[#38285e] text-white font-extrabold text-sm shadow-md transition disabled:opacity-50"
+            className="flex items-center gap-2 px-7 py-3 rounded-2xl bg-brand hover:bg-brand-hover text-white font-extrabold text-sm shadow-md transition disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             <span>{isSaving ? 'Saving Settings...' : 'Save All Platform Settings'}</span>

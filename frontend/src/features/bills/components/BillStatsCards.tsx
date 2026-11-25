@@ -16,7 +16,7 @@ export const BillStatsCards: React.FC = () => {
       value: formatCurrency(stats.totalSpend),
       icon: Receipt,
       barColor: '#453372',
-      iconBg: 'bg-[#453372]/12 text-[#453372]',
+      iconBg: 'bg-brand/12 text-brand',
       valueColor: 'text-slate-800',
     },
     {

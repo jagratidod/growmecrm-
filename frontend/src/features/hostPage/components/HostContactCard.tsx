@@ -24,7 +24,7 @@ export const HostContactCard: React.FC = () => {
               placeholder="+91 ..."
               value={hostData.contact.phone}
               onChange={(e) => updateContact({ phone: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] bg-white transition-all"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white transition-all"
             />
           </div>
 
@@ -34,10 +34,10 @@ export const HostContactCard: React.FC = () => {
             </label>
             <input
               type="email"
-              placeholder="hello@agency.com"
+
               value={hostData.contact.email}
               onChange={(e) => updateContact({ email: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] bg-white transition-all"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white transition-all"
             />
           </div>
         </div>
@@ -52,7 +52,7 @@ export const HostContactCard: React.FC = () => {
             placeholder="Office address"
             value={hostData.contact.address}
             onChange={(e) => updateContact({ address: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] bg-white transition-all"
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white transition-all"
           />
         </div>
       </div>
@@ -62,7 +62,7 @@ export const HostContactCard: React.FC = () => {
         <button
           type="button"
           onClick={saveWebsite}
-          className="px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+          className="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer"
         >
           Save website
         </button>

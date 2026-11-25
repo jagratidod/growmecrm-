@@ -40,7 +40,7 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
           <div
             key={hotel.id}
             onClick={() => onEditHotel(hotel)}
-            className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#453372]/30 transition-all cursor-pointer overflow-hidden flex flex-col group"
+            className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand/30 transition-all cursor-pointer overflow-hidden flex flex-col group"
           >
             {/* Hotel Image & Star Rating */}
             <div className="relative h-44 bg-slate-100 overflow-hidden">
@@ -51,7 +51,7 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-indigo-50 text-[#453372]">
+                <div className="w-full h-full flex items-center justify-center bg-canvas text-copy-muted">
                   <Building2 className="w-12 h-12 stroke-[1.5]" />
                 </div>
               )}
@@ -79,7 +79,7 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
 
               {/* Price badge */}
               {hotel.pricePerNight > 0 && (
-                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur-xs text-[#453372] text-xs font-extrabold shadow-xs">
+                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur-xs text-brand text-xs font-extrabold shadow-xs">
                   ₹{hotel.pricePerNight.toLocaleString('en-IN')}{' '}
                   <span className="text-[10px] font-medium text-slate-500">/ night</span>
                 </div>
@@ -94,7 +94,7 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
                   <span className="font-semibold text-slate-700">{hotel.city}</span>
                 </div>
 
-                <h3 className="font-bold text-slate-900 text-base group-hover:text-[#453372] transition-colors line-clamp-1">
+                <h3 className="font-bold text-slate-900 text-base group-hover:text-brand transition-colors line-clamp-1">
                   {hotel.name}
                 </h3>
 
@@ -113,7 +113,7 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
                       key={rIdx}
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-medium text-slate-700"
                     >
-                      <BedDouble className="w-2.5 h-2.5 text-[#453372]" />
+                      <BedDouble className="w-2.5 h-2.5 text-brand" />
                       <span>{room.name}</span>
                     </span>
                   ))}
@@ -128,7 +128,7 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
               {/* Notes / Contract Rates */}
               {hotel.notes && (
                 <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100/70 text-xs text-purple-950 flex items-start gap-2">
-                  <FileText className="w-3.5 h-3.5 text-[#453372] shrink-0 mt-0.5" />
+                  <FileText className="w-3.5 h-3.5 text-brand shrink-0 mt-0.5" />
                   <p className="line-clamp-2 leading-relaxed text-[11px]">
                     {hotel.notes}
                   </p>
@@ -142,7 +142,7 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
                     <a
                       href={`tel:${hotel.phone}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="p-1.5 hover:text-[#453372] hover:bg-slate-100 rounded-lg transition-colors"
+                      className="p-1.5 hover:text-brand hover:bg-slate-100 rounded-lg transition-colors"
                       title={hotel.phone}
                     >
                       <Phone className="w-4 h-4" />
@@ -152,7 +152,7 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
                     <a
                       href={`mailto:${hotel.email}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="p-1.5 hover:text-[#453372] hover:bg-slate-100 rounded-lg transition-colors"
+                      className="p-1.5 hover:text-brand hover:bg-slate-100 rounded-lg transition-colors"
                       title={hotel.email}
                     >
                       <Mail className="w-4 h-4" />
@@ -163,7 +163,7 @@ export const HotelsGrid: React.FC<HotelsGridProps> = ({ onEditHotel }) => {
                 <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => onEditHotel(hotel)}
-                    className="p-1.5 text-slate-400 hover:text-[#453372] hover:bg-purple-50 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-brand hover:bg-purple-50 rounded-lg transition-colors"
                     title="Edit hotel"
                   >
                     <Edit3 className="w-4 h-4" />

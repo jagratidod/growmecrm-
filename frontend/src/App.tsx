@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { lazy, Suspense, useEffect } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import { LeadsProvider } from './context/LeadsContext'
@@ -16,7 +16,11 @@ import { CalendarProvider } from './context/CalendarContext'
 import { CallLogProvider } from './context/CallLogContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { AuthPage } from './features/auth/AuthPage'
-import { DashboardPage } from './features/dashboard/DashboardPage'
+import { WorkspaceAccess, useWorkspace } from './features/workspace/WorkspaceAccess'
+import { WorkspaceHome, WebsitesPage } from './features/workspace/WorkspacePages'
+import { AcceptInvitePage } from './features/workspace/AcceptInvitePage'
+import { PlatformConsole } from './features/workspace/PlatformConsole'
+import { routeModules } from './features/workspace/workspaceApi'
 import { LeadsPage } from './features/leads/LeadsPage'
 import { BookingsPage } from './features/bookings/BookingsPage'
 import { TeamPage } from './features/team/TeamPage'
@@ -48,42 +52,66 @@ import { AuditLogsPage } from './features/superAdmin/AuditLogsPage'
 import { WebhookHealthPage } from './features/superAdmin/WebhookHealthPage'
 import { PlatformSettingsPage } from './features/superAdmin/PlatformSettingsPage'
 
-const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth()
-  const { path, navigate } = useRouter()
+const MarketingApp = lazy(() => import('./features/marketing/App.jsx'))
+const marketingRoutes = new Set([
+  '/', '/about', '/services', '/industries', '/portfolio', '/process', '/careers',
+  '/contact', '/get-a-quote', '/privacy-policy', '/terms-and-conditions',
+])
+const isMarketingPage = (path: string) => marketingRoutes.has(path) ||
+  /^\/(services|industries|portfolio)\/[^/]+$/.test(path)
 
+const AppContent: React.FC = () => {
+  const { isAuthenticated, isLoading, isRestoringSession, user } = useAuth()
+  const { path, navigate } = useRouter()
+  const { access, loading: accessLoading } = useWorkspace()
+
+  const isMarketingRoute = isMarketingPage(path)
   const isAuthRoute =
     path === '/login' ||
     path === '/signup' ||
     path === '/register' ||
-    path === '/forgot-password'
+    path === '/forgot-password' ||
+    path === '/accept-invite'
 
   useEffect(() => {
     if (isLoading) return
 
-    // Base route enforcement: if not logged in and not on an auth route, redirect to /login
-    if (!isAuthenticated && !isAuthRoute) {
-      navigate('/login', { replace: true })
+    if (!isAuthenticated && !isAuthRoute && !isMarketingRoute) navigate('/login', { replace: true })
+    if (isAuthenticated && user?.role === 'super_admin' && !path.startsWith('/super-admin')) {
+      navigate('/super-admin/clients', { replace: true })
+    } else if (isAuthenticated && user?.role !== 'super_admin' && (isAuthRoute || isMarketingRoute || path.startsWith('/super-admin'))) {
+      navigate('/dashboard', { replace: true })
     }
-  }, [isLoading, isAuthenticated, path, navigate, isAuthRoute])
+  }, [isLoading, isAuthenticated, user?.role, path, navigate, isAuthRoute, isMarketingRoute])
 
-  if (isLoading) {
+  if (isRestoringSession || (isLoading && !isAuthRoute) || (isAuthenticated && accessLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-canvas">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
           <p className="text-sm font-medium text-slate-500">Initializing CRM Session...</p>
         </div>
       </div>
     )
   }
 
-  // Show AuthPage if on any auth route or if unauthenticated
-  const showAuthPage = isAuthRoute || !isAuthenticated
-
-  if (showAuthPage) {
-    return <AuthPage onSuccess={() => navigate('/leads')} />
+  if (!isAuthenticated && isMarketingRoute) {
+    return <Suspense fallback={<div className="min-h-screen bg-cream" />}>
+      <MarketingApp />
+    </Suspense>
   }
+
+  if (!isAuthenticated) {
+    return path === '/accept-invite' ? <AcceptInvitePage /> : <AuthPage />
+  }
+
+  const requestedModule = routeModules[path] || (path.startsWith('/websites/') ? 'websites' : undefined)
+  if (user?.role !== 'super_admin' && (path.startsWith('/super-admin') || (requestedModule && !access?.modules.includes(requestedModule)))) {
+    return <WorkspaceHome />
+  }
+  if (user?.role === 'super_admin' && !path.startsWith('/super-admin')) return null
+  if (path === '/super-admin/clients' || path.startsWith('/super-admin/clients/')) return <PlatformConsole />
+  if (path === '/websites' || path.startsWith('/websites/')) return <WebsitesPage />
 
   const handleMenuNavigation = (menuName: string) => {
     if (menuName === 'Dashboard') {
@@ -104,6 +132,8 @@ const AppContent: React.FC = () => {
       navigate('/sightseeing')
     } else if (menuName === 'Hotels') {
       navigate('/hotels')
+    } else if (menuName === 'Websites') {
+      navigate('/websites')
     } else if (menuName === 'Host Page') {
       navigate('/host-page')
     } else if (menuName === 'Inbox') {
@@ -130,8 +160,6 @@ const AppContent: React.FC = () => {
       navigate('/ai-agent')
     } else if (menuName === 'Organization') {
       navigate('/organization')
-    } else if (menuName === 'Subscription') {
-      navigate('/subscription')
     } else if (menuName === 'Invoice Detail') {
       navigate('/invoice-detail')
     } else if (menuName === 'Automation') {
@@ -248,11 +276,7 @@ const AppContent: React.FC = () => {
   }
 
   if (path === '/organization') {
-    return <OrganizationPage onNavigateMenu={handleMenuNavigation} initialTab="branding" />
-  }
-
-  if (path === '/subscription' || path === '/plans') {
-    return <OrganizationPage onNavigateMenu={handleMenuNavigation} initialTab="subscription" />
+    return <OrganizationPage onNavigateMenu={handleMenuNavigation} />
   }
 
   if (path === '/invoice-detail') {
@@ -264,14 +288,14 @@ const AppContent: React.FC = () => {
   }
 
   if (path === '/dashboard') {
-    return <DashboardPage onNavigateMenu={handleMenuNavigation} />
+    return <WorkspaceHome />
   }
 
   if (path === '/leads') {
     return <LeadsPage onNavigateMenu={handleMenuNavigation} />
   }
 
-  return <DashboardPage onNavigateMenu={handleMenuNavigation} />
+  return <WorkspaceHome />
 }
 
 export default function App() {
@@ -279,6 +303,7 @@ export default function App() {
     <RouterProvider>
       <ToastProvider>
         <AuthProvider>
+          <WorkspaceAccess>
           <LeadsProvider>
             <BookingsProvider>
               <TeamProvider>
@@ -306,6 +331,7 @@ export default function App() {
               </TeamProvider>
             </BookingsProvider>
           </LeadsProvider>
+          </WorkspaceAccess>
         </AuthProvider>
       </ToastProvider>
     </RouterProvider>

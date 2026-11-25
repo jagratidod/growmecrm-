@@ -120,7 +120,7 @@ export const NewActivityModal: React.FC<NewActivityModalProps> = ({
           {/* Cover image dropzone */}
           <div>
             <label className="block text-xs font-bold text-slate-800 mb-1.5">Cover image</label>
-            <div className="relative border-2 border-dashed border-[#453372]/40 bg-purple-50/15 hover:bg-purple-50/30 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group overflow-hidden">
+            <div className="relative border-2 border-dashed border-brand/40 bg-purple-50/15 hover:bg-purple-50/30 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group overflow-hidden">
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
@@ -137,7 +137,7 @@ export const NewActivityModal: React.FC<NewActivityModalProps> = ({
                 </div>
               ) : (
                 <>
-                  <div className="w-12 h-12 rounded-full bg-purple-100 text-[#453372] flex items-center justify-center mb-2 shadow-2xs">
+                  <div className="w-12 h-12 rounded-full bg-purple-100 text-brand flex items-center justify-center mb-2 shadow-2xs">
                     <UploadCloud className="w-6 h-6 stroke-[1.8]" />
                   </div>
                   <p className="text-xs font-bold text-slate-800">Upload image</p>
@@ -154,7 +154,7 @@ export const NewActivityModal: React.FC<NewActivityModalProps> = ({
                 <div className="flex items-center gap-2">
                   <input
                     type="url"
-                    placeholder="https://example.com/activity.jpg"
+
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
                     className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200"
@@ -162,7 +162,7 @@ export const NewActivityModal: React.FC<NewActivityModalProps> = ({
                   <button
                     type="button"
                     onClick={handleAddUrl}
-                    className="px-3 py-1.5 text-xs font-semibold bg-[#453372] text-white rounded-lg"
+                    className="px-3 py-1.5 text-xs font-semibold bg-brand text-white rounded-lg"
                   >
                     Add
                   </button>
@@ -178,7 +178,7 @@ export const NewActivityModal: React.FC<NewActivityModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowUrlInput(true)}
-                  className="text-[11px] text-slate-500 hover:text-[#453372] flex items-center gap-1 font-medium"
+                  className="text-[11px] text-slate-500 hover:text-brand flex items-center gap-1 font-medium"
                 >
                   <LinkIcon className="w-3 h-3" />
                   <span>or paste an image URL</span>
@@ -198,10 +198,10 @@ export const NewActivityModal: React.FC<NewActivityModalProps> = ({
             <input
               type="text"
               required
-              placeholder="e.g. Gulmarg Excursion"
+
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
             />
           </div>
 
@@ -213,7 +213,7 @@ export const NewActivityModal: React.FC<NewActivityModalProps> = ({
               placeholder="What travellers do here — pickup, sightseeing spots, activities..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none transition-all"
             />
             <p className="text-[11px] text-slate-400 mt-1">
               This text auto-fills the day when you pick this activity in a package.
@@ -232,7 +232,7 @@ export const NewActivityModal: React.FC<NewActivityModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-sm font-semibold shadow-xs hover:shadow transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-xs hover:shadow transition-all disabled:opacity-50"
             >
               <Compass className="w-4 h-4 text-purple-200" />
               <span>{isSubmitting ? 'Saving...' : activityToEdit ? 'Save changes' : 'Add activity'}</span>

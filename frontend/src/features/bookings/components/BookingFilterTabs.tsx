@@ -9,7 +9,7 @@ export const BookingFilterTabs: React.FC = () => {
     { id: 'All', label: 'All bookings' },
     { id: 'Pending', label: 'Pending', dotColor: 'bg-[#ffb800]' },
     { id: 'Confirmed', label: 'Confirmed', dotColor: 'bg-blue-500' },
-    { id: 'Ongoing', label: 'Ongoing', dotColor: 'bg-[#453372]' },
+    { id: 'Ongoing', label: 'Ongoing', dotColor: 'bg-brand' },
     { id: 'Completed', label: 'Completed', dotColor: 'bg-[#22c55e]' },
     { id: 'Cancelled', label: 'Cancelled', dotColor: 'bg-slate-400' },
   ]
@@ -42,7 +42,7 @@ export const BookingFilterTabs: React.FC = () => {
               onClick={() => updateFilter('status', tab.id)}
               className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 ${
                 isSelected
-                  ? 'bg-[#453372] text-white shadow-xs'
+                  ? 'bg-brand text-white shadow-xs'
                   : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >

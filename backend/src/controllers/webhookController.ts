@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { Request, Response } from 'express';
 import { Lead } from '../models/Lead';
 import { Organization } from '../models/Organization';
@@ -27,21 +28,11 @@ export const ingestLead = async (req: Request, res: Response): Promise<void> => 
       (req.headers['x-api-key'] as string) ||
       req.body.apiKey;
 
-    let org = null;
-    if (apiKey) {
-      org = await Organization.findOne({ webhookApiKey: apiKey });
-    }
-
-    // Fallback: If no API key or not found, find the first active organization
+    const org = typeof apiKey === 'string' && apiKey
+      ? await Organization.findOne({ webhookApiKey: apiKey, status: { $in: ['ACTIVE', 'TRIAL'] } })
+      : null;
     if (!org) {
-      org = await Organization.findOne({ status: 'ACTIVE' });
-    }
-
-    if (!org) {
-      res.status(400).json({
-        success: false,
-        error: 'No valid organization found to assign the incoming lead. Provide a valid apiKey.',
-      });
+      res.status(401).json({ success: false, error: 'A valid organization webhook key is required.' });
       return;
     }
 
@@ -144,16 +135,29 @@ export const verifyMetaWebhook = (req: Request, res: Response): void => {
   }
 };
 
+async function providerOrganization(req: Request) {
+  const appSecret = process.env.META_APP_SECRET;
+  const webhookKey = req.query.apiKey;
+  const signature = req.get('x-hub-signature-256');
+  const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
+  if (!appSecret || typeof webhookKey !== 'string' || !signature || !rawBody) return null;
+  const expected = 'sha256=' + createHmac('sha256', appSecret).update(rawBody).digest('hex');
+  const received = Buffer.from(signature);
+  const calculated = Buffer.from(expected);
+  if (received.length !== calculated.length || !timingSafeEqual(received, calculated)) return null;
+  return Organization.findOne({ webhookApiKey: webhookKey, status: 'ACTIVE' });
+}
+
 export const handleMetaWebhook = async (req: Request, res: Response): Promise<void> => {
   try {
     const body = req.body;
-    console.log('[Meta Webhook Received]:', JSON.stringify(body, null, 2));
+
 
     // Acknowledge Meta immediately to avoid retries
     res.status(200).send('EVENT_RECEIVED');
 
     if (body.object === 'page' || body.object === 'instagram') {
-      const org = await Organization.findOne({ status: 'ACTIVE' });
+      const org = await providerOrganization(req);
       if (!org) return;
 
       for (const entry of body.entry || []) {
@@ -164,20 +168,26 @@ export const handleMetaWebhook = async (req: Request, res: Response): Promise<vo
             const pageId = change.value?.page_id;
             const isInstagram = body.object === 'instagram' || Boolean(change.value?.ad_id && String(change.value?.ad_id).includes('ig'));
 
-            // Check if mock/pre-parsed values exist or create lead placeholder
+            // Ingest only events that include the contact details required by the CRM.
+            const name = change.value?.full_name || change.value?.name;
+            const phone = change.value?.phone_number || change.value?.phone;
+            const destination = change.value?.destination;
+            if (typeof name !== 'string' || !name.trim() || typeof phone !== 'string' || !phone.trim() ||
+                typeof destination !== 'string' || !destination.trim()) continue;
             await Lead.create({
               organizationId: org._id,
-              name: `Meta Lead (${leadgenId || 'Form ' + (formId || '')})`,
-              phone: 'Pending Meta Sync',
+              name: name.trim(),
+              phone: phone.trim(),
+              email: change.value?.email || undefined,
               source: isInstagram ? 'Instagram' : 'Facebook',
               status: 'New',
               customerType: 'B2C',
-              destination: 'Meta Lead Ad',
+              destination: destination.trim(),
               travelers: 1,
               budget: 0,
               currency: 'INR',
               assignedTo: 'Unassigned',
-              temperature: 'Hot',
+              temperature: 'Warm',
               tags: [isInstagram ? 'instagram' : 'facebook', 'ad-lead'],
               notes: `Meta Leadgen ID: ${leadgenId}. Form ID: ${formId}, Page ID: ${pageId}`,
               activities: [
@@ -237,7 +247,7 @@ export const handleWhatsAppWebhook = async (req: Request, res: Response): Promis
     const senderName = contact?.profile?.name || `WhatsApp User ${fromPhone}`;
     const textBody = message.text?.body || message.type || 'New WhatsApp conversation started';
 
-    const org = await Organization.findOne({ status: 'ACTIVE' });
+    const org = await providerOrganization(req);
     if (!org) return;
 
     // Check if lead already exists with this phone number

@@ -9,7 +9,7 @@ export const TeamMembersTable: React.FC = () => {
   const roleBadgeConfig: Record<TeamRole, { bg: string; text: string; icon: React.ComponentType<{ className?: string }> }> = {
     Admin: {
       bg: 'bg-purple-50 border-purple-200',
-      text: 'text-[#453372]',
+      text: 'text-brand',
       icon: ShieldCheck,
     },
     Agent: {
@@ -29,7 +29,7 @@ export const TeamMembersTable: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-700 border-collapse">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-[#f3f4f8] text-[#453372] font-bold uppercase tracking-wider text-[11px]">
+            <tr className="border-b border-slate-200/80 bg-canvas text-brand font-bold uppercase tracking-wider text-[11px]">
               <th className="py-3 px-5">Member</th>
               <th className="py-3 px-5">Role</th>
               <th className="py-3 px-5">Status</th>
@@ -50,7 +50,7 @@ export const TeamMembersTable: React.FC = () => {
                   {/* Member Column */}
                   <td className="py-4 px-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#453372]/10 text-[#453372] font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                      <div className="w-9 h-9 rounded-full bg-brand/10 text-brand font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
                         {member.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">

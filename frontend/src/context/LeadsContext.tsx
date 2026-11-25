@@ -1,4 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import { useRouter } from './RouterContext'
+import { useAuth } from './AuthContext'
+import { useToast } from '../components/ui/Toast'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
+import { leadsService } from '../services/leadsService'
 import type {
   Lead,
   LeadFilters,
@@ -9,18 +14,20 @@ import type {
 
 interface LeadsContextType {
   leads: Lead[]
+  loading: boolean
+  loadError: string
   filteredLeads: Lead[]
   stats: LeadStats
   filters: LeadFilters
   setFilters: React.Dispatch<React.SetStateAction<LeadFilters>>
   updateFilter: <K extends keyof LeadFilters>(key: K, value: LeadFilters[K]) => void
   resetFilters: () => void
-  addLead: (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>) => Lead
+  addLead: (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>) => Promise<Lead | undefined>
   updateLead: (id: string, updates: Partial<Lead>) => void
   changeLeadStage: (id: string, newStage: LeadStage) => void
   deleteLead: (id: string) => void
-  importLeads: (newLeads: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>[]) => number
-  addLeadActivity: (leadId: string, activity: Omit<LeadActivity, 'id' | 'leadId' | 'timestamp'>) => void
+  importLeads: (newLeads: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>[]) => Promise<number | undefined>
+  addLeadActivity: (leadId: string, activity: Omit<LeadActivity, 'id' | 'leadId' | 'timestamp'>) => Promise<Lead | undefined>
   selectedLead: Lead | null
   setSelectedLead: (lead: Lead | null) => void
   isNewLeadModalOpen: boolean
@@ -29,11 +36,7 @@ interface LeadsContextType {
   setIsImportModalOpen: (open: boolean) => void
   isFiltersDrawerOpen: boolean
   setIsFiltersDrawerOpen: (open: boolean) => void
-  loadDemoData: () => void
-  clearAllLeads: () => void
 }
-
-const STORAGE_KEY = 'treki_crm_leads_data'
 
 const INITIAL_FILTERS: LeadFilters = {
   search: '',
@@ -45,126 +48,18 @@ const INITIAL_FILTERS: LeadFilters = {
   source: 'All',
 }
 
-const DEMO_LEADS: Lead[] = [
-  {
-    id: 'lead-1',
-    name: 'Aarav Mehta',
-    email: 'aarav.mehta@gmail.com',
-    phone: '+91 98201 44521',
-    source: 'Website',
-    status: 'Qualified',
-    customerType: 'B2C',
-    interestedPackage: 'Honeymoon Special',
-    destination: 'Bali, Indonesia',
-    travelDate: '2026-12-15',
-    travelers: 2,
-    budget: 180000,
-    currency: 'INR',
-    assignedTo: 'Kushal Pareta',
-    temperature: 'Hot',
-    tags: ['honeymoon', 'luxury', 'bali'],
-    notes: 'Looking for a private villa with pool in Seminyak and Ubud tour.',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    activities: [
-      {
-        id: 'act-1',
-        leadId: 'lead-1',
-        type: 'created',
-        description: 'Lead captured from Website enquiry form.',
-        timestamp: new Date().toISOString(),
-        author: 'System',
-      },
-      {
-        id: 'act-2',
-        leadId: 'lead-1',
-        type: 'stage_changed',
-        description: 'Stage updated from New to Qualified.',
-        timestamp: new Date().toISOString(),
-        author: 'Kushal Pareta',
-      },
-    ],
-  },
-  {
-    id: 'lead-2',
-    name: 'Priya Sen & Family',
-    email: 'priya.sen@outlook.com',
-    phone: '+91 98450 12890',
-    source: 'Referral',
-    status: 'Proposal sent',
-    customerType: 'B2C',
-    interestedPackage: 'Family Getaway',
-    destination: 'Switzerland & Paris',
-    travelDate: '2026-11-28',
-    travelers: 4,
-    budget: 650000,
-    currency: 'INR',
-    assignedTo: 'Pooja Sharma',
-    temperature: 'Warm',
-    tags: ['family', 'europe', 'train pass'],
-    notes: 'Requires 4-star hotels near railway stations.',
-    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    updatedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    activities: [
-      {
-        id: 'act-3',
-        leadId: 'lead-2',
-        type: 'created',
-        description: 'Lead created manually by Pooja Sharma.',
-        timestamp: new Date(Date.now() - 3600000 * 4).toISOString(),
-        author: 'Pooja Sharma',
-      },
-    ],
-  },
-  {
-    id: 'lead-3',
-    name: 'Vikramaditya Corp Events',
-    email: 'corporate@vikramaditya.co.in',
-    phone: '+91 97112 88410',
-    source: 'Google',
-    status: 'Won',
-    customerType: 'B2B',
-    interestedPackage: 'Corporate Retreat',
-    destination: 'Goa, India',
-    travelDate: '2026-12-05',
-    travelers: 25,
-    budget: 1200000,
-    currency: 'INR',
-    assignedTo: 'Rahul Verma',
-    temperature: 'Won',
-    tags: ['corporate', 'conference', 'beach resort'],
-    notes: 'Confirmed 25 beach view suites, banquet hall booked.',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updatedAt: new Date().toISOString(),
-    activities: [
-      {
-        id: 'act-4',
-        leadId: 'lead-3',
-        type: 'stage_changed',
-        description: 'Contract signed. Stage marked Won!',
-        timestamp: new Date().toISOString(),
-        author: 'Rahul Verma',
-      },
-    ],
-  },
-]
-
 const LeadsContext = createContext<LeadsContextType | undefined>(undefined)
 
 export const LeadsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [leads, setLeads] = useState<Lead[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        return JSON.parse(saved)
-      }
-    } catch {
-      // Fallback
-    }
-    // Start with empty to match Screenshot 2's "No leads yet" out of the box,
-    // with quick demo button available!
-    return []
-  })
+  const { token, user } = useAuth()
+  const { path } = useRouter()
+  const onLeadsPage = path === '/leads'
+  const { access } = useWorkspace()
+  const { toast } = useToast()
+  const enabled = Boolean(token && access?.modules.includes('leads'))
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   const [filters, setFilters] = useState<LeadFilters>(INITIAL_FILTERS)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
@@ -172,14 +67,20 @@ export const LeadsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isFiltersDrawerOpen, setIsFiltersDrawerOpen] = useState(false)
 
-  // Persist to localStorage whenever leads change
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(leads))
-    } catch {
-      // Ignore
+    if (!enabled) return
+    let active = true
+    const load = () => {
+      leadsService.getLeads().then(({ leads }) => {
+        if (active) { setLeads(leads); setLoadError(''); setLoading(false) }
+      }, (error: Error) => {
+        if (active) { setLoadError(error.message); setLoading(false) }
+      })
     }
-  }, [leads])
+    load()
+    window.addEventListener('focus', load)
+    return () => { active = false; window.removeEventListener('focus', load) }
+  }, [enabled, token, onLeadsPage])
 
   // Sync selectedLead when list updates
   useEffect(() => {
@@ -269,144 +170,49 @@ export const LeadsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     })
   }, [leads, filters])
 
-  const addLead = (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>): Lead => {
-    const now = new Date().toISOString()
-    const newId = 'lead-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5)
-
-    const newLead: Lead = {
-      ...leadData,
-      id: newId,
-      createdAt: now,
-      updatedAt: now,
-      activities: [
-        {
-          id: 'act-' + Date.now(),
-          leadId: newId,
-          type: 'created',
-          description: `Lead created manually via New Lead form.`,
-          timestamp: now,
-          author: 'Kushal Pareta',
-        },
-      ],
-    }
-
-    setLeads((prev) => [newLead, ...prev])
-    return newLead
+  async function mutate<T>(mutation: () => Promise<T>): Promise<T | undefined> {
+    try { return await mutation() }
+    catch (error) { toast({ type: 'error', title: 'Lead update failed', description: (error as Error).message }) }
   }
 
-  const updateLead = (id: string, updates: Partial<Lead>) => {
-    setLeads((prev) =>
-      prev.map((lead) => {
-        if (lead.id === id) {
-          return {
-            ...lead,
-            ...updates,
-            updatedAt: new Date().toISOString(),
-          }
-        }
-        return lead
-      })
-    )
-  }
+  const replaceLead = (lead: Lead) => setLeads((previous) => previous.map((item) => item.id === lead.id ? lead : item))
 
-  const changeLeadStage = (id: string, newStage: LeadStage) => {
-    setLeads((prev) =>
-      prev.map((lead) => {
-        if (lead.id === id && lead.status !== newStage) {
-          const now = new Date().toISOString()
-          const newActivity: LeadActivity = {
-            id: 'act-' + Date.now(),
-            leadId: id,
-            type: 'stage_changed',
-            description: `Stage changed from ${lead.status} to ${newStage}`,
-            timestamp: now,
-            author: 'Kushal Pareta',
-          }
-          return {
-            ...lead,
-            status: newStage,
-            temperature: newStage === 'Won' ? 'Won' : newStage === 'Lost' ? 'Lost' : lead.temperature,
-            updatedAt: now,
-            activities: [newActivity, ...lead.activities],
-          }
-        }
-        return lead
-      })
-    )
+  const addLead: LeadsContextType['addLead'] = (data) => mutate(async () => {
+    const lead = await leadsService.createLead(data)
+    setLeads((previous) => [lead, ...previous])
+    return lead
+  })
+  const updateLead: LeadsContextType['updateLead'] = (id, updates) => {
+    void mutate(async () => replaceLead(await leadsService.updateLead(id, updates)))
   }
-
-  const deleteLead = (id: string) => {
-    setLeads((prev) => prev.filter((lead) => lead.id !== id))
-    if (selectedLead?.id === id) {
-      setSelectedLead(null)
-    }
+  const changeLeadStage: LeadsContextType['changeLeadStage'] = (id, stage) => {
+    void mutate(async () => replaceLead(await leadsService.changeStage(id, stage)))
   }
-
-  const importLeads = (newLeadsData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>[]): number => {
-    const now = new Date().toISOString()
-    const mapped: Lead[] = newLeadsData.map((data, index) => {
-      const id = 'lead-import-' + Date.now() + '-' + index
-      return {
-        ...data,
-        id,
-        createdAt: now,
-        updatedAt: now,
-        activities: [
-          {
-            id: 'act-import-' + index,
-            leadId: id,
-            type: 'created',
-            description: 'Lead imported via CSV file.',
-            timestamp: now,
-            author: 'Kushal Pareta',
-          },
-        ],
-      }
+  const deleteLead: LeadsContextType['deleteLead'] = (id) => {
+    void mutate(async () => {
+      await leadsService.deleteLead(id)
+      setLeads((previous) => previous.filter((lead) => lead.id !== id))
+      setSelectedLead((previous) => previous?.id === id ? null : previous)
     })
-
-    setLeads((prev) => [...mapped, ...prev])
-    return mapped.length
   }
-
-  const addLeadActivity = (
-    leadId: string,
-    activity: Omit<LeadActivity, 'id' | 'leadId' | 'timestamp'>
-  ) => {
-    const now = new Date().toISOString()
-    const fullActivity: LeadActivity = {
-      ...activity,
-      id: 'act-' + Date.now(),
-      leadId,
-      timestamp: now,
-    }
-
-    setLeads((prev) =>
-      prev.map((lead) => {
-        if (lead.id === leadId) {
-          return {
-            ...lead,
-            updatedAt: now,
-            activities: [fullActivity, ...lead.activities],
-          }
-        }
-        return lead
-      })
-    )
-  }
-
-  const loadDemoData = () => {
-    setLeads(DEMO_LEADS)
-  }
-
-  const clearAllLeads = () => {
-    setLeads([])
-    setSelectedLead(null)
-  }
+  const importLeads: LeadsContextType['importLeads'] = (rows) => mutate(async () => {
+    const { count } = await leadsService.importLeads(rows)
+    const { leads } = await leadsService.getLeads()
+    setLeads(leads)
+    return count
+  })
+  const addLeadActivity: LeadsContextType['addLeadActivity'] = (id, activity) => mutate(async () => {
+    const lead = await leadsService.addActivity(id, { ...activity, author: user?.name || 'Agent' })
+    replaceLead(lead)
+    return lead
+  })
 
   return (
     <LeadsContext.Provider
       value={{
         leads,
+        loading,
+        loadError,
         filteredLeads,
         stats,
         filters,
@@ -427,8 +233,6 @@ export const LeadsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsImportModalOpen,
         isFiltersDrawerOpen,
         setIsFiltersDrawerOpen,
-        loadDemoData,
-        clearAllLeads,
       }}
     >
       {children}

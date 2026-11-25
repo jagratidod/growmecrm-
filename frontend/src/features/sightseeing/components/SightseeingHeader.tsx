@@ -26,14 +26,14 @@ export const SightseeingHeader: React.FC<SightseeingHeaderProps> = ({ onOpenNewM
           <button
             onClick={() => refreshActivities()}
             disabled={isLoading}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-[#453372] hover:bg-purple-50 transition cursor-pointer"
+            className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-brand hover:bg-purple-50 transition cursor-pointer"
             title="Refresh from server"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={onOpenNewModal}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-semibold text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>New activity</span>
@@ -50,12 +50,12 @@ export const SightseeingHeader: React.FC<SightseeingHeaderProps> = ({ onOpenNewM
             placeholder="Search activities..."
             value={filters.search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] shadow-2xs transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand shadow-2xs transition-all"
           />
         </div>
 
         <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-medium bg-white px-3 py-1.5 rounded-xl border border-slate-200">
-          <Compass className="w-4 h-4 text-[#453372]" />
+          <Compass className="w-4 h-4 text-brand" />
           <span>{activities.length} {activities.length === 1 ? 'Activity' : 'Activities'} in Library</span>
         </div>
       </div>

@@ -7,6 +7,7 @@ import {
   Mail,
   Star,
   Clock,
+  Sparkles,
 } from 'lucide-react'
 import { useHostPage } from '../../../context/HostPageContext'
 import { usePackages } from '../../../context/PackagesContext'
@@ -55,14 +56,14 @@ export const PublicWebsitePreviewModal: React.FC = () => {
           {/* Public Website Navbar */}
           <header className="bg-white border-b border-slate-100 sticky top-0 z-20 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#453372] text-white flex items-center justify-center font-black text-sm tracking-wide shadow-xs">
+              <div className="w-10 h-10 rounded-full bg-brand text-white flex items-center justify-center font-black text-sm tracking-wide shadow-xs">
                 {agencyInitials}
               </div>
               <div>
                 <h1 className="text-base font-extrabold text-slate-900 leading-tight">
                   {agencyName}
                 </h1>
-                <p className="text-[11px] text-[#453372] font-semibold">Verified Travel Host</p>
+                <p className="text-[11px] text-brand font-semibold">Verified Travel Host</p>
               </div>
             </div>
 
@@ -70,7 +71,7 @@ export const PublicWebsitePreviewModal: React.FC = () => {
               {hostData.contact.phone && (
                 <a
                   href={`tel:${hostData.contact.phone}`}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#453372] text-xs font-semibold transition-colors"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-brand text-xs font-semibold transition-colors"
                 >
                   <Phone className="w-3.5 h-3.5" />
                   <span>Call Us</span>
@@ -78,7 +79,7 @@ export const PublicWebsitePreviewModal: React.FC = () => {
               )}
               <button
                 onClick={() => setIsPublicPreviewOpen(false)}
-                className="px-4 py-1.5 rounded-xl bg-[#453372] text-white text-xs font-semibold shadow-xs hover:bg-[#37275d] transition-all"
+                className="px-4 py-1.5 rounded-xl bg-brand text-white text-xs font-semibold shadow-xs hover:bg-brand-hover transition-all"
               >
                 Close Preview
               </button>
@@ -94,13 +95,13 @@ export const PublicWebsitePreviewModal: React.FC = () => {
                 className="absolute inset-0 w-full h-full object-cover opacity-80"
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-r from-[#3e2e68] via-[#453372] to-[#60449e]" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#3e2e68] via-brand to-[#60449e]" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
 
             <div className="relative z-10 text-center px-4 max-w-2xl text-white space-y-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-semibold text-purple-200">
-                <Star className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 Handcrafted Journeys & Group Trips
               </span>
               <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white drop-shadow-md">
@@ -143,7 +144,7 @@ export const PublicWebsitePreviewModal: React.FC = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-purple-50 text-[#453372]">
+                        <div className="w-full h-full flex items-center justify-center bg-purple-50 text-brand">
                           TT
                         </div>
                       )}
@@ -176,11 +177,11 @@ export const PublicWebsitePreviewModal: React.FC = () => {
                           <p className="text-[10px] text-slate-400 font-semibold uppercase">
                             Starting from
                           </p>
-                          <p className="text-base font-extrabold text-[#453372]">
+                          <p className="text-base font-extrabold text-brand">
                             ₹{(pkg.price || 0).toLocaleString('en-IN')}
                           </p>
                         </div>
-                        <button className="px-3.5 py-1.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs font-semibold transition-all">
+                        <button className="px-3.5 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold transition-all">
                           Enquire Now
                         </button>
                       </div>
@@ -222,7 +223,7 @@ export const PublicWebsitePreviewModal: React.FC = () => {
                         "{rev.quote}"
                       </p>
                       <div className="flex items-center gap-2.5 pt-2 border-t border-slate-100">
-                        <div className="w-7 h-7 rounded-full bg-purple-100 text-[#453372] flex items-center justify-center font-bold text-xs overflow-hidden">
+                        <div className="w-7 h-7 rounded-full bg-purple-100 text-brand flex items-center justify-center font-bold text-xs overflow-hidden">
                           {rev.avatarUrl ? (
                             <img
                               src={rev.avatarUrl}

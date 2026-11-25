@@ -17,7 +17,7 @@ export const HostPage: React.FC<HostPageProps> = ({ onNavigateMenu }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       {/* Sidebar with active Host Page tab cutout */}
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}
@@ -37,7 +37,7 @@ export const HostPage: React.FC<HostPageProps> = ({ onNavigateMenu }) => {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#453372] text-white flex items-center justify-center font-bold text-xs">
+            <div className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xs">
               TT
             </div>
             <span className="font-bold text-sm text-slate-900">Host Page</span>

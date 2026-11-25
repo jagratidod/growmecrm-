@@ -28,67 +28,17 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'partial' | 'unpaid'>('all')
 
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>(() => {
-    const saved = localStorage.getItem('treki_crm_tax_invoices')
-    if (saved) {
-      try {
-        return JSON.parse(saved)
-      } catch {
-        // fallback
-      }
-    }
-    return [
-      {
-        id: 'inv-1',
-        invoiceNumber: 'INV-2026-001',
-        customerName: 'Rahul Sharma',
-        customerPhone: '+91 98765 43210',
-        destination: '5D/4N Kashmir Paradise Tour',
-        issueDate: '2026-11-15',
-        dueDate: '2026-11-25',
-        totalAmount: 64000,
-        paidAmount: 64000,
-        status: 'paid',
-      },
-      {
-        id: 'inv-2',
-        invoiceNumber: 'INV-2026-002',
-        customerName: 'Ananya Deshmukh',
-        customerPhone: '+91 98111 22334',
-        destination: 'Goa Premium Beachfront Villa',
-        issueDate: '2026-11-18',
-        dueDate: '2026-11-22',
-        totalAmount: 48500,
-        paidAmount: 20000,
-        status: 'partial',
-      },
-      {
-        id: 'inv-3',
-        invoiceNumber: 'INV-2026-003',
-        customerName: 'Vikram & Aarti Mehta',
-        customerPhone: '+91 99887 76655',
-        destination: 'Dubai Luxury Desert & City Tour',
-        issueDate: '2026-11-19',
-        dueDate: '2026-11-28',
-        totalAmount: 145000,
-        paidAmount: 0,
-        status: 'unpaid',
-      },
-    ]
-  })
+  const [invoices, setInvoices] = useState<InvoiceRecord[]>([])
 
   // Fetch invoices from API
   const fetchInvoices = useCallback(async () => {
     try {
       const res = await invoicesService.getInvoices()
-      if (res?.invoices && res.invoices.length > 0) {
-        setInvoices(res.invoices)
-        localStorage.setItem('treki_crm_tax_invoices', JSON.stringify(res.invoices))
-      }
-    } catch {
-      // Keep local storage fallback
+      setInvoices(res.invoices)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not load invoices', description: (error as Error).message })
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     fetchInvoices()
@@ -102,101 +52,58 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
   const [custName, setCustName] = useState('')
   const [custPhone, setCustPhone] = useState('')
   const [tripName, setTripName] = useState('')
-  const [amount, setAmount] = useState('45000')
-  const [dueDate, setDueDate] = useState('2026-11-30')
+  const [amount, setAmount] = useState('')
+  const [dueDate, setDueDate] = useState('')
 
-  const saveInvoices = (records: InvoiceRecord[]) => {
-    setInvoices(records)
-    localStorage.setItem('treki_crm_tax_invoices', JSON.stringify(records))
-  }
+  const [isSaving, setIsSaving] = useState(false)
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault()
-    const nextNum = `INV-2026-00${invoices.length + 1}`
-    const tempId = `inv-${Date.now()}`
-    const newRec: InvoiceRecord = {
-      id: tempId,
-      invoiceNumber: nextNum,
-      customerName: custName || 'Valued Traveller',
-      customerPhone: custPhone || '+91 98765 00000',
-      destination: tripName || 'Custom Travel Package',
-      issueDate: new Date().toISOString().split('T')[0],
-      dueDate: dueDate,
-      totalAmount: parseFloat(amount) || 0,
-      paidAmount: 0,
-      status: 'unpaid',
-    }
-
-    const updated = [newRec, ...invoices]
-    saveInvoices(updated)
-    setIsNewModalOpen(false)
-    setCustName('')
-    setCustPhone('')
-    setTripName('')
-
-    toast({
-      type: 'success',
-      title: 'Tax Invoice Created',
-      description: `Generated invoice ${nextNum} for ${newRec.customerName}.`,
-    })
-
+    if (isSaving) return
+    setIsSaving(true)
     try {
-      const res = await invoicesService.createInvoice({
-        customerName: newRec.customerName,
-        customerPhone: newRec.customerPhone,
-        destination: newRec.destination,
-        dueDate: newRec.dueDate,
-        totalAmount: newRec.totalAmount,
+      const { invoice } = await invoicesService.createInvoice({
+        customerName: custName.trim(),
+        customerPhone: custPhone.trim(),
+        destination: tripName.trim(),
+        dueDate: dueDate || undefined,
+        totalAmount: Number(amount),
       })
-      if (res?.invoice) {
-        setInvoices((prev) => prev.map((inv) => (inv.id === tempId ? res.invoice : inv)))
-      }
-    } catch {
-      // offline fallback
+      setInvoices((prev) => [invoice, ...prev])
+      setIsNewModalOpen(false)
+      setCustName('')
+      setCustPhone('')
+      setTripName('')
+      setAmount('')
+      setDueDate('')
+      toast({ type: 'success', title: 'Invoice created' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not create invoice', description: (error as Error).message })
+    } finally {
+      setIsSaving(false)
     }
   }
 
   const handleMarkPaid = async (id: string) => {
-    const updated = invoices.map((inv) => {
-      if (inv.id === id) {
-        return {
-          ...inv,
-          paidAmount: inv.totalAmount,
-          status: 'paid' as const,
-        }
-      }
-      return inv
-    })
-    saveInvoices(updated)
-    toast({
-      type: 'success',
-      title: 'Payment Recorded',
-      description: 'Invoice marked fully paid.',
-    })
-
     try {
-      await invoicesService.recordPayment(id, { markFull: true })
-    } catch {
-      // offline fallback
+      const { invoice } = await invoicesService.recordPayment(id, { markFull: true })
+      setInvoices((prev) => prev.map((item) => item.id === id ? invoice : item))
+      setPreviewInvoice((current) => current?.id === id ? invoice : current)
+      toast({ type: 'success', title: 'Payment recorded' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not record payment', description: (error as Error).message })
     }
   }
 
-  const handleDeleteInvoice = async (id: string, num: string) => {
-    if (!window.confirm(`Are you sure you want to delete invoice ${num}?`)) return
-    const prev = [...invoices]
-    const updated = invoices.filter((inv) => inv.id !== id)
-    saveInvoices(updated)
-    toast({
-      type: 'info',
-      title: 'Invoice Deleted',
-      description: `Invoice ${num} removed.`,
-    })
-
+  const handleDeleteInvoice = async (id: string, number: string) => {
+    if (!window.confirm(`Delete invoice ${number}?`)) return
     try {
       await invoicesService.deleteInvoice(id)
-    } catch {
-      setInvoices(prev)
-      toast({ type: 'error', title: 'Delete Failed' })
+      setInvoices((prev) => prev.filter((invoice) => invoice.id !== id))
+      setPreviewInvoice((current) => current?.id === id ? null : current)
+      toast({ type: 'success', title: 'Invoice deleted' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not delete invoice', description: (error as Error).message })
     }
   }
 
@@ -216,7 +123,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
   const totalPending = totalBilled - totalCollected
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
@@ -247,7 +154,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
 
             <button
               onClick={() => setIsNewModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#453372] text-white font-semibold text-xs shadow-md hover:bg-[#382860] transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand text-white font-semibold text-xs shadow-md hover:bg-brand-hover transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>New invoice</span>
@@ -259,7 +166,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
             <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-semibold text-slate-500">Total Billed</span>
-                <div className="w-7 h-7 rounded-lg bg-purple-50 text-[#453372] flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-purple-50 text-brand flex items-center justify-center">
                   <FileText className="w-4 h-4" />
                 </div>
               </div>
@@ -302,7 +209,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                 placeholder="Search invoice # or traveller..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#453372] transition"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand transition"
               />
             </div>
 
@@ -313,7 +220,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                   onClick={() => setStatusFilter(tab)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize whitespace-nowrap transition cursor-pointer ${
                     statusFilter === tab
-                      ? 'bg-[#453372] text-white shadow-xs'
+                      ? 'bg-brand text-white shadow-xs'
                       : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -348,7 +255,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                   ) : (
                     filteredInvoices.map((inv) => (
                       <tr key={inv.id} className="hover:bg-slate-50/50 transition">
-                        <td className="py-3.5 px-4 font-bold text-[#453372]">
+                        <td className="py-3.5 px-4 font-bold text-brand">
                           {inv.invoiceNumber}
                         </td>
                         <td className="py-3.5 px-4">
@@ -386,7 +293,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => setPreviewInvoice(inv)}
-                              className="p-1.5 rounded-lg text-slate-600 hover:text-[#453372] hover:bg-purple-50 transition cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-600 hover:text-brand hover:bg-purple-50 transition cursor-pointer"
                               title="View & Print Invoice"
                             >
                               <Printer className="w-4 h-4" />
@@ -440,10 +347,10 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Ramesh Chandra"
+
                   value={custName}
                   onChange={(e) => setCustName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                 />
               </div>
 
@@ -453,10 +360,10 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                 </label>
                 <input
                   type="text"
-                  placeholder="+91 98765 43210"
+
                   value={custPhone}
                   onChange={(e) => setCustPhone(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                 />
               </div>
 
@@ -467,10 +374,10 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. 6D/5N Manali & Solang Valley Special"
+
                   value={tripName}
                   onChange={(e) => setTripName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                 />
               </div>
 
@@ -484,7 +391,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                     required
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                   />
                 </div>
                 <div>
@@ -495,7 +402,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                   />
                 </div>
               </div>
@@ -510,7 +417,8 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-[#453372] hover:bg-[#382860] rounded-xl shadow-md transition cursor-pointer"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-xs font-semibold text-white bg-brand hover:bg-brand-hover rounded-xl shadow-md transition cursor-pointer"
                 >
                   Generate invoice
                 </button>
@@ -531,7 +439,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 text-[#453372] text-xs font-semibold hover:bg-purple-100 transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 text-brand text-xs font-semibold hover:bg-purple-100 transition cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   Print / Save PDF
@@ -550,13 +458,13 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
               {/* Header */}
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-xl font-black text-slate-800">{org.agencyName && org.agencyName !== 'Treki Travels' ? org.agencyName : 'GrowMe CRM'}</h3>
+                  <h3 className="text-xl font-black text-slate-800">{org.agencyName}</h3>
                   <p className="text-xs text-slate-500">Travel & Holiday Specialists</p>
                   <p className="text-xs text-slate-500">State: {invoice.state} (Code: {invoice.stateCode})</p>
                   <p className="text-xs text-slate-500">GSTIN: {invoice.gstin || '27AAAAA0000A1Z5'}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-black text-[#453372]">{previewInvoice.invoiceNumber}</p>
+                  <p className="text-lg font-black text-brand">{previewInvoice.invoiceNumber}</p>
                   <p className="text-xs text-slate-500">Date: {previewInvoice.issueDate}</p>
                   <p className="text-xs text-slate-500">Due: {previewInvoice.dueDate}</p>
                 </div>
@@ -593,7 +501,7 @@ export const InvoicesPage: React.FC<InvoicesPageProps> = ({ onNavigateMenu }) =>
                   </tr>
                   <tr className="font-bold">
                     <td className="py-2 text-right text-slate-600">Total:</td>
-                    <td className="py-2 text-right text-[#453372] text-sm">
+                    <td className="py-2 text-right text-brand text-sm">
                       ₹{previewInvoice.totalAmount.toLocaleString('en-IN')}
                     </td>
                   </tr>

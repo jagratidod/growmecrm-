@@ -70,7 +70,7 @@ export const InboxHeader: React.FC<InboxHeaderProps> = ({
           <button
             type="button"
             onClick={() => setIsNewChatModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#453372] text-xs font-semibold border border-purple-200/80 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-brand text-xs font-semibold border border-purple-200/80 transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New chat</span>

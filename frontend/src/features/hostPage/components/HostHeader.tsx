@@ -18,7 +18,7 @@ export const HostHeader: React.FC = () => {
 
       <button
         onClick={() => setIsPublicPreviewOpen(true)}
-        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white font-semibold text-xs sm:text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0 cursor-pointer"
+        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-semibold text-xs sm:text-sm shadow-xs hover:shadow transition-all active:scale-[0.98] shrink-0 cursor-pointer"
       >
         <ExternalLink className="w-4 h-4" />
         <span>Open website</span>

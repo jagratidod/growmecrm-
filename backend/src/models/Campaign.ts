@@ -50,16 +50,16 @@ const CampaignSchema = new Schema<ICampaign>(
     },
     sentAt: {
       type: String,
-      required: true,
+      default: '',
     },
     status: {
       type: String,
       enum: ['sent', 'scheduled', 'draft'],
-      default: 'sent',
+      default: 'draft',
     },
     openRate: {
       type: String,
-      default: '0%',
+      default: '-',
     },
   },
   {

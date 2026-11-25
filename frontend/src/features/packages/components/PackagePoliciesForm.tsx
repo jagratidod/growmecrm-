@@ -13,16 +13,13 @@ export const PackagePoliciesForm: React.FC<PackagePoliciesFormProps> = ({ onNext
   const { toast } = useToast()
 
   const [cancellationPolicy, setCancellationPolicy] = useState(
-    activePackage?.cancellationPolicy ||
-      'Free cancellation up to 15 days before departure.\n50% cancellation fee between 14 to 7 days before departure.\nNon-refundable if cancelled within 7 days of departure.'
+    activePackage?.cancellationPolicy ?? ''
   )
   const [paymentTerms, setPaymentTerms] = useState(
-    activePackage?.paymentTerms ||
-      '25% advance to confirm, balance 7 days before travel.'
+    activePackage?.paymentTerms ?? ''
   )
   const [termsAndConditions, setTermsAndConditions] = useState(
-    activePackage?.termsAndConditions ||
-      'Any additional terms travellers should know...\n1. Passports must have a minimum validity of 6 months.\n2. Standard hotel check-in time is 2:00 PM and check-out is 11:00 AM.\n3. Early check-in or late check-out is subject to room availability.'
+    activePackage?.termsAndConditions ?? ''
   )
 
   const handleProceed = async () => {
@@ -46,10 +43,10 @@ export const PackagePoliciesForm: React.FC<PackagePoliciesFormProps> = ({ onNext
           </div>
           <textarea
             rows={4}
-            placeholder="Free cancellation up to 15 days before departure..."
+
             value={cancellationPolicy}
             onChange={(e) => setCancellationPolicy(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
           />
         </div>
 
@@ -61,25 +58,25 @@ export const PackagePoliciesForm: React.FC<PackagePoliciesFormProps> = ({ onNext
           </div>
           <textarea
             rows={3}
-            placeholder="25% advance to confirm, balance 7 days before travel..."
+
             value={paymentTerms}
             onChange={(e) => setPaymentTerms(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
           />
         </div>
 
         {/* Terms & conditions */}
         <div>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <FileText className="w-4 h-4 text-[#453372]" />
+            <FileText className="w-4 h-4 text-brand" />
             <label className="text-xs font-bold text-slate-800">Terms & conditions</label>
           </div>
           <textarea
             rows={5}
-            placeholder="Any additional terms travellers should know..."
+
             value={termsAndConditions}
             onChange={(e) => setTermsAndConditions(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
           />
         </div>
       </div>
@@ -98,7 +95,7 @@ export const PackagePoliciesForm: React.FC<PackagePoliciesFormProps> = ({ onNext
         <button
           type="button"
           onClick={handleProceed}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
         >
           <span>Next: FAQs</span>
           <ArrowRight className="w-4 h-4" />

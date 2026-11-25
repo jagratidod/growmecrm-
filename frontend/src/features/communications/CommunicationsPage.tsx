@@ -26,55 +26,14 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
   const [searchQuery, setSearchQuery] = useState('')
   const [isNewModalOpen, setIsNewModalOpen] = useState(false)
 
-  const [campaigns, setCampaigns] = useState<CampaignItem[]>(() => {
-    const saved = localStorage.getItem('treki_crm_campaigns')
-    if (saved) {
-      try {
-        return JSON.parse(saved)
-      } catch {
-        // fallback
-      }
-    }
-    return [
-      {
-        id: 'camp-1',
-        title: 'Winter Holidays Flash Offer: Flat 15% Off Kashmir',
-        channel: 'whatsapp',
-        audience: 'All Leads (Proposal Sent)',
-        recipientCount: 24,
-        sentAt: '2026-11-18 03:30 PM',
-        status: 'sent',
-        openRate: '92%',
-      },
-      {
-        id: 'camp-2',
-        title: 'New Year Goa Group Trip Early Bird Invitation',
-        channel: 'whatsapp',
-        audience: 'Active Inquiries',
-        recipientCount: 18,
-        sentAt: '2026-11-15 11:00 AM',
-        status: 'sent',
-        openRate: '88%',
-      },
-      {
-        id: 'camp-3',
-        title: 'November Agency Newsletter & Trending Destinations',
-        channel: 'email',
-        audience: 'Past Travellers & Bookings',
-        recipientCount: 65,
-        sentAt: '2026-11-20 10:00 AM',
-        status: 'scheduled',
-        openRate: '-',
-      },
-    ]
-  })
+  const [campaigns, setCampaigns] = useState<CampaignItem[]>([])
 
   // Load from API on mount
   useEffect(() => {
     const fetchCampaigns = async () => {
       try {
         const data = await campaignsService.getCampaigns()
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setCampaigns(data)
           localStorage.setItem('treki_crm_campaigns', JSON.stringify(data))
         }
@@ -91,49 +50,22 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
   const [audience, setAudience] = useState('All Active Leads')
   const [message, setMessage] = useState('')
 
+  const [isSaving, setIsSaving] = useState(false)
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault()
-    const optimisticCamp: CampaignItem = {
-      id: `camp-${Date.now()}`,
-      title,
-      channel,
-      audience,
-      recipientCount: 30,
-      sentAt: 'Just now',
-      status: 'sent',
-      openRate: '100%',
-    }
-    const updated = [optimisticCamp, ...campaigns]
-    setCampaigns(updated)
-    localStorage.setItem('treki_crm_campaigns', JSON.stringify(updated))
-    setIsNewModalOpen(false)
-    const submittedTitle = title
-    const submittedChannel = channel
-    const submittedAudience = audience
-    const submittedMessage = message
-    setTitle('')
-    setMessage('')
-    toast({
-      type: 'success',
-      title: 'Campaign Launched',
-      description: `Broadcast sent successfully via ${submittedChannel.toUpperCase()}.`,
-    })
-
+    if (isSaving) return
+    setIsSaving(true)
     try {
-      const created = await campaignsService.createCampaign({
-        title: submittedTitle,
-        channel: submittedChannel,
-        audience: submittedAudience,
-        message: submittedMessage,
-        recipientCount: 30,
-      })
-      if (created) {
-        setCampaigns((prev) =>
-          prev.map((c) => (c.id === optimisticCamp.id ? created : c))
-        )
-      }
-    } catch (err) {
-      console.error('Failed to sync campaign to server:', err)
+      const created = await campaignsService.createCampaign({ title, channel, audience, message })
+      setCampaigns((prev) => [created, ...prev])
+      setIsNewModalOpen(false)
+      setTitle('')
+      setMessage('')
+      toast({ type: 'success', title: 'Campaign draft saved' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not save campaign', description: (error as Error).message })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -145,7 +77,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
   })
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
@@ -176,7 +108,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
 
             <button
               onClick={() => setIsNewModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#453372] text-white font-semibold text-xs shadow-md hover:bg-[#382860] transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand text-white font-semibold text-xs shadow-md hover:bg-brand-hover transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>New broadcast</span>
@@ -188,7 +120,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
             <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-semibold text-slate-500">Total Sent</span>
-                <div className="w-7 h-7 rounded-lg bg-purple-50 text-[#453372] flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-purple-50 text-brand flex items-center justify-center">
                   <Send className="w-4 h-4" />
                 </div>
               </div>
@@ -225,7 +157,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                 placeholder="Search campaigns..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#453372] transition"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand transition"
               />
             </div>
 
@@ -236,7 +168,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                   onClick={() => setChannelFilter(tab)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize whitespace-nowrap transition cursor-pointer ${
                     channelFilter === tab
-                      ? 'bg-[#453372] text-white shadow-xs'
+                      ? 'bg-brand text-white shadow-xs'
                       : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -256,7 +188,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                       className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${
                         item.channel === 'whatsapp'
                           ? 'bg-emerald-50 text-emerald-600'
-                          : 'bg-purple-50 text-[#453372]'
+                          : 'bg-purple-50 text-brand'
                       }`}
                     >
                       {item.channel === 'whatsapp' ? (
@@ -270,10 +202,9 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                       <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-400">
                         <span className="flex items-center gap-1">
                           <Users className="w-3.5 h-3.5" />
-                          {item.audience} ({item.recipientCount} recipients)
+                          {item.audience}{item.status === 'sent' && ` (${item.recipientCount} recipients)`}
                         </span>
-                        <span>•</span>
-                        <span>{item.sentAt}</span>
+                        {item.sentAt && <span>{item.sentAt}</span>}
                       </div>
                     </div>
                   </div>
@@ -308,7 +239,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-800">New Broadcast Campaign</h2>
+              <h2 className="text-base font-bold text-slate-800">New campaign draft</h2>
               <button
                 onClick={() => setIsNewModalOpen(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-600 transition cursor-pointer"
@@ -325,10 +256,10 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Weekend Flash Sale"
+
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372]"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
                 />
               </div>
 
@@ -353,7 +284,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                     onClick={() => setChannel('email')}
                     className={`py-2 text-xs font-semibold rounded-xl border transition cursor-pointer ${
                       channel === 'email'
-                        ? 'border-purple-600 bg-purple-50 text-[#453372]'
+                        ? 'border-purple-600 bg-purple-50 text-brand'
                         : 'border-slate-200 text-slate-600'
                     }`}
                   >
@@ -369,7 +300,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                 <select
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372] bg-white"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand bg-white"
                 >
                   <option value="All Active Leads">All Active Leads</option>
                   <option value="Proposal Sent Stage">Proposal Sent Stage</option>
@@ -384,10 +315,9 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                 <textarea
                   rows={4}
                   required
-                  placeholder="Hey {{name}}, we have an exciting seasonal discount for your trip..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#453372] resize-none"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand resize-none"
                 />
               </div>
 
@@ -401,9 +331,10 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-[#453372] hover:bg-[#382860] rounded-xl shadow-md transition cursor-pointer"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-xs font-semibold text-white bg-brand hover:bg-brand-hover rounded-xl shadow-md transition cursor-pointer"
                 >
-                  Send broadcast
+                  Save draft
                 </button>
               </div>
             </form>

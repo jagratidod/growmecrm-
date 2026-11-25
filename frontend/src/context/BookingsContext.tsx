@@ -1,15 +1,21 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react'
+import { useAuth } from './AuthContext'
+import { useToast } from '../components/ui/Toast'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
+import { bookingsService } from '../services/bookingsService'
 import type { Booking, BookingFilters, BookingStats, BookingStatus } from '../types/booking.types'
 
 interface BookingsContextType {
   bookings: Booking[]
+  loading: boolean
+  loadError: string
   filteredBookings: Booking[]
   stats: BookingStats
   filters: BookingFilters
   setFilters: React.Dispatch<React.SetStateAction<BookingFilters>>
   updateFilter: <K extends keyof BookingFilters>(key: K, value: BookingFilters[K]) => void
   resetFilters: () => void
-  addBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => Booking
+  addBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Booking | undefined>
   updateBooking: (id: string, updates: Partial<Booking>) => void
   deleteBooking: (id: string) => void
   updateBookingStatus: (id: string, status: BookingStatus) => void
@@ -17,105 +23,18 @@ interface BookingsContextType {
   setSelectedBooking: (booking: Booking | null) => void
   isNewBookingModalOpen: boolean
   setIsNewBookingModalOpen: (open: boolean) => void
-  loadDemoData: () => void
-  clearAllBookings: () => void
 }
-
-const STORAGE_KEY = 'treki_crm_bookings_data'
-
-const DEMO_BOOKINGS: Booking[] = [
-  {
-    id: 'bk-1',
-    customerName: 'Ananya Sharma',
-    email: 'ananya.sharma@gmail.com',
-    phone: '+91 98201 55672',
-    destination: 'Bali, Indonesia',
-    status: 'Confirmed',
-    departure: '2026-12-10',
-    returnDate: '2026-12-17',
-    travellers: 2,
-    totalAmount: 185000,
-    amountPaid: 95000,
-    currency: 'INR',
-    package: 'Honeymoon Special Villa Package',
-    assignedTo: 'Rahul Verma',
-    notes: 'Airport pick up scheduled. Private pool villa confirmed.',
-    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'bk-2',
-    customerName: 'Vikramaditya Singhania',
-    email: 'vikram.singhania@corp.in',
-    phone: '+91 98112 34901',
-    destination: 'Dubai & Abu Dhabi, UAE',
-    status: 'Pending',
-    departure: '2026-12-20',
-    returnDate: '2026-12-26',
-    travellers: 4,
-    totalAmount: 340000,
-    amountPaid: 50000,
-    currency: 'INR',
-    package: 'Luxury Desert Safari & Marina Tour',
-    assignedTo: 'Priya Nair',
-    notes: 'Awaiting visa approval and remaining advance payment.',
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'bk-3',
-    customerName: 'Rajesh & Meera Patel',
-    email: 'patel.rajesh@outlook.com',
-    phone: '+91 97234 11890',
-    destination: 'Kashmir Valley, India',
-    status: 'Ongoing',
-    departure: '2026-11-18',
-    returnDate: '2026-11-25',
-    travellers: 3,
-    totalAmount: 120000,
-    amountPaid: 120000,
-    currency: 'INR',
-    package: 'Gulmarg Gondola & Dal Lake Houseboat',
-    assignedTo: 'Rahul Verma',
-    notes: 'Guest checked into Srinagar houseboat today. All payments cleared.',
-    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'bk-4',
-    customerName: 'Kavita Menon',
-    email: 'kavita.menon@techsoft.com',
-    phone: '+91 98450 78210',
-    destination: 'Swiss Alps & Paris',
-    status: 'Completed',
-    departure: '2026-10-15',
-    returnDate: '2026-10-24',
-    travellers: 2,
-    totalAmount: 520000,
-    amountPaid: 520000,
-    currency: 'INR',
-    package: 'Grand European Winter Wonder',
-    assignedTo: 'Priya Nair',
-    notes: 'Trip completed successfully. Received 5-star Google review.',
-    createdAt: new Date(Date.now() - 86400000 * 35).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
 
 const BookingsContext = createContext<BookingsContextType | undefined>(undefined)
 
 export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [bookings, setBookings] = useState<Booking[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        return JSON.parse(saved)
-      }
-    } catch {
-      // fallback
-    }
-    return DEMO_BOOKINGS
-  })
+  const { token } = useAuth()
+  const { access } = useWorkspace()
+  const { toast } = useToast()
+  const enabled = Boolean(token && access?.modules.includes('bookings'))
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   const [filters, setFilters] = useState<BookingFilters>({
     search: '',
@@ -125,14 +44,16 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [isNewBookingModalOpen, setIsNewBookingModalOpen] = useState(false)
 
-  // Sync with localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings))
-    } catch {
-      // ignore
-    }
-  }, [bookings])
+    if (!enabled) return
+    let active = true
+    bookingsService.getBookings().then(({ bookings }) => {
+      if (active) { setBookings(bookings); setLoading(false) }
+    }, (error: Error) => {
+      if (active) { setLoadError(error.message); setLoading(false) }
+    })
+    return () => { active = false }
+  }, [enabled, token])
 
   const updateFilter = <K extends keyof BookingFilters>(key: K, value: BookingFilters[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
@@ -195,53 +116,39 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     })
   }, [bookings, filters])
 
-  const addBooking = (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Booking => {
-    const now = new Date().toISOString()
-    const newBooking: Booking = {
-      ...bookingData,
-      id: 'bk-' + Date.now(),
-      createdAt: now,
-      updatedAt: now,
-    }
-
-    setBookings((prev) => [newBooking, ...prev])
-    return newBooking
+  async function mutate<T>(mutation: () => Promise<T>): Promise<T | undefined> {
+    try { return await mutation() }
+    catch (error) { toast({ type: 'error', title: 'Booking update failed', description: (error as Error).message }) }
   }
-
-  const updateBooking = (id: string, updates: Partial<Booking>) => {
-    const now = new Date().toISOString()
-    setBookings((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, ...updates, updatedAt: now } : b))
-    )
-    if (selectedBooking && selectedBooking.id === id) {
-      setSelectedBooking((prev) => (prev ? { ...prev, ...updates, updatedAt: now } : null))
-    }
+  const replaceBooking = (booking: Booking) => {
+    setBookings((previous) => previous.map((item) => item.id === booking.id ? booking : item))
+    setSelectedBooking((previous) => previous?.id === booking.id ? booking : previous)
   }
-
-  const deleteBooking = (id: string) => {
-    setBookings((prev) => prev.filter((b) => b.id !== id))
-    if (selectedBooking && selectedBooking.id === id) {
-      setSelectedBooking(null)
-    }
+  const addBooking: BookingsContextType['addBooking'] = (data) => mutate(async () => {
+    const booking = await bookingsService.createBooking(data)
+    setBookings((previous) => [booking, ...previous])
+    return booking
+  })
+  const updateBooking: BookingsContextType['updateBooking'] = (id, updates) => {
+    void mutate(async () => replaceBooking(await bookingsService.updateBooking(id, updates)))
   }
-
-  const updateBookingStatus = (id: string, status: BookingStatus) => {
-    updateBooking(id, { status })
+  const deleteBooking: BookingsContextType['deleteBooking'] = (id) => {
+    void mutate(async () => {
+      await bookingsService.deleteBooking(id)
+      setBookings((previous) => previous.filter((booking) => booking.id !== id))
+      setSelectedBooking((previous) => previous?.id === id ? null : previous)
+    })
   }
-
-  const loadDemoData = () => {
-    setBookings(DEMO_BOOKINGS)
-  }
-
-  const clearAllBookings = () => {
-    setBookings([])
-    setSelectedBooking(null)
+  const updateBookingStatus: BookingsContextType['updateBookingStatus'] = (id, status) => {
+    void mutate(async () => replaceBooking(await bookingsService.updateStatus(id, status)))
   }
 
   return (
     <BookingsContext.Provider
       value={{
         bookings,
+        loading,
+        loadError,
         filteredBookings,
         stats,
         filters,
@@ -256,8 +163,6 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setSelectedBooking,
         isNewBookingModalOpen,
         setIsNewBookingModalOpen,
-        loadDemoData,
-        clearAllBookings,
       }}
     >
       {children}

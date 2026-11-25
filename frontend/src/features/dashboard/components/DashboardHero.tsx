@@ -31,15 +31,15 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({ onRefresh, isLoadi
   const agencyName = user?.organizationName || 'your workspace'
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#3e2e68] via-[#453372] to-[#594096] text-white p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm border border-purple-500/20">
+    <div className="rounded-2xl sm:rounded-3xl bg-[image:var(--gm-overview-gradient)] text-ink p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm border border-line">
       <div className="space-y-1.5">
-        <p className="text-xs sm:text-sm font-medium text-purple-200/90 tracking-wide">
+        <p className="text-xs sm:text-sm font-medium text-copy-muted tracking-wide">
           {formattedDate}
         </p>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink flex items-center gap-2">
           {getGreeting()}, {firstName} <span className="inline-block animate-wiggle">👋</span>
         </h1>
-        <p className="text-xs sm:text-sm text-purple-200/80 font-normal">
+        <p className="text-xs sm:text-sm text-copy-muted font-normal">
           Here's what's happening at {agencyName}.
         </p>
       </div>
@@ -49,7 +49,7 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({ onRefresh, isLoadi
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition cursor-pointer"
+            className="p-2.5 rounded-xl bg-white hover:bg-canvas text-ink border border-line transition cursor-pointer"
             title="Refresh dashboard metrics"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />

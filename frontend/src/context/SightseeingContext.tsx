@@ -1,3 +1,4 @@
+import { useAuth } from './AuthContext'
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { SightseeingActivity, SightseeingFilters } from '../types/sightseeing.types'
 import { sightseeingService } from '../services/sightseeingService'
@@ -18,59 +19,14 @@ interface SightseeingContextType {
   deleteActivity: (id: string) => Promise<void>
 }
 
-const STORAGE_KEY = 'treki_crm_sightseeing_data'
-
-const DEFAULT_ACTIVITIES: SightseeingActivity[] = [
-  {
-    id: 'act-1',
-    name: 'Gulmarg Gondola & Snow Excursion',
-    coverImage: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80',
-    description: 'Scenic mountain drive to Gulmarg. Take the world-famous Gondola Cable Car to Phase 1 & Phase 2 at Apharwat Peak for skiing, snowboarding, and panoramic Himalayan vistas.',
-    destination: 'Kashmir',
-    duration: 'Full Day (8 Hours)',
-    tags: ['Adventure', 'Snow', 'Mountains'],
-    isFavorite: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'act-2',
-    name: 'Uluwatu Sunset Temple & Kecak Dance',
-    coverImage: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80',
-    description: 'Visit the dramatic sea cliff temple of Uluwatu perched 70 meters above the Indian Ocean. Witness the mesmerizing traditional Balinese Kecak fire dance against a golden sunset.',
-    destination: 'Bali',
-    duration: 'Half Day (5 Hours)',
-    tags: ['Culture', 'Sunset', 'Temple'],
-    isFavorite: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'act-3',
-    name: 'Nusa Penida Speedboat Island Tour',
-    coverImage: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=800&q=80',
-    description: 'High-speed catamaran cruise to Nusa Penida island. Visit iconic Kelingking Beach (T-Rex cliff), Broken Beach natural bridge, Angel Billabong, and snorkel at Crystal Bay.',
-    destination: 'Bali',
-    duration: 'Full Day (10 Hours)',
-    tags: ['Beach', 'Boat Tour', 'Island'],
-    isFavorite: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
+const STORAGE_PREFIX = 'treki_crm_sightseeing_data'
 
 const SightseeingContext = createContext<SightseeingContextType | undefined>(undefined)
 
 export const SightseeingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activities, setActivities] = useState<SightseeingActivity[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch (e) {
-      console.error('Failed to parse sightseeing activities from localStorage', e)
-    }
-    return DEFAULT_ACTIVITIES
-  })
+  const { user } = useAuth()
+  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
+  const [activities, setActivities] = useState<SightseeingActivity[]>([])
 
   const [isLoading, setIsLoading] = useState(false)
   const [filters, setFilters] = useState<SightseeingFilters>({
@@ -85,7 +41,7 @@ export const SightseeingProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setIsLoading(true)
     try {
       const res = await sightseeingService.getActivities()
-      if (res?.activities && res.activities.length > 0) {
+      if (res?.activities) {
         setActivities(res.activities)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(res.activities))
       }

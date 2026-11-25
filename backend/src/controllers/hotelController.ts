@@ -3,69 +3,6 @@ import { AuthenticatedRequest } from '../types';
 import { Hotel, IHotel } from '../models/Hotel';
 import { Organization } from '../models/Organization';
 
-// Default initial demo partner hotels for newly onboarded agencies
-const DEFAULT_HOTEL_SEEDS = [
-  {
-    name: 'The Grand Bali Resort',
-    city: 'Ubud',
-    address: 'Jl. Raya Campuhan No. 12, Ubud, Gianyar, Bali',
-    stars: 5,
-    pricePerNight: 8500,
-    currency: 'INR',
-    phone: '+62 361 975 688',
-    email: 'reservations@thegrandbali.com',
-    commissionRate: 15,
-    notes: 'Contract rate: ₹8,500/night incl. breakfast & tax. Contact: Wayan (Sales Manager). 15% agency commission on pool villas.',
-    roomTypes: [
-      { name: 'Deluxe Suite', pricePerNight: 8500, inclusions: 'Breakfast & Taxes', capacity: 2 },
-      { name: 'Private Pool Villa', pricePerNight: 16500, inclusions: 'Breakfast, Airport Pickup & High Tea', capacity: 4 },
-    ],
-    photos: [
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
-    ],
-  },
-  {
-    name: 'The Khyber Himalayan Resort & Spa',
-    city: 'Gulmarg',
-    address: 'Near Gondola Base Station, Gulmarg, Kashmir',
-    stars: 5,
-    pricePerNight: 22000,
-    currency: 'INR',
-    phone: '+91 1954 254 666',
-    email: 'stay@khyberresort.com',
-    commissionRate: 12,
-    notes: 'Direct walking distance to Gondola Phase 1. Winter rates locked at ₹22,000/night for deluxe mountain-view rooms. Free airport pickup on 3+ night bookings.',
-    roomTypes: [
-      { name: 'Premier Mountain View', pricePerNight: 22000, inclusions: 'Buffet Breakfast & Gondola Transfer', capacity: 2 },
-      { name: 'Luxury Heritage Cottage', pricePerNight: 35000, inclusions: 'All Meals, Heated Pool & Spa Access', capacity: 4 },
-    ],
-    photos: [
-      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80',
-    ],
-  },
-  {
-    name: 'Taj Holiday Village Resort & Spa',
-    city: 'Goa',
-    address: 'Sinquerim Beach, Candolim, Bardez, North Goa',
-    stars: 5,
-    pricePerNight: 14500,
-    currency: 'INR',
-    phone: '+91 832 664 5858',
-    email: 'village.goa@tajhotels.com',
-    commissionRate: 18,
-    notes: 'Beachfront cottages. Monsoon package special: Stay 3 Pay 2. Contact: Rohit Verma (Key Accounts).',
-    roomTypes: [
-      { name: 'Garden View Cottage', pricePerNight: 14500, inclusions: 'Daily Breakfast & Free Wi-Fi', capacity: 2 },
-      { name: 'Sunset Beachfront Villa', pricePerNight: 26000, inclusions: 'Breakfast, Sunset Cruise & Airport Cab', capacity: 3 },
-    ],
-    photos: [
-      'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80',
-    ],
-  },
-];
-
 // Helper to format Mongoose document to frontend-compatible Hotel object
 const formatHotel = (doc: IHotel) => {
   const obj = doc.toObject();
@@ -94,19 +31,6 @@ export const getHotels = async (req: AuthenticatedRequest, res: Response): Promi
     if (!organizationId) {
       res.status(200).json({ hotels: [], total: 0 });
       return;
-    }
-
-    // Auto-seed default hotels if directory is empty for this organization
-    const count = await Hotel.countDocuments({ organizationId, status: { $ne: 'ARCHIVED' } });
-    if (count === 0) {
-      await Hotel.insertMany(
-        DEFAULT_HOTEL_SEEDS.map((seed) => ({
-          ...seed,
-          organizationId,
-          createdBy: req.user?.userId,
-          status: 'ACTIVE',
-        }))
-      );
     }
 
     const { search, city, stars } = req.query;

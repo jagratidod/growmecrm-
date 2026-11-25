@@ -1,3 +1,4 @@
+import { useAuth } from './AuthContext'
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react'
 import type { Bill, BillFilters, BillStats } from '../types/bill.types'
 import { billsService } from '../services/billsService'
@@ -16,88 +17,17 @@ interface BillsContextType {
   recordPayment: (id: string, additionalPaid: number) => void
   isAddBillModalOpen: boolean
   setIsAddBillModalOpen: (open: boolean) => void
-  loadDemoData: () => void
-  clearAllBills: () => void
   refreshBills: () => Promise<void>
 }
 
-const STORAGE_KEY = 'treki_crm_bills_data'
-
-const DEMO_BILLS: Bill[] = [
-  {
-    id: 'bill-1',
-    vendor: 'Bali Grand Hotel & Luxury Villas',
-    category: 'Hotel',
-    totalAmount: 95000,
-    amountPaid: 95000,
-    currency: 'INR',
-    billDate: '2026-11-15',
-    linkedTripId: 'bk-1',
-    linkedTripName: 'Ananya Sharma (Bali, Indonesia)',
-    notes: '7 nights pool villa stay with complimentary airport transfers.',
-    status: 'Paid',
-    createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'bill-2',
-    vendor: 'Emirates Airline Group',
-    category: 'Flight',
-    totalAmount: 145000,
-    amountPaid: 65000,
-    currency: 'INR',
-    billDate: '2026-11-18',
-    linkedTripId: 'bk-2',
-    linkedTripName: 'Vikramaditya Singhania (Dubai)',
-    notes: '4 business class return tickets BOM-DXB. Advance paid.',
-    status: 'Partial',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'bill-3',
-    vendor: 'Dal Lake Royal Houseboat Services',
-    category: 'Hotel',
-    totalAmount: 48000,
-    amountPaid: 48000,
-    currency: 'INR',
-    billDate: '2026-11-10',
-    linkedTripId: 'bk-3',
-    linkedTripName: 'Rajesh & Meera Patel (Kashmir)',
-    notes: 'Premium 3-bedroom cedarwood houseboat booked.',
-    status: 'Paid',
-    createdAt: new Date(Date.now() - 86400000 * 9).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'bill-4',
-    vendor: 'Swiss Rail & Alpine Bus Pass',
-    category: 'Transport',
-    totalAmount: 88000,
-    amountPaid: 0,
-    currency: 'INR',
-    billDate: '2026-11-19',
-    linkedTripId: 'bk-4',
-    linkedTripName: 'Kavita Menon (Swiss Alps)',
-    notes: '8-day first class Swiss Travel Pass voucher pending invoice.',
-    status: 'Unpaid',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
+const STORAGE_PREFIX = 'treki_crm_bills_data'
 
 const BillsContext = createContext<BillsContextType | undefined>(undefined)
 
 export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [bills, setBills] = useState<Bill[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch {
-      // ignore
-    }
-    return DEMO_BILLS
-  })
+  const { user } = useAuth()
+  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
+  const [bills, setBills] = useState<Bill[]>([])
 
   const [filters, setFilters] = useState<BillFilters>({
     search: '',
@@ -110,7 +40,7 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const refreshBills = useCallback(async () => {
     try {
       const res = await billsService.getBills()
-      if (res?.bills && res.bills.length > 0) {
+      if (res?.bills) {
         setBills(res.bills)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(res.bills))
       }
@@ -258,14 +188,6 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     billsService.recordPayment(id, additionalPaid).catch(() => {})
   }
 
-  const loadDemoData = () => {
-    setBills(DEMO_BILLS)
-  }
-
-  const clearAllBills = () => {
-    setBills([])
-  }
-
   return (
     <BillsContext.Provider
       value={{
@@ -282,8 +204,6 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         recordPayment,
         isAddBillModalOpen,
         setIsAddBillModalOpen,
-        loadDemoData,
-        clearAllBills,
         refreshBills,
       }}
     >

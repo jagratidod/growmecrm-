@@ -1,9 +1,11 @@
+import { useTeam } from '../../../context/TeamContext'
 import React from 'react'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { useLeads } from '../../../context/LeadsContext'
 import type { LeadStage, LeadTemperature, CustomerType, LeadSource } from '../../../types/lead.types'
 
 export const LeadsSearchFilter: React.FC = () => {
+  const { members } = useTeam()
   const {
     filters,
     updateFilter,
@@ -31,7 +33,7 @@ export const LeadsSearchFilter: React.FC = () => {
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
             placeholder="Search name, email, phone, destination..."
-            className="w-full bg-white border border-slate-200/90 rounded-2xl pl-11 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition shadow-xs"
+            className="w-full bg-white border border-slate-200/90 rounded-2xl pl-11 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 transition shadow-xs"
           />
           {filters.search && (
             <button
@@ -48,14 +50,14 @@ export const LeadsSearchFilter: React.FC = () => {
           onClick={() => setIsFiltersDrawerOpen(!isFiltersDrawerOpen)}
           className={`inline-flex items-center gap-2 px-4 py-2.5 sm:py-3 rounded-2xl border text-xs sm:text-sm font-semibold transition shadow-xs shrink-0 select-none ${
             hasActiveFilters || isFiltersDrawerOpen
-              ? 'border-[#453372] bg-purple-50 text-[#453372]'
+              ? 'border-brand bg-purple-50 text-brand'
               : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
           }`}
         >
           <SlidersHorizontal className="w-4 h-4 text-current" />
           <span>Filters</span>
           {hasActiveFilters && (
-            <span className="w-2 h-2 rounded-full bg-[#453372]"></span>
+            <span className="w-2 h-2 rounded-full bg-brand"></span>
           )}
         </button>
       </div>
@@ -68,7 +70,7 @@ export const LeadsSearchFilter: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={resetFilters}
-                className="text-xs text-[#453372] hover:underline font-semibold"
+                className="text-xs text-brand hover:underline font-semibold"
               >
                 Reset All
               </button>
@@ -150,9 +152,7 @@ export const LeadsSearchFilter: React.FC = () => {
               >
                 <option value="All">All Members</option>
                 <option value="Unassigned">Unassigned</option>
-                <option value="Kushal Pareta">Kushal Pareta</option>
-                <option value="Pooja Sharma">Pooja Sharma</option>
-                <option value="Rahul Verma">Rahul Verma</option>
+                {members.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
               </select>
             </div>
 

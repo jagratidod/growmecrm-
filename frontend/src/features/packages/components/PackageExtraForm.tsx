@@ -3,7 +3,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Plus,
-  Star,
+  Sparkles,
   X,
   Link as LinkIcon,
 } from 'lucide-react'
@@ -21,18 +21,11 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
 
   const [highlightInput, setHighlightInput] = useState('')
   const [highlights, setHighlights] = useState<string[]>(
-    activePackage?.highlights || [
-      'Private sunset dinner on the beach',
-      'Daily yoga & wellness massage sessions',
-      'High-speed catamaran cruise to outer islands',
-    ]
+    activePackage?.highlights ?? []
   )
 
   const [galleryImages, setGalleryImages] = useState<string[]>(
-    activePackage?.galleryImages || [
-      'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=600&q=80',
-    ]
+    activePackage?.galleryImages ?? []
   )
 
   const [showUrlModal, setShowUrlModal] = useState(false)
@@ -107,7 +100,7 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
           <div className="flex items-center gap-2">
             <input
               type="text"
-              placeholder="e.g. Private sunset dinner on the beach"
+
               value={highlightInput}
               onChange={(e) => setHighlightInput(e.target.value)}
               onKeyDown={(e) => {
@@ -116,7 +109,7 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
                   handleAddHighlight()
                 }
               }}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
             />
             <button
               type="button"
@@ -137,7 +130,7 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
                   className="flex items-center justify-between p-3 rounded-xl bg-purple-50/40 border border-purple-100/70 text-xs sm:text-sm text-slate-800"
                 >
                   <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-[#453372] shrink-0" />
+                    <Sparkles className="w-4 h-4 text-brand shrink-0" />
                     <span>{h}</span>
                   </div>
                   <button
@@ -187,15 +180,15 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
             ))}
 
             {/* "+ Add image" dashed box matching screenshot */}
-            <div className="relative w-28 h-28 rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#453372]/60 hover:bg-purple-50/20 transition-all flex flex-col items-center justify-center cursor-pointer group">
+            <div className="relative w-28 h-28 rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand/60 hover:bg-purple-50/20 transition-all flex flex-col items-center justify-center cursor-pointer group">
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleFileUpload}
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
               />
-              <Plus className="w-6 h-6 text-slate-400 group-hover:text-[#453372] transition-colors mb-1" />
-              <span className="text-xs font-bold text-slate-600 group-hover:text-[#453372]">
+              <Plus className="w-6 h-6 text-slate-400 group-hover:text-brand transition-colors mb-1" />
+              <span className="text-xs font-bold text-slate-600 group-hover:text-brand">
                 Add image
               </span>
             </div>
@@ -204,7 +197,7 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
             <button
               type="button"
               onClick={() => setShowUrlModal(true)}
-              className="text-xs text-slate-500 hover:text-[#453372] flex items-center gap-1 font-medium underline-offset-2 hover:underline ml-2"
+              className="text-xs text-slate-500 hover:text-brand flex items-center gap-1 font-medium underline-offset-2 hover:underline ml-2"
             >
               <LinkIcon className="w-3.5 h-3.5" />
               <span>or paste image URL</span>
@@ -216,7 +209,7 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
             <div className="flex items-center gap-2 pt-2 max-w-md bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <input
                 type="url"
-                placeholder="https://example.com/photo.jpg"
+
                 value={imageUrlInput}
                 onChange={(e) => setImageUrlInput(e.target.value)}
                 className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white"
@@ -224,7 +217,7 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
               <button
                 type="button"
                 onClick={handleAddImageUrl}
-                className="px-3 py-1.5 bg-[#453372] text-white text-xs font-semibold rounded-lg"
+                className="px-3 py-1.5 bg-brand text-white text-xs font-semibold rounded-lg"
               >
                 Add
               </button>
@@ -254,7 +247,7 @@ export const PackageExtraForm: React.FC<PackageExtraFormProps> = ({ onNext, onBa
         <button
           type="button"
           onClick={handleProceed}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
         >
           <span>Next: Review</span>
           <ArrowRight className="w-4 h-4" />

@@ -196,6 +196,7 @@ export const updateLead = async (req: AuthenticatedRequest, res: Response): Prom
     delete updates._id;
     delete updates.id;
     delete updates.organizationId;
+    delete updates.websiteId;
     delete updates.activities; // Activities managed via specific endpoints
 
     Object.assign(lead, updates);

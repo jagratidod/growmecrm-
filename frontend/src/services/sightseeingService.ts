@@ -52,10 +52,4 @@ export const sightseeingService = {
     });
   },
 
-  // 6. Re-seed default sample activities
-  async seedActivities(): Promise<{ message: string; activities: SightseeingActivity[] }> {
-    return request<{ message: string; activities: SightseeingActivity[] }>('/sightseeing/seed', {
-      method: 'POST',
-    });
-  },
 };

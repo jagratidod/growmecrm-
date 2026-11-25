@@ -31,8 +31,8 @@ export interface IPlatformSetting extends Document {
 const PlatformSettingSchema = new Schema<IPlatformSetting>(
   {
     platformName: { type: String, default: 'GrowMe CRM', trim: true },
-    supportEmail: { type: String, default: 'support@growmecrm.com', trim: true },
-    contactPhone: { type: String, default: '+91 89822 92201', trim: true },
+    supportEmail: { type: String, default: '', trim: true },
+    contactPhone: { type: String, default: '', trim: true },
     defaultCurrency: { type: String, default: 'INR' },
     defaultTrialDays: { type: Number, default: 14 },
     maintenanceMode: { type: Boolean, default: false },
@@ -51,7 +51,7 @@ const PlatformSettingSchema = new Schema<IPlatformSetting>(
     smtpHost: { type: String, default: '' },
     smtpPort: { type: Number, default: 587 },
     smtpUser: { type: String, default: '' },
-    smtpFromEmail: { type: String, default: 'notifications@growmecrm.com' },
+    smtpFromEmail: { type: String, default: '' },
     smtpPassword: { type: String, default: '' },
   },
   { timestamps: true }

@@ -59,7 +59,7 @@ export const BookingDetailsDrawer: React.FC = () => {
           <div className="p-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/60">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-[#453372]">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-brand">
                   {selectedBooking.id}
                 </span>
                 <select
@@ -99,7 +99,7 @@ export const BookingDetailsDrawer: React.FC = () => {
           <div className="p-5 space-y-5 flex-1">
             {/* Quick Contacts */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-[#f3f4f8] border border-slate-100">
+              <div className="p-3 rounded-xl bg-canvas border border-slate-100">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
                   Phone
                 </span>
@@ -107,7 +107,7 @@ export const BookingDetailsDrawer: React.FC = () => {
                   {selectedBooking.phone || 'N/A'}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-[#f3f4f8] border border-slate-100">
+              <div className="p-3 rounded-xl bg-canvas border border-slate-100">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
                   Email
                 </span>
@@ -144,7 +144,7 @@ export const BookingDetailsDrawer: React.FC = () => {
               {selectedBooking.package && (
                 <div className="pt-2 border-t border-slate-100">
                   <span className="text-[11px] text-slate-400 block">Selected Package</span>
-                  <span className="text-xs font-bold text-[#453372]">{selectedBooking.package}</span>
+                  <span className="text-xs font-bold text-brand">{selectedBooking.package}</span>
                 </div>
               )}
             </div>
@@ -153,12 +153,12 @@ export const BookingDetailsDrawer: React.FC = () => {
             <div className="p-4 rounded-2xl bg-white border border-slate-200/80 space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-[#453372]" /> Financials & Payment
+                  <CreditCard className="w-3.5 h-3.5 text-brand" /> Financials & Payment
                 </h4>
                 <button
                   type="button"
                   onClick={() => setIsAddingPayment(!isAddingPayment)}
-                  className="text-xs font-bold text-[#453372] hover:underline"
+                  className="text-xs font-bold text-brand hover:underline"
                 >
                   + Add Deposit
                 </button>
@@ -202,11 +202,11 @@ export const BookingDetailsDrawer: React.FC = () => {
                     placeholder="Amount (₹)..."
                     value={addPaymentAmount}
                     onChange={(e) => setAddPaymentAmount(e.target.value)}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:outline-hidden focus:border-[#453372]"
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:outline-hidden focus:border-brand"
                   />
                   <button
                     type="submit"
-                    className="px-3 py-1.5 rounded-xl bg-[#453372] text-white text-xs font-bold hover:bg-[#382760] transition"
+                    className="px-3 py-1.5 rounded-xl bg-brand text-white text-xs font-bold hover:bg-brand-hover transition"
                   >
                     Save
                   </button>
@@ -219,7 +219,7 @@ export const BookingDetailsDrawer: React.FC = () => {
               <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-slate-400" /> Booking Notes
               </h4>
-              <p className="text-xs text-slate-600 leading-relaxed bg-[#f3f4f8] p-3 rounded-xl border border-slate-100">
+              <p className="text-xs text-slate-600 leading-relaxed bg-canvas p-3 rounded-xl border border-slate-100">
                 {selectedBooking.notes || 'No notes added for this booking yet.'}
               </p>
             </div>
@@ -243,7 +243,7 @@ export const BookingDetailsDrawer: React.FC = () => {
             <button
               type="button"
               onClick={() => setSelectedBooking(null)}
-              className="px-4 py-2 rounded-xl bg-[#453372] text-white text-xs font-bold hover:bg-[#382760] transition"
+              className="px-4 py-2 rounded-xl bg-brand text-white text-xs font-bold hover:bg-brand-hover transition"
             >
               Close
             </button>

@@ -8,7 +8,6 @@ import {
   toggleFavourite,
   updateStage,
   deleteConversation,
-  seedDemoConversations,
 } from '../controllers/inboxController';
 
 const router = Router();
@@ -17,7 +16,6 @@ router.use(authenticate);
 
 router.get('/', getConversations);
 router.post('/', createConversation);
-router.post('/seed-demo', seedDemoConversations);
 router.get('/:id', getConversationById);
 router.post('/:id/messages', sendMessage);
 router.patch('/:id/favourite', toggleFavourite);

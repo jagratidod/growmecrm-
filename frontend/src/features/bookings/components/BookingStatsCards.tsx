@@ -24,7 +24,7 @@ export const BookingStatsCards: React.FC = () => {
       value: stats.departingThisMonth.toLocaleString(),
       icon: PlaneTakeoff,
       barColor: '#453372',
-      iconBg: 'bg-[#453372]/12 text-[#453372]',
+      iconBg: 'bg-brand/12 text-brand',
     },
     {
       title: 'Pipeline Value',

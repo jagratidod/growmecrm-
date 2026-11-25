@@ -105,13 +105,13 @@ export const AddBillModal: React.FC = () => {
               <input
                 type="text"
                 required
-                placeholder="e.g. Bali Grand Hotel"
+
                 value={vendor}
                 onChange={(e) => {
                   setVendor(e.target.value)
                   if (error) setError('')
                 }}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
               {error && (
                 <p className="text-[11px] text-[#ff7675] mt-1 font-medium">{error}</p>
@@ -123,7 +123,7 @@ export const AddBillModal: React.FC = () => {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as BillCategory)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition cursor-pointer"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition cursor-pointer"
               >
                 <option value="Hotel">Hotel</option>
                 <option value="Flight">Flight</option>
@@ -150,7 +150,7 @@ export const AddBillModal: React.FC = () => {
                 value={totalAmount === 0 ? '' : totalAmount}
                 onChange={(e) => setTotalAmount(Number(e.target.value))}
                 placeholder="0"
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
 
@@ -163,7 +163,7 @@ export const AddBillModal: React.FC = () => {
                 value={amountPaid === 0 ? '' : amountPaid}
                 onChange={(e) => setAmountPaid(Number(e.target.value))}
                 placeholder="0"
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
           </div>
@@ -175,7 +175,7 @@ export const AddBillModal: React.FC = () => {
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition cursor-pointer"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition cursor-pointer"
               >
                 <option value="INR">INR (₹)</option>
                 <option value="USD">USD ($)</option>
@@ -190,7 +190,7 @@ export const AddBillModal: React.FC = () => {
                 type="date"
                 value={billDate}
                 onChange={(e) => setBillDate(e.target.value)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
           </div>
@@ -201,7 +201,7 @@ export const AddBillModal: React.FC = () => {
             <select
               value={linkedTripId}
               onChange={(e) => setLinkedTripId(e.target.value)}
-              className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition cursor-pointer"
+              className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition cursor-pointer"
             >
               <option value="">No trip (general cost)</option>
               {bookings.map((b) => (
@@ -223,7 +223,7 @@ export const AddBillModal: React.FC = () => {
               placeholder="Reference number, payment method..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+              className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
             />
           </div>
 
@@ -238,7 +238,7 @@ export const AddBillModal: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#382760] text-white text-xs sm:text-sm font-semibold shadow-sm shadow-[#453372]/30 transition active:scale-[0.99]"
+              className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99]"
             >
               Add bill
             </button>

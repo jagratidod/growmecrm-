@@ -31,7 +31,7 @@ export const PackageStepNavigation: React.FC = () => {
               onClick={() => handleStepClick(step.number)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'bg-[#181829] text-white shadow-xs'
+                  ? 'bg-brand text-white shadow-xs'
                   : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/70 hover:border-slate-300'
               }`}
             >

@@ -88,8 +88,8 @@ export const CallLogTable: React.FC = () => {
             {filteredCallLogs.map((log: CallLogEntry) => {
               const style = outcomeStyles[log.outcome] || {
                 bg: 'bg-purple-50',
-                text: 'text-[#453372]',
-                dot: 'bg-[#453372]',
+                text: 'text-brand',
+                dot: 'bg-brand',
                 icon: PhoneCall,
               }
               const Icon = style.icon
@@ -110,7 +110,7 @@ export const CallLogTable: React.FC = () => {
                   {/* Caller Agent */}
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-purple-50 text-[#453372] border border-purple-100 flex items-center justify-center font-bold text-xs shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-purple-50 text-brand border border-purple-100 flex items-center justify-center font-bold text-xs shrink-0">
                         <User className="w-3.5 h-3.5" />
                       </div>
                       <span className="font-semibold text-xs text-slate-700">{log.userName}</span>
@@ -168,8 +168,8 @@ export const CallLogTable: React.FC = () => {
         {filteredCallLogs.map((log: CallLogEntry) => {
           const style = outcomeStyles[log.outcome] || {
             bg: 'bg-purple-50',
-            text: 'text-[#453372]',
-            dot: 'bg-[#453372]',
+            text: 'text-brand',
+            dot: 'bg-brand',
             icon: PhoneCall,
           }
           const Icon = style.icon

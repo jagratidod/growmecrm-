@@ -119,14 +119,14 @@ export const CalendarGrid: React.FC = () => {
             onClick={() => handleCellClick(cell)}
             className={`min-h-[90px] sm:min-h-[115px] p-2 sm:p-2.5 transition-colors cursor-pointer group flex flex-col justify-between relative ${
               cell.isToday
-                ? 'bg-purple-50/30 ring-2 ring-inset ring-[#453372]/30'
+                ? 'bg-purple-50/30 ring-2 ring-inset ring-brand/30'
                 : 'hover:bg-slate-50/60'
             }`}
           >
             {/* Day Number Header */}
             <div className="flex items-center justify-between">
               {cell.isToday ? (
-                <div className="w-6 h-6 rounded-full bg-[#453372] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                <div className="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xs shadow-xs">
                   {cell.dayNumber}
                 </div>
               ) : (
@@ -153,7 +153,7 @@ export const CalendarGrid: React.FC = () => {
                       ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/70'
                       : evt.type === 'return'
                       ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/70'
-                      : 'bg-purple-50 text-[#453372] border border-purple-200/70'
+                      : 'bg-purple-50 text-brand border border-purple-200/70'
                   }`}
                   title={`${evt.title}${evt.notes ? ` — ${evt.notes}` : ''}`}
                 >

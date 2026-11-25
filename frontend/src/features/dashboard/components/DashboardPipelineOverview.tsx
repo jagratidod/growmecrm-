@@ -29,7 +29,7 @@ export const DashboardPipelineOverview: React.FC<DashboardPipelineOverviewProps>
         </h2>
         <button
           onClick={onOpenPipeline}
-          className="text-xs sm:text-sm font-semibold text-[#453372] hover:text-[#322353] transition-colors cursor-pointer hover:underline"
+          className="text-xs sm:text-sm font-semibold text-brand hover:text-brand-hover transition-colors cursor-pointer hover:underline"
         >
           Open pipeline
         </button>

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import crypto from 'crypto';
 
-export type PlanType = 'STARTER' | 'PRO' | 'ENTERPRISE';
+export type PlanType = 'STARTER' | 'PRO' | 'ENTERPRISE' | 'CUSTOM';
 
 export interface IOrganization extends Document {
   name: string;
@@ -46,7 +46,7 @@ const OrganizationSchema = new Schema<IOrganization>(
     },
     plan: {
       type: String,
-      enum: ['STARTER', 'PRO', 'ENTERPRISE'],
+      enum: ['STARTER', 'PRO', 'ENTERPRISE', 'CUSTOM'],
       default: 'STARTER',
     },
     maxSeats: {

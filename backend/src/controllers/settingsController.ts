@@ -8,37 +8,19 @@ const DEFAULT_SETTINGS = {
     whatsappConnected: false,
     instagramConnected: false,
     emailConnected: false,
-    emailFromAddress: 'bookings@youragency.com',
-    emailApiKey: 're_xxxxxxxxxxxx',
+    emailFromAddress: '',
+    emailApiKey: '',
   },
   aiAgent: {
-    tone: 'Friendly, warm and professional',
-    systemPrompt:
-      'You are the assistant for Wander & Co. Travel — always mention our 24/7 support line if asked about emergencies...',
-    keyFacts:
-      'We specialise in Kashmir, Ladakh and Himachal packages. Payment: 30% advance, balance before departure.',
+    tone: '',
+    systemPrompt: '',
+    keyFacts: '',
   },
   automation: {
     enabled: false,
     nudgeAfterHours: 48,
-    nudgeMessage:
-      'Just checking in — happy to help if you still have questions about your trip! Let us know.',
-    logs: [
-      {
-        id: 'log-1',
-        timestamp: 'Today, 11:30 PM',
-        status: 'Checked' as const,
-        details: 'Evaluated 4 open leads. None exceeded 48h silence threshold.',
-      },
-      {
-        id: 'log-2',
-        timestamp: 'Today, 11:15 PM',
-        status: 'Skipped' as const,
-        leadName: 'Aarav Mehta',
-        channel: 'WhatsApp' as const,
-        details: 'Last message was 18 hours ago (under 48h threshold).',
-      },
-    ],
+    nudgeMessage: '',
+    logs: [],
   },
 };
 

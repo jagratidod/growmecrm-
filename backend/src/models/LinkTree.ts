@@ -49,7 +49,7 @@ const LinkTreeSchema = new Schema<ILinkTree>(
     },
     bioTagline: {
       type: String,
-      default: 'Curated Trips, Himalayan Treks & Luxury Getaways ✨',
+      default: '',
       trim: true,
     },
     links: [BioLinkItemSchema],

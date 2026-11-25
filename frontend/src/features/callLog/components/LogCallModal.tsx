@@ -1,3 +1,4 @@
+import { useAuth } from '../../../context/AuthContext'
 import React, { useState } from 'react'
 import { X, Search, PhoneCall, User } from 'lucide-react'
 import { useCallLog } from '../../../context/CallLogContext'
@@ -19,6 +20,7 @@ const PREDEFINED_OUTCOMES: PredefinedOutcome[] = [
 ]
 
 export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) => {
+  const { user } = useAuth()
   const { logCall } = useCallLog()
   const { leads } = useLeads()
   const { toast } = useToast()
@@ -69,7 +71,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
       await logCall({
         leadName: finalLeadName,
         leadPhone: finalLeadPhone,
-        userName: 'Kushal Pareta',
+        userName: user?.name || '',
         outcome: finalOutcome,
         notes: notes.trim() || undefined,
       })
@@ -133,7 +135,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
                   setIsLeadDropdownOpen(true)
                 }}
                 onFocus={() => setIsLeadDropdownOpen(true)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               />
             </div>
 
@@ -148,7 +150,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
                     className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center justify-between text-xs transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <User className="w-3.5 h-3.5 text-[#453372]" />
+                      <User className="w-3.5 h-3.5 text-brand" />
                       <span className="font-semibold text-slate-900">{l.name}</span>
                     </div>
                     <span className="text-slate-400 font-mono">{l.phone || 'No phone'}</span>
@@ -173,7 +175,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
                     onClick={() => handleSelectOutcome(out)}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                       isSelected
-                        ? 'bg-[#453372] text-white shadow-xs'
+                        ? 'bg-brand text-white shadow-xs'
                         : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                     }`}
                   >
@@ -189,7 +191,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
               placeholder="Or type a custom outcome..."
               value={customOutcome}
               onChange={(e) => setCustomOutcome(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
             />
           </div>
 
@@ -201,7 +203,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
               placeholder="What was discussed..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none transition-all"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none transition-all"
             />
           </div>
 
@@ -217,7 +219,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-sm font-semibold shadow-xs hover:shadow transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-xs hover:shadow transition-all disabled:opacity-50"
             >
               <PhoneCall className="w-4 h-4 text-purple-200" />
               <span>{isSubmitting ? 'Logging...' : 'Log call'}</span>

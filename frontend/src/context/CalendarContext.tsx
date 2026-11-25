@@ -1,3 +1,4 @@
+import { useAuth } from './AuthContext'
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { CalendarEvent } from '../types/calendar.types'
 import { useBookings } from './BookingsContext'
@@ -21,55 +22,34 @@ interface CalendarContextType {
   refreshEvents: () => Promise<void>
 }
 
-const STORAGE_KEY = 'treki_crm_calendar_events'
-
-const DEFAULT_EVENTS: CalendarEvent[] = [
-  {
-    id: 'evt-1',
-    title: 'Goa Tour Group Briefing',
-    date: '2026-11-19',
-    notes: 'Goa group departure briefing & flight vouchers distribution.',
-    type: 'manual',
-    color: '#453372',
-    createdAt: new Date().toISOString(),
-  },
-]
+const STORAGE_PREFIX = 'treki_crm_calendar_events'
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined)
 
 export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth()
+  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
   const { bookings } = useBookings()
   const { toast } = useToast()
 
-  const [events, setEvents] = useState<CalendarEvent[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch (e) {
-      console.error('Failed to parse calendar events', e)
-    }
-    return DEFAULT_EVENTS
-  })
+  const [events, setEvents] = useState<CalendarEvent[]>([])
 
-  // Date anchor: defaults to November 2026
   const [currentDate, setCurrentDate] = useState<Date>(() => {
-    return new Date(2026, 10, 19)
+    return new Date()
   })
 
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState('2026-11-19')
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA'))
 
   // Fetch from backend API
   const refreshEvents = useCallback(async () => {
     try {
       const res = await calendarService.getEvents()
-      if (res?.events && res.events.length > 0) {
+      if (res?.events) {
         // filter out booking auto events for manual events state
         const manualOnly = res.events.filter((e) => e.type === 'manual')
-        if (manualOnly.length > 0) {
-          setEvents(manualOnly)
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(manualOnly))
-        }
+        setEvents(manualOnly)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(manualOnly))
       }
     } catch {
       // offline fallback
@@ -130,7 +110,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }
 
   const goToToday = () => {
-    setCurrentDate(new Date(2026, 10, 19))
+    setCurrentDate(new Date())
   }
 
   const addEvent = (data: { title: string; date: string; notes?: string }) => {

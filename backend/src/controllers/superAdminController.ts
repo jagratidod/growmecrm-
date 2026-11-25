@@ -1,3 +1,4 @@
+import { planModules } from '../platform/access';
 import { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
@@ -10,78 +11,22 @@ import { PlatformSetting } from '../models/PlatformSetting';
 import { PlatformAnnouncement } from '../models/PlatformAnnouncement';
 import { AuditLog } from '../models/AuditLog';
 
-// Helper to seed initial plans if DB is empty
-const seedDefaultPlansIfEmpty = async () => {
-  const count = await SubscriptionPlan.countDocuments();
-  if (count === 0) {
-    await SubscriptionPlan.insertMany([
-      {
-        name: 'Starter Tier',
-        code: 'STARTER',
-        tagline: 'Ideal for independent travel agents and emerging boutique agencies.',
-        priceMonthly: 1499,
-        priceYearly: 14990,
-        currency: 'INR',
-        maxSeats: 2,
-        maxLeads: 500,
-        features: [
-          'Up to 2 Team Members',
-          '500 Leads Capacity',
-          'Manual & Website Lead Ingestion',
-          'Standard PDF Quotations',
-          'Email Support (48h SLA)',
-        ],
-        isPopular: false,
-        isActive: true,
-      },
-      {
-        name: 'Growth Pro',
-        code: 'PRO',
-        tagline: 'Best for growing tour operators and multi-channel travel desks.',
-        priceMonthly: 3999,
-        priceYearly: 39990,
-        currency: 'INR',
-        maxSeats: 10,
-        maxLeads: 5000,
-        features: [
-          'Up to 10 Team Members',
-          '5,000 Leads Capacity',
-          'WhatsApp Cloud API Automation',
-          'Instagram & Meta Lead Webhooks',
-          'Automated Client Nudge Workflows',
-          'Priority WhatsApp & Email Support',
-        ],
-        isPopular: true,
-        isActive: true,
-      },
-      {
-        name: 'Enterprise Agency',
-        code: 'ENTERPRISE',
-        tagline: 'For large destination management companies and franchise networks.',
-        priceMonthly: 9999,
-        priceYearly: 99990,
-        currency: 'INR',
-        maxSeats: 50,
-        maxLeads: 50000,
-        features: [
-          'Unlimited Team Seats',
-          '50,000+ Leads Capacity',
-          'Custom Domain & Full White-labeling',
-          'Dedicated Account Manager',
-          'Custom Webhook Integrations & Zapier',
-          '99.9% Uptime Guarantee & SLA',
-        ],
-        isPopular: false,
-        isActive: true,
-      },
-    ]);
-  }
+// Keep editable plan records available without assigning subscription prices.
+const ensurePlans = async () => {
+  const defaults = [
+    { name: 'Starter', code: 'STARTER', maxSeats: 2, maxLeads: 500 },
+    { name: 'Pro', code: 'PRO', maxSeats: 10, maxLeads: 5000 },
+    { name: 'Enterprise', code: 'ENTERPRISE', maxSeats: 50, maxLeads: 50000 },
+  ] as const;
+  await SubscriptionPlan.bulkWrite(defaults.map((plan) => ({
+    updateOne: { filter: { code: plan.code }, update: { $setOnInsert: plan }, upsert: true },
+  })));
 };
 
 // 1. GET SUPER ADMIN DASHBOARD KPIS
 export const getDashboardStats = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    await seedDefaultPlansIfEmpty();
+    await ensurePlans();
 
     const [totalAgencies, activeAgencies, suspendedAgencies, totalAdmins, totalLeads] = await Promise.all([
       Organization.countDocuments(),
@@ -107,13 +52,15 @@ export const getDashboardStats = async (req: AuthenticatedRequest, res: Response
       }
     });
 
-    // Approximate MRR calculation based on active plans
-    const mrr =
-      (planDistribution.STARTER || 0) * 1499 +
-      (planDistribution.PRO || 0) * 3999 +
-      (planDistribution.ENTERPRISE || 0) * 9999;
-
-    // Recent 5 agencies
+    const [planPrices, activePlans] = await Promise.all([
+      SubscriptionPlan.find().select('code priceMonthly').lean(),
+      Organization.aggregate([
+        { $match: { status: 'ACTIVE' } },
+        { $group: { _id: '$plan', count: { $sum: 1 } } },
+      ]),
+    ]);
+    const prices = new Map<string, number>(planPrices.map((plan) => [plan.code, plan.priceMonthly]));
+    const mrr = activePlans.reduce((sum, plan) => sum + plan.count * (prices.get(plan._id) ?? 0), 0);
     const recentAgencies = await Organization.find()
       .sort({ createdAt: -1 })
       .limit(5)
@@ -157,10 +104,10 @@ export const getTenants = async (req: AuthenticatedRequest, res: Response): Prom
     if (status) filter.status = status;
     if (plan) filter.plan = plan;
     if (search) {
-      filter.$or = [
-        { name: new RegExp(search as string, 'i') },
-        { slug: new RegExp(search as string, 'i') },
-      ];
+      const text = String(search).slice(0, 120).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(text, 'i');
+      const owners = await User.find({ role: 'OWNER', email: pattern }).distinct('organizationId');
+      filter.$or = [{ name: pattern }, { slug: pattern }, { _id: { $in: owners } }];
     }
 
     const total = await Organization.countDocuments(filter);
@@ -284,7 +231,7 @@ export const impersonateTenant = async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    const secret = process.env.JWT_SECRET || 'fallback_secret';
+    const secret = process.env.JWT_SECRET!;
     // Short-lived 3-hour impersonation session
     const token = jwt.sign(
       {
@@ -339,68 +286,18 @@ export const impersonateTenant = async (req: AuthenticatedRequest, res: Response
 // 5. GET & UPDATE SUBSCRIPTION PLANS
 export const getSubscriptionPlans = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    await seedDefaultPlansIfEmpty();
-    const plans = await SubscriptionPlan.find().sort({ priceMonthly: 1 });
-    res.status(200).json({ plans });
+    await ensurePlans();
+    const plans = await SubscriptionPlan.find().sort({ priceMonthly: 1 }).lean();
+    res.status(200).json({ plans: plans.map((plan) => ({ ...plan, modules: planModules(plan.code, plan.features) })) });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Error fetching subscription plans' });
   }
 };
 
-export const createSubscriptionPlan = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const { name, code, tagline, priceMonthly, priceYearly, currency, maxSeats, maxLeads, features, isPopular } = req.body;
-    if (!name || !name.trim()) {
-      res.status(400).json({ error: 'Plan name is required' });
-      return;
-    }
-
-    const planCode = (code || name.toUpperCase().replace(/[^A-Z0-9]/g, '_')).slice(0, 20);
-    const existing = await SubscriptionPlan.findOne({ code: planCode });
-    if (existing) {
-      res.status(400).json({ error: `A plan with code '${planCode}' already exists` });
-      return;
-    }
-
-    const plan = await SubscriptionPlan.create({
-      name: name.trim(),
-      code: planCode,
-      tagline: tagline ? tagline.trim() : '',
-      priceMonthly: Number(priceMonthly) || 0,
-      priceYearly: Number(priceYearly) || 0,
-      currency: currency || 'INR',
-      maxSeats: Number(maxSeats) || 2,
-      maxLeads: Number(maxLeads) || 500,
-      features: Array.isArray(features) && features.length > 0 ? features : ['Standard Feature Access', 'Priority Support'],
-      isPopular: Boolean(isPopular),
-      isActive: true,
-    });
-
-    await AuditLog.create({
-      actorEmail: req.user?.email || 'superadmin@growmecrm.com',
-      actorRole: req.user?.role || 'SUPER_ADMIN',
-      action: 'CREATE_PLAN',
-      details: `Created new subscription plan ${plan.name} (${plan.code}) at ₹${plan.priceMonthly}/mo`,
-      status: 'SUCCESS',
-    });
-
-    res.status(201).json({ message: 'Subscription model created successfully', plan });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error creating subscription plan' });
-  }
-};
-
 export const updateSubscriptionPlan = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const rawId = req.params.id;
-    const id = Array.isArray(rawId) ? rawId[0] : rawId;
-    let plan = null;
-    if (id && Types.ObjectId.isValid(id)) {
-      plan = await SubscriptionPlan.findByIdAndUpdate(id, req.body, { new: true });
-    }
-    if (!plan && id) {
-      plan = await SubscriptionPlan.findOneAndUpdate({ code: id }, req.body, { new: true });
-    }
+    const { id } = req.params;
+    const plan = await SubscriptionPlan.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
     if (!plan) {
       res.status(404).json({ error: 'Subscription plan not found' });
       return;
@@ -417,38 +314,6 @@ export const updateSubscriptionPlan = async (req: AuthenticatedRequest, res: Res
     res.status(200).json({ message: 'Plan updated successfully', plan });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Error updating plan' });
-  }
-};
-
-export const deleteSubscriptionPlan = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const rawId = req.params.id;
-    const id = Array.isArray(rawId) ? rawId[0] : rawId;
-    let plan = null;
-    if (id && Types.ObjectId.isValid(id)) {
-      plan = await SubscriptionPlan.findById(id);
-    }
-    if (!plan && id) {
-      plan = await SubscriptionPlan.findOne({ code: id });
-    }
-    if (!plan) {
-      res.status(404).json({ error: 'Subscription plan not found' });
-      return;
-    }
-
-    await SubscriptionPlan.findByIdAndDelete(plan._id);
-
-    await AuditLog.create({
-      actorEmail: req.user?.email || 'superadmin@growmecrm.com',
-      actorRole: req.user?.role || 'SUPER_ADMIN',
-      action: 'DELETE_PLAN',
-      details: `Deleted subscription plan ${plan.name} (${plan.code})`,
-      status: 'SUCCESS',
-    });
-
-    res.status(200).json({ message: 'Subscription plan deleted successfully' });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Error deleting plan' });
   }
 };
 
@@ -586,29 +451,29 @@ export const getWebhookHealth = async (req: AuthenticatedRequest, res: Response)
         {
           name: 'Meta Graph API (Facebook / Instagram)',
           endpoint: `${baseUrl}/api/webhooks/meta`,
-          status: 'OPERATIONAL',
-          latencyMs: 142,
-          lastReceived: new Date().toISOString(),
+          status: 'UNVERIFIED',
+          latencyMs: null,
+          lastReceived: null,
           description: 'Receives real-time lead submissions from Meta Lead Forms and IG Direct messages.',
         },
         {
           name: 'WhatsApp Cloud API Webhook',
           endpoint: `${baseUrl}/api/webhooks/whatsapp`,
-          status: 'OPERATIONAL',
-          latencyMs: 98,
-          lastReceived: new Date().toISOString(),
+          status: 'UNVERIFIED',
+          latencyMs: null,
+          lastReceived: null,
           description: 'Ingests inbound client messages and delivery receipts from WhatsApp Business.',
         },
         {
           name: 'Universal Multi-Channel Lead Ingestion',
           endpoint: `${baseUrl}/api/webhooks/lead`,
-          status: 'OPERATIONAL',
-          latencyMs: 45,
-          lastReceived: new Date().toISOString(),
+          status: 'UNVERIFIED',
+          latencyMs: null,
+          lastReceived: null,
           description: 'REST webhook receiver for website inquiry forms and external campaign landing pages.',
         },
       ],
-      systemStatus: 'ALL_SYSTEMS_OPERATIONAL',
+      systemStatus: 'UNVERIFIED',
       checkedAt: new Date().toISOString(),
     });
   } catch (error: any) {

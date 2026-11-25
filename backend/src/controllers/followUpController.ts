@@ -22,50 +22,6 @@ const formatFollowUp = (doc: IFollowUp) => {
   };
 };
 
-// Default seed data for new agency workspaces
-const DEFAULT_FOLLOWUP_SEEDS = [
-  {
-    leadName: 'Amit Sharma',
-    phone: '+91 98765 43210',
-    destination: 'Kashmir Holiday Package',
-    dueDate: '2026-11-20',
-    dueTime: '11:30 AM',
-    type: 'whatsapp' as const,
-    note: 'Send revised hotel quotation for 4-star Dal Lake houseboat upgrade.',
-    status: 'pending' as const,
-  },
-  {
-    leadName: 'Pooja Verma',
-    phone: '+91 98111 22334',
-    destination: 'Goa Weekend Trip',
-    dueDate: '2026-11-19',
-    dueTime: '04:00 PM',
-    type: 'call' as const,
-    note: 'Follow up on booking advance payment confirmation link.',
-    status: 'overdue' as const,
-  },
-  {
-    leadName: 'Vikram Mehta',
-    phone: '+91 99887 76655',
-    destination: 'Dubai Family 6D/5N',
-    dueDate: '2026-11-22',
-    dueTime: '02:00 PM',
-    type: 'call' as const,
-    note: 'Discuss flight timings and visa requirements for family members.',
-    status: 'pending' as const,
-  },
-  {
-    leadName: 'Sneha Patel',
-    phone: '+91 97766 55443',
-    destination: 'Kerala Backwaters',
-    dueDate: '2026-11-18',
-    dueTime: '10:00 AM',
-    type: 'whatsapp' as const,
-    note: 'Shared brochure and customized itinerary via WhatsApp.',
-    status: 'completed' as const,
-  },
-];
-
 // 1. GET ALL FOLLOW-UPS (with filters, search, and calculated stats)
 export const getFollowUps = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -76,38 +32,6 @@ export const getFollowUps = async (req: AuthenticatedRequest, res: Response): Pr
     }
 
     const todayStr = getTodayStr();
-
-    // Auto-seed default follow-ups if none exist for this agency
-    const count = await FollowUp.countDocuments({ organizationId });
-    if (count === 0) {
-      // Try to link to real leads in this organization if they exist
-      const orgLeads = await Lead.find({ organizationId }).limit(4);
-      const seeds = DEFAULT_FOLLOWUP_SEEDS.map((seed, idx) => {
-        const lead = orgLeads[idx];
-        return {
-          ...seed,
-          organizationId,
-          createdBy: req.user?.userId,
-          leadId: lead ? lead._id : undefined,
-          leadName: lead ? lead.name : seed.leadName,
-          phone: lead ? lead.phone : seed.phone,
-          destination: lead ? lead.destination : seed.destination,
-        };
-      });
-      await FollowUp.insertMany(seeds);
-    }
-
-    // Auto-update pending follow-ups past their due date to 'overdue'
-    await FollowUp.updateMany(
-      {
-        organizationId,
-        status: 'pending',
-        dueDate: { $lt: todayStr },
-      },
-      {
-        $set: { status: 'overdue' },
-      }
-    );
 
     const { filter = 'all', search } = req.query;
     const query: any = { organizationId };

@@ -14,46 +14,6 @@ const formatSightseeing = (doc: ISightseeing) => {
   };
 };
 
-// Default seed activities for new tenant workspaces
-const DEFAULT_SIGHTSEEING_SEEDS = [
-  {
-    name: 'Gulmarg Gondola & Snow Excursion',
-    coverImage: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80',
-    description: 'Scenic mountain drive to Gulmarg. Take the world-famous Gondola Cable Car to Phase 1 & Phase 2 at Apharwat Peak for skiing, snowboarding, and panoramic Himalayan vistas.',
-    destination: 'Kashmir',
-    duration: 'Full Day (8 Hours)',
-    tags: ['Adventure', 'Snow', 'Mountains'],
-    isFavorite: true,
-  },
-  {
-    name: 'Uluwatu Sunset Temple & Kecak Dance',
-    coverImage: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80',
-    description: 'Visit the dramatic sea cliff temple of Uluwatu perched 70 meters above the Indian Ocean. Witness the mesmerizing traditional Balinese Kecak fire dance against a golden sunset.',
-    destination: 'Bali',
-    duration: 'Half Day (5 Hours)',
-    tags: ['Culture', 'Sunset', 'Temple'],
-    isFavorite: true,
-  },
-  {
-    name: 'Nusa Penida Speedboat Island Tour',
-    coverImage: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=800&q=80',
-    description: 'High-speed catamaran cruise to Nusa Penida island. Visit iconic Kelingking Beach (T-Rex cliff), Broken Beach natural bridge, Angel Billabong, and snorkel at Crystal Bay.',
-    destination: 'Bali',
-    duration: 'Full Day (10 Hours)',
-    tags: ['Beach', 'Boat Tour', 'Island'],
-    isFavorite: true,
-  },
-  {
-    name: 'Dal Lake Shikara Ride & Floating Market',
-    coverImage: 'https://images.unsplash.com/photo-1595815771614-ade9d652a65d?auto=format&fit=crop&w=800&q=80',
-    description: 'Tranquil evening Shikara boat cruise on Srinagar’s jewel Dal Lake. Glide past floating lotus gardens, historic houseboats, and vibrant local floating bazaars.',
-    destination: 'Kashmir',
-    duration: '2 Hours',
-    tags: ['Relaxation', 'Scenic', 'Romantic'],
-    isFavorite: false,
-  },
-];
-
 // 1. GET ALL SIGHTSEEING ACTIVITIES FOR TENANT
 export const getActivities = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -61,18 +21,6 @@ export const getActivities = async (req: AuthenticatedRequest, res: Response): P
     if (!organizationId) {
       res.status(401).json({ error: 'Tenant context missing' });
       return;
-    }
-
-    // Auto-seed default activities if collection is empty for this workspace
-    const existingCount = await Sightseeing.countDocuments({ organizationId });
-    if (existingCount === 0) {
-      await Sightseeing.insertMany(
-        DEFAULT_SIGHTSEEING_SEEDS.map((item) => ({
-          ...item,
-          organizationId: organizationId as any,
-          createdBy: req.user?.userId as any,
-        }))
-      );
     }
 
     const { search } = req.query;
@@ -211,34 +159,5 @@ export const deleteActivity = async (req: AuthenticatedRequest, res: Response): 
   } catch (error: any) {
     console.error('[Delete Activity Error]:', error);
     res.status(500).json({ error: error.message || 'Error deleting activity' });
-  }
-};
-
-// 6. RE-SEED DEFAULT SIGHTSEEING FOR TENANT
-export const seedActivities = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const organizationId = req.user?.organizationId;
-    if (!organizationId) {
-      res.status(401).json({ error: 'Tenant context missing' });
-      return;
-    }
-
-    await Sightseeing.insertMany(
-      DEFAULT_SIGHTSEEING_SEEDS.map((item) => ({
-        ...item,
-        organizationId: organizationId as any,
-        createdBy: req.user?.userId as any,
-      }))
-    );
-
-    const activities = await Sightseeing.find({ organizationId }).sort({ createdAt: -1 });
-
-    res.status(201).json({
-      message: `Seeded default sightseeing activities`,
-      activities: activities.map(formatSightseeing),
-    });
-  } catch (error: any) {
-    console.error('[Seed Activities Error]:', error);
-    res.status(500).json({ error: error.message || 'Error seeding activities' });
   }
 };

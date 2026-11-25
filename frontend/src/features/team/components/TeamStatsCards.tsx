@@ -11,7 +11,7 @@ export const TeamStatsCards: React.FC = () => {
       value: stats.members,
       icon: Users,
       barColor: '#453372',
-      iconBg: 'bg-[#453372]/12 text-[#453372]',
+      iconBg: 'bg-brand/12 text-brand',
     },
     {
       title: 'Admins',

@@ -1,0 +1,170 @@
+@layer base {
+  html:has(.growme-marketing) {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .growme-marketing {
+    overflow-x: clip;
+    background: var(--gm-surface);
+    color: var(--gm-ink);
+    font-family: var(--gm-font);
+  }
+
+  .growme-marketing ::selection {
+    background: var(--gm-accent-soft);
+    color: var(--gm-ink);
+  }
+}
+
+@layer components {
+  .card-brutal {
+    border: 1px solid var(--gm-line);
+    border-radius: 16px;
+    background: var(--gm-surface);
+    box-shadow: var(--gm-shadow);
+    transition: transform 240ms var(--gm-ease), box-shadow 240ms;
+  }
+
+  .card-brutal:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--gm-shadow-raised);
+  }
+
+  .sticker {
+    display: inline-block;
+    padding: .32rem .8rem;
+    border: 1px solid var(--gm-line);
+    border-radius: 8px;
+    color: var(--gm-muted);
+    background: var(--gm-canvas);
+    font-size: .75rem;
+    font-weight: 670;
+    line-height: 1.3;
+  }
+
+  .sticker-orange, .sticker-violet {
+    color: var(--gm-accent-hover);
+    background: var(--gm-accent-soft);
+    border-color: var(--gm-accent-line);
+  }
+
+  .sticker-yellow {
+    color: var(--gm-blue-ink);
+    background: var(--gm-blue-soft);
+  }
+
+  .sticker-white {
+    background: var(--gm-surface);
+  }
+
+  .sticker-black {
+    color: var(--gm-surface);
+    background: var(--gm-ink);
+  }
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    color: var(--gm-blue-ink);
+    font-size: .76rem;
+    font-weight: 680;
+    letter-spacing: .065em;
+    text-transform: uppercase;
+  }
+
+  .btn-primary, .btn-secondary, .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .65rem 1.25rem;
+    border: 1px solid var(--gm-line);
+    border-radius: 11px;
+    background: var(--gm-surface);
+    color: var(--gm-ink);
+    font-size: .875rem;
+    font-weight: 660;
+    transition: background 180ms, border-color 180ms, transform 220ms var(--gm-ease);
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--gm-accent);
+    color: var(--gm-surface);
+    border-color: transparent;
+  }
+
+  .btn-primary:hover {
+    background: var(--gm-accent-hover);
+  }
+
+  .btn-secondary:hover, .btn-ghost:hover {
+    background: var(--gm-canvas);
+    border-color: var(--gm-accent-line);
+  }
+
+  .btn-ghost {
+    background: transparent;
+  }
+
+  .btn-primary:active, .btn-secondary:active, .btn-ghost:active {
+    transform: scale(.985);
+  }
+
+  .input-brutal, .textarea-brutal, .select-brutal {
+    width: 100%;
+    padding: .75rem .85rem;
+    border: 1px solid var(--gm-line);
+    border-radius: 11px;
+    background: var(--gm-raised);
+    color: var(--gm-ink);
+    font: inherit;
+    font-size: .875rem;
+    transition: border 180ms, background 180ms, box-shadow 180ms;
+  }
+
+  .input-brutal:focus, .textarea-brutal:focus, .select-brutal:focus {
+    outline: none;
+    border-color: var(--gm-accent);
+    background: var(--gm-surface);
+    box-shadow: 0 0 0 3px var(--gm-accent-soft);
+  }
+
+  .input-brutal::placeholder, .textarea-brutal::placeholder {
+    color: var(--gm-subtle);
+  }
+
+  .textarea-brutal {
+    resize: vertical;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .grid-swiss {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .input-brutal, .textarea-brutal, .select-brutal {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.growme-marketing) {
+    scroll-behavior: auto;
+  }
+
+  .card-brutal {
+    transition: none;
+  }
+}

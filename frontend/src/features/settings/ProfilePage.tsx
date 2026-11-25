@@ -20,17 +20,17 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
 
   const storedAgency = typeof window !== 'undefined' ? localStorage.getItem('crm_current_agency') : null
   const activeOrg =
-    user?.organizationName && user.organizationName !== 'Treki Travels'
+    user?.organizationName
       ? user.organizationName
-      : storedAgency && storedAgency !== 'Treki Travels'
+      : storedAgency
       ? storedAgency
-      : organization?.agencyName && organization.agencyName !== 'Treki Travels'
+      : organization?.agencyName
       ? organization.agencyName
       : 'GrowMe CRM'
 
   // Derive active display values with priority to logged-in user
   const activeFullName = user?.name || profile.fullName || 'User'
-  const activeEmail = user?.email || profile.email || 'user@agency.com'
+  const activeEmail = user?.email || profile.email || ''
   const activeRole = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : (profile.role || 'Owner')
   const activeMemberSince = user?.memberSince || profile.memberSince || 'Today'
   const activeLastSignIn = user?.lastSignIn || profile.lastSignIn || 'Just now'
@@ -52,7 +52,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
         if (data) {
           if (data.fullName) setFullName(data.fullName)
           if (data.email) setEmail(data.email)
-          if (data.organization && data.organization !== 'Treki Travels') {
+          if (data.organization) {
             updateOrganization({ agencyName: data.organization })
             if (updateUser) {
               updateUser({ organizationName: data.organization })
@@ -66,7 +66,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
       .getOrganization()
       .then((org) => {
         const orgName = org?.agencyName || org?.name
-        if (orgName && orgName !== 'Treki Travels') {
+        if (orgName) {
           updateOrganization({ agencyName: orgName })
           if (updateUser) {
             updateUser({ organizationName: orgName })
@@ -136,7 +136,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       {/* Sidebar with active My profile cutout */}
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}
@@ -166,9 +166,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
             <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between">
               <div>
                 {/* Top Gradient Banner */}
-                <div className="h-28 bg-gradient-to-r from-[#453372] via-[#543b8c] to-[#6366f1] relative">
+                <div className="h-28 bg-blue-soft relative">
                   {/* Avatar centered on banner bottom border */}
-                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-[#453372] text-white ring-4 ring-white flex items-center justify-center font-black text-lg tracking-wide shadow-md">
+                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-brand text-white ring-4 ring-white flex items-center justify-center font-black text-lg tracking-wide shadow-md">
                     {initials}
                   </div>
                 </div>
@@ -183,7 +183,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                   </p>
 
                   <div className="mt-3">
-                    <span className="inline-block text-[11px] font-bold px-3 py-1 rounded-full bg-purple-50 text-[#453372] border border-purple-200">
+                    <span className="inline-block text-[11px] font-bold px-3 py-1 rounded-full bg-purple-50 text-brand border border-purple-200">
                       {activeRole}
                     </span>
                   </div>
@@ -230,7 +230,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                      className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
                     />
                   </div>
 
@@ -243,14 +243,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                      className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
                     />
                   </div>
 
                   <div className="pt-2 flex justify-end">
                     <button
                       type="submit"
-                      className="px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#382760] text-white text-xs sm:text-sm font-semibold shadow-sm shadow-[#453372]/30 transition active:scale-[0.99] flex items-center gap-1.5"
+                      className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99] flex items-center gap-1.5"
                     >
                       {savedPersonal ? (
                         <>
@@ -292,7 +292,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                       placeholder="••••••••"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                      className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
                     />
                   </div>
 
@@ -306,7 +306,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                         placeholder="••••••••"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                        className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
                       />
                     </div>
 
@@ -319,7 +319,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                         placeholder="••••••••"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                        className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
                       />
                     </div>
                   </div>
@@ -327,7 +327,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                   <div className="pt-2 flex justify-end">
                     <button
                       type="submit"
-                      className="px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#382760] text-white text-xs sm:text-sm font-semibold shadow-sm shadow-[#453372]/30 transition active:scale-[0.99] flex items-center gap-1.5"
+                      className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99] flex items-center gap-1.5"
                     >
                       {savedPassword ? (
                         <>

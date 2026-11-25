@@ -15,24 +15,27 @@ export const NewChatModal: React.FC = () => {
 
   if (!isNewChatModalOpen) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!contactName.trim()) {
       toast({ title: 'Please enter a contact name', type: 'error' })
       return
     }
 
-    startNewChat({
-      contactName: contactName.trim(),
-      contactPhone: activeChannel === 'whatsapp' ? contactPhone.trim() : undefined,
-      contactHandle: activeChannel === 'instagram' ? contactHandle.trim() : undefined,
-      initialMessage: initialMessage.trim() || undefined,
-    })
-
-    setContactName('')
-    setContactPhone('')
-    setContactHandle('')
-    setInitialMessage('')
+    try {
+      await startNewChat({
+        contactName: contactName.trim(),
+        contactPhone: activeChannel === 'whatsapp' ? contactPhone.trim() : undefined,
+        contactHandle: activeChannel === 'instagram' ? contactHandle.trim() : undefined,
+        initialMessage: initialMessage.trim() || undefined,
+      })
+      setContactName('')
+      setContactPhone('')
+      setContactHandle('')
+      setInitialMessage('')
+    } catch {
+      // Keep the form available for retry.
+    }
   }
 
   return (
@@ -73,10 +76,10 @@ export const NewChatModal: React.FC = () => {
             </label>
             <input
               type="text"
-              placeholder="e.g. Rahul Sharma"
+
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               autoFocus
             />
           </div>
@@ -88,10 +91,10 @@ export const NewChatModal: React.FC = () => {
               </label>
               <input
                 type="tel"
-                placeholder="+91 98765 43210"
+
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
             </div>
           ) : (
@@ -104,7 +107,7 @@ export const NewChatModal: React.FC = () => {
                 placeholder="@username"
                 value={contactHandle}
                 onChange={(e) => setContactHandle(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
             </div>
           )}
@@ -118,7 +121,7 @@ export const NewChatModal: React.FC = () => {
               placeholder="Type initial message to send..."
               value={initialMessage}
               onChange={(e) => setInitialMessage(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
             />
           </div>
 

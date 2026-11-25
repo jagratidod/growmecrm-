@@ -141,7 +141,7 @@ export const LeadsTable: React.FC = () => {
   }, [sortedLeads, currentPage, pageSize])
 
   const stageBadgeColors: Record<LeadStage, string> = {
-    New: 'bg-purple-50 text-[#453372] border-purple-200',
+    New: 'bg-purple-50 text-brand border-purple-200',
     Contacted: 'bg-indigo-50 text-indigo-700 border-indigo-200',
     Qualified: 'bg-rose-50 text-rose-700 border-rose-200',
     'Proposal sent': 'bg-amber-50 text-amber-700 border-amber-200',
@@ -163,7 +163,7 @@ export const LeadsTable: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-700 border-collapse">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-[#f3f4f8] text-[#453372] font-bold uppercase tracking-wider text-[11px]">
+            <tr className="border-b border-slate-200/80 bg-canvas text-brand font-bold uppercase tracking-wider text-[11px]">
               <th
                 onClick={() => handleSort('name')}
                 className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none"

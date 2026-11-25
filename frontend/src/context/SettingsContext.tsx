@@ -1,3 +1,4 @@
+import { useAuth } from './AuthContext'
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { settingsService } from '../services/settingsService'
 
@@ -29,9 +30,6 @@ export interface OrganizationSettings {
   logoUrl?: string
   primaryColor: string
   secondaryColor: string
-  plan?: string
-  maxSeats?: number
-  maxLeads?: number
 }
 
 export interface InvoiceDetailSettings {
@@ -82,112 +80,86 @@ interface SettingsContextType {
   updateAutomation: (updates: Partial<AutomationSettings>) => void
 }
 
-const STORAGE_KEY = 'treki_crm_settings_data'
+const INVOICE_STORAGE_PREFIX = 'growme_invoice_preferences'
 
 const DEFAULT_PROFILE: UserProfileSettings = {
-  fullName: 'Agency Owner',
-  email: 'owner@agency.com',
-  role: 'Owner',
-  organization: 'GrowMe CRM',
-  memberSince: 'Today',
-  lastSignIn: 'Just now',
+  fullName: '',
+  email: '',
+  role: '',
+  organization: '',
+  memberSince: '',
+  lastSignIn: '',
 }
 
 const DEFAULT_CHANNELS: ChannelsSettings = {
   whatsappConnected: false,
   instagramConnected: false,
   emailConnected: false,
-  emailFromAddress: 'bookings@youragency.com',
-  emailApiKey: 're_xxxxxxxxxxxx',
+  emailFromAddress: '',
+  emailApiKey: '',
 }
 
 const DEFAULT_AI_AGENT: AiAgentSettings = {
-  tone: 'Friendly, warm and professional',
+  tone: '',
   systemPrompt:
-    'You are the assistant for Wander & Co. Travel — always mention our 24/7 support line if asked about emergencies...',
+    '',
   keyFacts:
-    'We specialise in Kashmir, Ladakh and Himachal packages. Payment: 30% advance, balance before departure.',
+    '',
 }
 
 const DEFAULT_ORGANIZATION: OrganizationSettings = {
-  agencyName: 'GrowMe CRM',
+  agencyName: '',
   logoUrl: '',
   primaryColor: '#4F46E5',
   secondaryColor: '#0D9488',
 }
 
 const DEFAULT_INVOICE_DETAIL: InvoiceDetailSettings = {
-  secondPhone: '+91 98765 43210',
-  secondEmail: 'accounts@agency.com',
-  state: 'Maharashtra',
-  stateCode: '27',
-  bankName: 'HDFC Bank, Andheri branch',
-  bankAccountNumber: '50100123456789',
-  ifscCode: 'HDFC0001234',
-  gstin: '27AAAAA0000A1Z5',
-  pan: 'AAAAA0000A',
-  hsnSacCode: '998552',
+  secondPhone: '',
+  secondEmail: '',
+  state: '',
+  stateCode: '',
+  bankName: '',
+  bankAccountNumber: '',
+  ifscCode: '',
+  gstin: '',
+  pan: '',
+  hsnSacCode: '',
   signatureImage: '',
-  signatoryTitle: 'Director',
+  signatoryTitle: '',
   termsAndConditions:
-    'We declare that there is no tax payable under reverse charge mechanism.\nThe total invoice value mentioned herein shall be non-refundable in nature.',
+    '',
 }
 
 const DEFAULT_AUTOMATION: AutomationSettings = {
   enabled: false,
   nudgeAfterHours: 48,
   nudgeMessage:
-    'Just checking in — happy to help if you still have questions about your trip! Let us know.',
-  logs: [
-    {
-      id: 'log-1',
-      timestamp: 'Today, 11:30 PM',
-      status: 'Checked',
-      details: 'Evaluated 4 open leads. None exceeded 48h silence threshold.',
-    },
-    {
-      id: 'log-2',
-      timestamp: 'Today, 11:15 PM',
-      status: 'Skipped',
-      leadName: 'Aarav Mehta',
-      channel: 'WhatsApp',
-      details: 'Last message was 18 hours ago (under 48h threshold).',
-    },
-  ],
+    '',
+  logs: [],
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth()
+  const invoiceStorageKey = user?.organizationId ? `${INVOICE_STORAGE_PREFIX}:${user.organizationId}` : ''
   const [profile, setProfile] = useState<UserProfileSettings>(() => {
     try {
       const authUserStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')
       if (authUserStr) {
         const authUser = JSON.parse(authUserStr)
         if (authUser?.name) {
-          const orgName = (authUser.organizationName && authUser.organizationName !== 'Treki Travels')
-            ? authUser.organizationName
-            : (localStorage.getItem('crm_current_agency') || 'GrowMe CRM')
+          const orgName = authUser.organizationName || ''
           return {
             fullName: authUser.name,
-            email: authUser.email || 'user@agency.com',
+            email: authUser.email || '',
             role: authUser.role ? (authUser.role.charAt(0).toUpperCase() + authUser.role.slice(1)) : 'Owner',
             organization: orgName,
-            memberSince: authUser.memberSince || 'Today',
-            lastSignIn: authUser.lastSignIn || 'Just now',
+            memberSince: authUser.memberSince || '',
+            lastSignIn: authUser.lastSignIn || '',
           }
         }
-      }
-      const saved = localStorage.getItem(STORAGE_KEY + '_profile')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (parsed.organization === 'Treki Travels' || !parsed.organization) {
-          parsed.organization = localStorage.getItem('crm_current_agency') || 'GrowMe CRM'
-        }
-        if (parsed.fullName === 'Kushal Pareta') {
-          parsed.fullName = 'Agency Owner'
-        }
-        return parsed
       }
     } catch {
       // ignore
@@ -195,34 +167,16 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return DEFAULT_PROFILE
   })
 
-  const [channels, setChannels] = useState<ChannelsSettings>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + '_channels')
-      if (saved) return JSON.parse(saved)
-    } catch {
-      // ignore
-    }
-    return DEFAULT_CHANNELS
-  })
+  const [channels, setChannels] = useState<ChannelsSettings>(DEFAULT_CHANNELS)
 
-  const [aiAgent, setAiAgent] = useState<AiAgentSettings>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + '_ai')
-      if (saved) return JSON.parse(saved)
-    } catch {
-      // ignore
-    }
-    return DEFAULT_AI_AGENT
-  })
+  const [aiAgent, setAiAgent] = useState<AiAgentSettings>(DEFAULT_AI_AGENT)
 
   useEffect(() => {
     try {
       const authUserStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')
       if (authUserStr) {
         const authUser = JSON.parse(authUserStr)
-        const orgName = (authUser.organizationName && authUser.organizationName !== 'Treki Travels')
-          ? authUser.organizationName
-          : (localStorage.getItem('crm_current_agency') || 'GrowMe CRM')
+        const orgName = authUser.organizationName || ''
 
         if (authUser?.name) {
           setProfile((prev) => ({
@@ -243,36 +197,12 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch {}
   }, [])
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + '_profile', JSON.stringify(profile))
-    } catch {
-      // ignore
-    }
-  }, [profile])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + '_channels', JSON.stringify(channels))
-    } catch {
-      // ignore
-    }
-  }, [channels])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + '_ai', JSON.stringify(aiAgent))
-    } catch {
-      // ignore
-    }
-  }, [aiAgent])
-
   const [organization, setOrganization] = useState<OrganizationSettings>(() => {
     try {
       const authUserStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')
       if (authUserStr) {
         const authUser = JSON.parse(authUserStr)
-        if (authUser?.organizationName && authUser.organizationName !== 'Treki Travels') {
+        if (authUser?.organizationName) {
           return {
             agencyName: authUser.organizationName,
             logoUrl: '',
@@ -281,31 +211,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
         }
       }
-      const saved = localStorage.getItem(STORAGE_KEY + '_org')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (parsed.agencyName === 'Treki Travels' || !parsed.agencyName) {
-          parsed.agencyName = localStorage.getItem('crm_current_agency') || 'GrowMe CRM'
-        }
-        return parsed
-      }
     } catch {
       // ignore
     }
     return DEFAULT_ORGANIZATION
   })
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + '_org', JSON.stringify(organization))
-    } catch {
-      // ignore
-    }
-  }, [organization])
-
   const [invoiceDetail, setInvoiceDetail] = useState<InvoiceDetailSettings>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY + '_invoice')
+      const saved = invoiceStorageKey ? localStorage.getItem(invoiceStorageKey) : null
       if (saved) return JSON.parse(saved)
     } catch {
       // ignore
@@ -315,29 +229,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY + '_invoice', JSON.stringify(invoiceDetail))
+      if (invoiceStorageKey) localStorage.setItem(invoiceStorageKey, JSON.stringify(invoiceDetail))
     } catch {
       // ignore
     }
-  }, [invoiceDetail])
+  }, [invoiceDetail, invoiceStorageKey])
 
-  const [automation, setAutomation] = useState<AutomationSettings>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + '_automation')
-      if (saved) return JSON.parse(saved)
-    } catch {
-      // ignore
-    }
-    return DEFAULT_AUTOMATION
-  })
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + '_automation', JSON.stringify(automation))
-    } catch {
-      // ignore
-    }
-  }, [automation])
+  const [automation, setAutomation] = useState<AutomationSettings>(DEFAULT_AUTOMATION)
 
   // Fetch remote settings on mount
   useEffect(() => {
@@ -350,11 +248,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           if (data.automation) setAutomation((prev) => ({ ...prev, ...data.automation }))
         }
       } catch (err) {
-        console.warn('Could not fetch settings from server, using local cache:', err)
+        console.warn('Could not fetch workspace settings:', err)
       }
     }
-    fetchSettings()
-  }, [])
+    if (user?.organizationId) fetchSettings()
+  }, [user?.organizationId])
 
   const updateProfile = (updates: Partial<UserProfileSettings>) => {
     setProfile((prev) => ({ ...prev, ...updates }))

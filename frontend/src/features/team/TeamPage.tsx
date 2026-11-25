@@ -14,7 +14,7 @@ export const TeamPage: React.FC<TeamPageProps> = ({ onNavigateMenu }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       {/* Sidebar with active Team tab cutout */}
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}

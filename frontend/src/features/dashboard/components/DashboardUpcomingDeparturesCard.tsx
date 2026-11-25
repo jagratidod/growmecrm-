@@ -28,7 +28,7 @@ export const DashboardUpcomingDeparturesCard: React.FC<DashboardUpcomingDepartur
         </div>
         <button
           onClick={onOpenCalendar}
-          className="text-xs font-semibold text-[#453372] hover:text-[#322353] transition-colors cursor-pointer hover:underline"
+          className="text-xs font-semibold text-brand hover:text-brand-hover transition-colors cursor-pointer hover:underline"
         >
           Calendar
         </button>

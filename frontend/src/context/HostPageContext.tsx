@@ -1,3 +1,4 @@
+import { useAuth } from './AuthContext'
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { HostPageData, HostReview, HostContact } from '../types/hostPage.types'
 import { hostPageService } from '../services/hostPageService'
@@ -17,10 +18,10 @@ interface HostPageContextType {
   refreshHostPage: () => Promise<void>
 }
 
-const STORAGE_KEY = 'treki_crm_host_page_data'
+const STORAGE_PREFIX = 'treki_crm_host_page_data'
 
 const DEFAULT_HOST_DATA: HostPageData = {
-  websiteUrl: 'https://joinetra.com/growme-crm',
+  websiteUrl: '',
   bannerImage: '',
   aboutUs: '',
   contact: {
@@ -34,6 +35,8 @@ const DEFAULT_HOST_DATA: HostPageData = {
 const HostPageContext = createContext<HostPageContextType | undefined>(undefined)
 
 export const HostPageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth()
+  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
 

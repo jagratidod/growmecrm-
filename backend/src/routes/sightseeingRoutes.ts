@@ -6,7 +6,6 @@ import {
   createActivity,
   updateActivity,
   deleteActivity,
-  seedActivities,
 } from '../controllers/sightseeingController';
 
 const router = Router();
@@ -20,6 +19,5 @@ router.get('/:id', getActivityById);
 router.post('/', createActivity);
 router.put('/:id', updateActivity);
 router.delete('/:id', deleteActivity);
-router.post('/seed', seedActivities);
 
 export default router;

@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
+import { useToast } from '../components/ui/Toast'
+import { packagesService } from '../services/packagesService'
 import type { TravelPackage } from '../types/package.types'
 
 interface PackagesContextType {
@@ -15,181 +18,63 @@ interface PackagesContextType {
   deletePackage: (id: string) => Promise<void>
 }
 
-const STORAGE_KEY = 'treki_crm_packages_data'
-
-const DEFAULT_PACKAGES: TravelPackage[] = [
-  {
-    id: 'pkg-1',
-    name: 'BALI_V1_2026',
-    code: 'BALI-2026',
-    status: 'DRAFT',
-    brochureDesign: 'Signature',
-    template: 'Bali Honeymoon & Leisure',
-    categories: ['Honeymoon', 'Beach', 'International'],
-    slug: 'bali-v1-2026',
-    duration: { nights: 4, days: 5 },
-    bookingTitle: 'Experience Bali Paradise: Private Pool Villas & Temples',
-    destination: 'Bali, Indonesia',
-    price: 13999,
-    originalPrice: 16000,
-    currency: 'INR',
-    route: 'Delhi to Delhi',
-    bookingAmount: 5000,
-    pricingOptions: [
-      { id: 'po-1', label: 'Double Sharing (Per Person)', price: 13999 },
-      { id: 'po-2', label: 'Single Occupancy Villa', price: 21999 },
-      { id: 'po-3', label: 'Child with Bed (Under 12)', price: 9999 },
-      { id: 'po-4', label: 'Peak Season Surcharge (Dec/Jan)', price: 17999, isPeakSeason: true },
-    ],
-    bannerImage: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=80',
-    whatsappBannerImage: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80',
-    whatsappDescription: '🌴 Book Bali 5D/4N with Private Villa & Uluwatu Sunset Tour starting at just ₹13,999! Limited slots available.',
-    description: 'Immerse yourself in tropical serenity with our signature Bali 5D/4N holiday package. Enjoy luxury pool villa stays, private airport transfers, Ubud artisan tour, and Nusa Penida island speedboat cruise.',
-    contactNumber: '+91-98765-43210',
-    contactEmail: 'contact@growmecrm.com',
-    itineraryDays: [
-      {
-        id: 'd1-1',
-        dayNumber: 1,
-        title: 'Arrival & beach sunset',
-        dayPlan: 'Arrival at Denpasar International Airport.\nPrivate pickup by chauffeur.\nCheck-in to private pool villa in Seminyak.\nEvening sunset walk along the beach.',
-        hotelType: 'No hotel / custom stay',
-        stay: 'The Seminyak Beach Resort & Spa',
-        activities: 'Airport transfer, Beach stroll',
-        meals: 'Dinner',
-        distance: '25 Kms',
-        notes: 'Standard check-in time is 2:00 PM.',
-        photos: ['https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80'],
-      },
-      {
-        id: 'd1-2',
-        dayNumber: 2,
-        title: 'Ubud cultural tour & jungle swing',
-        dayPlan: 'Breakfast at the villa.\nVisit Ubud monkey forest and art market.\nTry the famous Bali jungle swing overlooking rice terraces.\nReturn to resort in the evening.',
-        hotelType: '4-Star Premium Resort',
-        stay: 'The Seminyak Beach Resort & Spa',
-        activities: 'Monkey forest, Rice terrace trek, Swing',
-        meals: 'Breakfast, Lunch',
-        distance: '55 Kms',
-        notes: 'Wear comfortable walking shoes.',
-        photos: ['https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=600&q=80'],
-      },
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'pkg-2',
-    name: 'KASHMIR_BLISS_2026',
-    code: 'KSH-2026',
-    status: 'PUBLISHED',
-    brochureDesign: 'Adventure',
-    template: 'Kashmir Valley & Snow Tour',
-    categories: ['Mountains', 'Snow', 'Family'],
-    slug: 'kashmir-bliss-2026',
-    duration: { nights: 5, days: 6 },
-    bookingTitle: 'Enchanting Kashmir: Dal Lake Houseboat & Gulmarg Gondola',
-    destination: 'Srinagar, Gulmarg & Pahalgam',
-    price: 24999,
-    originalPrice: 29999,
-    currency: 'INR',
-    route: 'Srinagar to Srinagar',
-    bookingAmount: 7000,
-    pricingOptions: [
-      { id: 'po-k1', label: 'Twin Sharing Deluxe', price: 24999 },
-      { id: 'po-k2', label: 'Family Suite (4 Guests)', price: 44999 },
-    ],
-    bannerImage: 'https://images.unsplash.com/photo-1595815771614-ade9d652a65d?auto=format&fit=crop&w=1200&q=80',
-    whatsappBannerImage: 'https://images.unsplash.com/photo-1595815771614-ade9d652a65d?auto=format&fit=crop&w=800&q=80',
-    whatsappDescription: '❄️ Experience heaven on earth! 6 Days Kashmir with Gulmarg Gondola & Dal Lake Houseboat @ ₹24,999.',
-    description: 'Explore breathtaking valleys, snow-capped peaks, shikara rides on Dal Lake, and world-class luxury houseboats in Kashmir.',
-    contactNumber: '+91-98765-43210',
-    contactEmail: 'contact@growmecrm.com',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
-
-export const NEW_PACKAGE_INITIAL: Omit<TravelPackage, 'id' | 'createdAt' | 'updatedAt'> = {
-  name: 'BALI_V1_2026',
+const NEW_PACKAGE_INITIAL: Omit<TravelPackage, 'id' | 'createdAt' | 'updatedAt'> = {
+  name: '',
   code: '',
   status: 'DRAFT',
   brochureDesign: 'Signature',
   template: '',
   categories: [],
-  slug: 'bali-v1-2026',
+  slug: '',
   duration: { nights: 1, days: 2 },
   bookingTitle: '',
-  destination: 'Bali, Indonesia',
-  price: 13999,
-  originalPrice: 16000,
+  destination: '',
+  price: 0,
+  originalPrice: 0,
   currency: 'INR',
-  route: 'Delhi to Delhi',
-  bookingAmount: 5000,
+  route: '',
+  bookingAmount: 0,
   pricingOptions: [],
   bannerImage: '',
   whatsappBannerImage: '',
   whatsappDescription: '',
   description: '',
-  contactNumber: '+91-XXXX-XXXX',
-  contactEmail: 'hello@example.com',
-  itineraryDays: [
-    {
-      id: 'day-init-1',
-      dayNumber: 1,
-      title: 'Arrival & beach sunset',
-      dayPlan: '',
-      hotelType: 'No hotel / custom stay',
-      stay: '',
-      activities: '',
-      meals: '',
-      distance: '',
-      notes: '',
-      photos: [],
-    },
-  ],
-  inclusions: 'Return flights\nHotel 4★\nDaily breakfast',
-  exclusions: 'Visa fees\nLunch & dinner\nPersonal expenses',
-  pickupDropPoints: 'Pickup: Airport T2\nDrop: Hotel lobby',
-  thingsToCarry: 'Passport\nSunscreen\nComfortable shoes',
-  cancellationPolicy: 'Free cancellation up to 15 days before departure...',
-  paymentTerms: '25% advance to confirm, balance 7 days before travel...',
-  termsAndConditions: 'Any additional terms travellers should know...',
-  faqs: [
-    {
-      id: 'faq-1',
-      question: 'Are flights included?',
-      answer: 'Yes, round-trip economy flights are included in this package.',
-    },
-  ],
-  highlights: ['Private sunset dinner on the beach'],
+  contactNumber: '',
+  contactEmail: '',
+  itineraryDays: [],
+  inclusions: '',
+  exclusions: '',
+  pickupDropPoints: '',
+  thingsToCarry: '',
+  cancellationPolicy: '',
+  paymentTerms: '',
+  termsAndConditions: '',
+  faqs: [],
+  highlights: [],
   galleryImages: [],
 }
 
 const PackagesContext = createContext<PackagesContextType | undefined>(undefined)
 
 export const PackagesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [packages, setPackages] = useState<TravelPackage[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) return JSON.parse(saved)
-    } catch (e) {
-      console.error('Failed to parse packages from localStorage', e)
-    }
-    return DEFAULT_PACKAGES
-  })
+  const { access } = useWorkspace()
+  const { toast } = useToast()
+  const enabled = access?.modules.includes('catalog')
+  const [packages, setPackages] = useState<TravelPackage[]>([])
 
   const [activePackage, setActivePackage] = useState<TravelPackage | null>(null)
   const [isBuilderOpen, setIsBuilderOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(packages))
-    } catch (e) {
-      console.error('Failed to save packages to localStorage', e)
-    }
-  }, [packages])
+    if (!enabled) return
+    let active = true
+    packagesService.getPackages().then(
+      (items) => { if (active) setPackages(items) },
+      (error: Error) => { if (active) toast({ type: 'error', title: 'Could not load packages', description: error.message }) },
+    )
+    return () => { active = false }
+  }, [enabled, toast])
 
   const startNewPackage = () => {
     const fresh: TravelPackage = {
@@ -210,34 +95,18 @@ export const PackagesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }
 
   const savePackage = async (pkgData: Partial<TravelPackage>): Promise<TravelPackage> => {
-    const now = new Date().toISOString()
-    let saved: TravelPackage
-
-    if (activePackage && packages.some((p) => p.id === activePackage.id)) {
-      // Update existing
-      saved = {
-        ...activePackage,
-        ...pkgData,
-        updatedAt: now,
-      }
-      setPackages((prev) => prev.map((p) => (p.id === saved.id ? saved : p)))
-    } else {
-      // Create new
-      saved = {
-        ...(activePackage || NEW_PACKAGE_INITIAL),
-        ...pkgData,
-        id: activePackage?.id || `pkg-${Date.now()}`,
-        createdAt: now,
-        updatedAt: now,
-      } as TravelPackage
-      setPackages((prev) => [saved, ...prev])
-    }
-
+    const existing = activePackage && packages.some((item) => item.id === activePackage.id)
+    const data = { ...(activePackage || NEW_PACKAGE_INITIAL), ...pkgData }
+    const saved = existing
+      ? await packagesService.updatePackage(activePackage.id, data)
+      : await packagesService.createPackage(data)
+    setPackages((previous) => existing ? previous.map((item) => item.id === saved.id ? saved : item) : [saved, ...previous])
     setActivePackage(saved)
     return saved
   }
 
   const deletePackage = async (id: string) => {
+    await packagesService.deletePackage(id)
     setPackages((prev) => prev.filter((p) => p.id !== id))
     if (activePackage?.id === id) {
       setActivePackage(null)

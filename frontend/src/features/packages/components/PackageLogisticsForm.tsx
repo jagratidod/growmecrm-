@@ -13,16 +13,16 @@ export const PackageLogisticsForm: React.FC<PackageLogisticsFormProps> = ({ onNe
   const { toast } = useToast()
 
   const [inclusions, setInclusions] = useState(
-    activePackage?.inclusions || 'Return flights\nHotel 4★\nDaily breakfast'
+    activePackage?.inclusions ?? ''
   )
   const [exclusions, setExclusions] = useState(
-    activePackage?.exclusions || 'Visa fees\nLunch & dinner\nPersonal expenses'
+    activePackage?.exclusions ?? ''
   )
   const [pickupDropPoints, setPickupDropPoints] = useState(
-    activePackage?.pickupDropPoints || 'Pickup: Airport T2\nDrop: Hotel lobby'
+    activePackage?.pickupDropPoints ?? ''
   )
   const [thingsToCarry, setThingsToCarry] = useState(
-    activePackage?.thingsToCarry || 'Passport\nSunscreen\nComfortable shoes'
+    activePackage?.thingsToCarry ?? ''
   )
 
   const handleProceed = async () => {
@@ -49,10 +49,10 @@ export const PackageLogisticsForm: React.FC<PackageLogisticsFormProps> = ({ onNe
             </div>
             <textarea
               rows={6}
-              placeholder={'Return flights\nHotel 4★\nDaily breakfast'}
+
               value={inclusions}
               onChange={(e) => setInclusions(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none font-mono"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none font-mono"
             />
             <p className="text-[11px] text-slate-400 mt-1">One per line.</p>
           </div>
@@ -65,10 +65,10 @@ export const PackageLogisticsForm: React.FC<PackageLogisticsFormProps> = ({ onNe
             </div>
             <textarea
               rows={6}
-              placeholder={'Visa fees\nLunch & dinner\nPersonal expenses'}
+
               value={exclusions}
               onChange={(e) => setExclusions(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none font-mono"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none font-mono"
             />
             <p className="text-[11px] text-slate-400 mt-1">One per line.</p>
           </div>
@@ -81,10 +81,10 @@ export const PackageLogisticsForm: React.FC<PackageLogisticsFormProps> = ({ onNe
             </div>
             <textarea
               rows={6}
-              placeholder={'Pickup: Airport T2\nDrop: Hotel lobby'}
+
               value={pickupDropPoints}
               onChange={(e) => setPickupDropPoints(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none font-mono"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none font-mono"
             />
             <p className="text-[11px] text-slate-400 mt-1">Where the trip starts and ends.</p>
           </div>
@@ -97,10 +97,10 @@ export const PackageLogisticsForm: React.FC<PackageLogisticsFormProps> = ({ onNe
             </div>
             <textarea
               rows={6}
-              placeholder={'Passport\nSunscreen\nComfortable shoes'}
+
               value={thingsToCarry}
               onChange={(e) => setThingsToCarry(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none font-mono"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none font-mono"
             />
             <p className="text-[11px] text-slate-400 mt-1">One per line.</p>
           </div>
@@ -121,7 +121,7 @@ export const PackageLogisticsForm: React.FC<PackageLogisticsFormProps> = ({ onNe
         <button
           type="button"
           onClick={handleProceed}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-[0.98]"
         >
           <span>Next: Policies</span>
           <ArrowRight className="w-4 h-4" />

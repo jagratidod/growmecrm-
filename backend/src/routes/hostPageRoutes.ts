@@ -1,3 +1,4 @@
+import { requireModule } from '../platform/access';
 import { Router } from 'express';
 import { authenticate } from '../middleware/authMiddleware';
 import {
@@ -14,9 +15,9 @@ const router = Router();
 router.get('/public/:slug', getPublicHostPage);
 
 // Authenticated private routes for tenant host customization
-router.get('/', authenticate, getHostPage);
-router.put('/', authenticate, updateHostPage);
-router.post('/reviews', authenticate, addReview);
-router.delete('/reviews/:reviewId', authenticate, deleteReview);
+router.get('/', authenticate, requireModule('websites'), getHostPage);
+router.put('/', authenticate, requireModule('websites'), updateHostPage);
+router.post('/reviews', authenticate, requireModule('websites'), addReview);
+router.delete('/reviews/:reviewId', authenticate, requireModule('websites'), deleteReview);
 
 export default router;

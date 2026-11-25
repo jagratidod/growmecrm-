@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Neo-brutalist rounded square badge -->
+  <rect x="6" y="8" width="52" height="52" rx="14" fill="#111111" />
+  <rect x="4" y="4" width="52" height="52" rx="14" fill="#FFF8EE" stroke="#111111" stroke-width="4" />
+  <!-- Vibrant Orange Accent -->
+  <path d="M32 14L36.5 25.5L48 30L36.5 34.5L32 46L27.5 34.5L16 30L27.5 25.5Z" fill="#F97316" stroke="#111111" stroke-width="2.5" stroke-linejoin="round" />
+  <!-- Small Corner Dot -->
+  <circle cx="44" cy="18" r="3" fill="#111111" />
+</svg>

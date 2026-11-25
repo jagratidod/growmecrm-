@@ -1,3 +1,5 @@
+import { usePackages } from '../../../context/PackagesContext'
+import { useTeam } from '../../../context/TeamContext'
 import React, { useState } from 'react'
 import { X, Calendar as CalendarIcon } from 'lucide-react'
 import { useLeads } from '../../../context/LeadsContext'
@@ -5,6 +7,8 @@ import { useToast } from '../../../components/ui/Toast'
 import type { LeadStage, CustomerType, LeadSource, LeadTemperature } from '../../../types/lead.types'
 
 export const NewLeadModal: React.FC = () => {
+  const { members } = useTeam()
+  const { packages } = usePackages()
   const { isNewLeadModalOpen, setIsNewLeadModalOpen, addLead } = useLeads()
   const { toast } = useToast()
 
@@ -49,7 +53,7 @@ export const NewLeadModal: React.FC = () => {
     setErrors({})
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: { name?: string; phone?: string } = {}
     if (!name.trim()) newErrors.name = 'Name is required'
@@ -60,7 +64,7 @@ export const NewLeadModal: React.FC = () => {
       return
     }
 
-    addLead({
+    const created = await addLead({
       name: name.trim(),
       email: email.trim() || undefined,
       phone: phone.trim(),
@@ -78,6 +82,7 @@ export const NewLeadModal: React.FC = () => {
       tags,
       notes: notes.trim() || undefined,
     })
+    if (!created) return
 
     toast({
       type: 'success',
@@ -151,7 +156,7 @@ export const NewLeadModal: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
+
                 className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
@@ -166,7 +171,6 @@ export const NewLeadModal: React.FC = () => {
                   setPhone(e.target.value)
                   if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }))
                 }}
-                placeholder="+1 555 000 0000"
                 className={`w-full bg-white border rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none transition ${
                   errors.phone
                     ? 'border-rose-400 ring-2 ring-rose-100'
@@ -240,11 +244,7 @@ export const NewLeadModal: React.FC = () => {
                 className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               >
                 <option value="None">None</option>
-                <option value="Honeymoon Special">Honeymoon Special</option>
-                <option value="Adventure Trek">Adventure Trek</option>
-                <option value="Family Getaway">Family Getaway</option>
-                <option value="Luxury Villa Escape">Luxury Villa Escape</option>
-                <option value="Corporate Retreat">Corporate Retreat</option>
+                {packages.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
               </select>
               <p className="text-[11px] text-slate-400 mt-1">
                 Optional — helps the team see what they're after.
@@ -262,7 +262,7 @@ export const NewLeadModal: React.FC = () => {
                 type="text"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                placeholder="e.g. Bali, Indonesia"
+
                 className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
@@ -332,9 +332,7 @@ export const NewLeadModal: React.FC = () => {
                 className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               >
                 <option value="Unassigned">Unassigned</option>
-                <option value="Kushal Pareta">Kushal Pareta</option>
-                <option value="Pooja Sharma">Pooja Sharma</option>
-                <option value="Rahul Verma">Rahul Verma</option>
+                {members.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
               </select>
             </div>
             <div>
@@ -382,7 +380,7 @@ export const NewLeadModal: React.FC = () => {
               className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
             <p className="text-[11px] text-slate-400 mt-1">
-              Press Enter after each — e.g. honeymoon, hot lead.
+              Press Enter to add each tag.
             </p>
           </div>
 
@@ -411,7 +409,7 @@ export const NewLeadModal: React.FC = () => {
           <button
             type="button"
             onClick={handleSubmit}
-            className="px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#382760] text-white text-sm font-semibold shadow-sm shadow-[#453372]/25 transition active:scale-[0.99]"
+            className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-sm shadow-brand/25 transition active:scale-[0.99]"
           >
             Create lead
           </button>

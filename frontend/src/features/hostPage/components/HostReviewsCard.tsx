@@ -75,8 +75,8 @@ export const HostReviewsCard: React.FC = () => {
               />
             ) : (
               <>
-                <Upload className="w-5 h-5 text-slate-400 group-hover:text-[#453372] mb-1 transition-colors" />
-                <span className="text-[11px] font-semibold text-slate-500 group-hover:text-[#453372]">
+                <Upload className="w-5 h-5 text-slate-400 group-hover:text-brand mb-1 transition-colors" />
+                <span className="text-[11px] font-semibold text-slate-500 group-hover:text-brand">
                   Upload
                 </span>
               </>
@@ -99,7 +99,7 @@ export const HostReviewsCard: React.FC = () => {
                 placeholder="Reviewer name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
             </div>
             <div className="w-16 sm:w-20">
@@ -110,7 +110,7 @@ export const HostReviewsCard: React.FC = () => {
                 placeholder="5"
                 value={rating}
                 onChange={(e) => setRating(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-center font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372]"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-center font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
             </div>
           </div>
@@ -121,7 +121,7 @@ export const HostReviewsCard: React.FC = () => {
               placeholder="Their quote..."
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
             />
           </div>
 
@@ -129,7 +129,7 @@ export const HostReviewsCard: React.FC = () => {
             <button
               type="button"
               onClick={handleAddReview}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#453372] hover:bg-[#37275d] text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add review</span>
@@ -152,7 +152,7 @@ export const HostReviewsCard: React.FC = () => {
                 className="p-4 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-white hover:border-purple-200 transition-all flex items-start justify-between gap-3 shadow-2xs group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-100 text-[#453372] flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 text-brand flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
                     {rev.avatarUrl ? (
                       <img
                         src={rev.avatarUrl}

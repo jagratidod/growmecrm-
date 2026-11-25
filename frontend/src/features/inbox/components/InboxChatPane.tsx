@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import {
   Send,
-  Bot,
   Paperclip,
   CheckCheck,
   User,
@@ -9,13 +8,10 @@ import {
   Phone,
 } from 'lucide-react'
 import { useInbox } from '../../../context/InboxContext'
-import { useToast } from '../../../components/ui/Toast'
 
 export const InboxChatPane: React.FC = () => {
   const { selectedChat, setSelectedChat, sendMessage } = useInbox()
-  const { toast } = useToast()
   const [inputText, setInputText] = useState('')
-  const [isAiGenerating, setIsAiGenerating] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -24,10 +20,15 @@ export const InboxChatPane: React.FC = () => {
 
   if (!selectedChat) return null
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputText.trim()) return
-    sendMessage(selectedChat.id, inputText)
-    setInputText('')
+    const message = inputText
+    try {
+      await sendMessage(selectedChat.id, message)
+      setInputText((current) => current === message ? '' : current)
+    } catch {
+      // Keep the text available for retry.
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -35,25 +36,6 @@ export const InboxChatPane: React.FC = () => {
       e.preventDefault()
       handleSend()
     }
-  }
-
-  const handleAiSuggest = () => {
-    setIsAiGenerating(true)
-    setTimeout(() => {
-      const suggestions = [
-        `Hi ${selectedChat.contactName}, thank you for reaching out! We'd love to organize your trip. How many guests will be travelling?`,
-        `Hello ${selectedChat.contactName}! I have attached our detailed day-by-day itinerary and pricing options for you. Please let me know if you have any questions!`,
-        `Hi ${selectedChat.contactName}, our slots for this batch are filling fast! Would you like to reserve your spot with an advance booking?`,
-      ]
-      const chosen = suggestions[Math.floor(Math.random() * suggestions.length)]
-      setInputText(chosen)
-      setIsAiGenerating(false)
-      toast({ title: 'AI suggestion generated', type: 'info' })
-    }, 600)
-  }
-
-  const handleSendQuickChip = (text: string) => {
-    setInputText(text)
   }
 
   const channelColor =
@@ -74,7 +56,7 @@ export const InboxChatPane: React.FC = () => {
           </button>
 
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-purple-100 text-[#453372] flex items-center justify-center font-bold text-xs overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-purple-100 text-brand flex items-center justify-center font-bold text-xs overflow-hidden">
               {selectedChat.contactAvatar ? (
                 <img
                   src={selectedChat.contactAvatar}
@@ -99,7 +81,7 @@ export const InboxChatPane: React.FC = () => {
               <h3 className="text-sm font-bold text-slate-900 leading-tight">
                 {selectedChat.contactName}
               </h3>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-[#453372]">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-brand">
                 {selectedChat.stage}
               </span>
             </div>
@@ -113,7 +95,7 @@ export const InboxChatPane: React.FC = () => {
           {selectedChat.contactPhone && (
             <a
               href={`tel:${selectedChat.contactPhone}`}
-              className="p-2 text-slate-500 hover:text-[#453372] hover:bg-slate-100 rounded-xl transition-colors"
+              className="p-2 text-slate-500 hover:text-brand hover:bg-slate-100 rounded-xl transition-colors"
               title="Call contact"
             >
               <Phone className="w-4 h-4" />
@@ -139,7 +121,7 @@ export const InboxChatPane: React.FC = () => {
                 <div
                   className={`max-w-[80%] sm:max-w-md px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs ${
                     isAgent
-                      ? 'bg-[#453372] text-white rounded-br-xs'
+                      ? 'bg-brand text-white rounded-br-xs'
                       : 'bg-white border border-slate-200/90 text-slate-800 rounded-bl-xs'
                   }`}
                 >
@@ -156,41 +138,6 @@ export const InboxChatPane: React.FC = () => {
           })
         )}
         <div ref={messagesEndRef} />
-      </div>
-
-      {/* Quick Action Suggestion Bar */}
-      <div className="px-4 py-2 border-t border-slate-100 bg-white flex items-center gap-2 overflow-x-auto scrollbar-none">
-        <button
-          type="button"
-          onClick={handleAiSuggest}
-          disabled={isAiGenerating}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#453372] text-xs font-semibold shrink-0 transition-colors cursor-pointer"
-        >
-          <Bot className="w-3.5 h-3.5" />
-          <span>{isAiGenerating ? 'Drafting...' : 'AI Suggestion'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleSendQuickChip('Please find our brochure attached below with dates.')}
-          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs shrink-0 transition-colors"
-        >
-          Send Brochure
-        </button>
-        <button
-          type="button"
-          onClick={() => handleSendQuickChip('How many travelers are joining the trip?')}
-          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs shrink-0 transition-colors"
-        >
-          Ask Travelers Count
-        </button>
-        <button
-          type="button"
-          onClick={() => handleSendQuickChip('Here is the secure payment link to reserve your slot.')}
-          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs shrink-0 transition-colors"
-        >
-          Payment Link
-        </button>
       </div>
 
       {/* Input Message Composer */}
@@ -214,7 +161,7 @@ export const InboxChatPane: React.FC = () => {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] resize-none"
+            className="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
           />
         </div>
 

@@ -131,7 +131,7 @@ export const InboxSidebarList: React.FC = () => {
         {filteredConversations.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center p-6 text-center my-12">
             {/* Rounded light-purple badge matching screenshots */}
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-[#453372] mb-3 shadow-2xs">
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-brand mb-3 shadow-2xs">
               <InboxIcon className="w-6 h-6 stroke-[1.75]" />
             </div>
 
@@ -160,7 +160,7 @@ export const InboxSidebarList: React.FC = () => {
               >
                 {/* Contact Avatar */}
                 <div className="relative shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-purple-100 text-[#453372] flex items-center justify-center font-bold text-xs overflow-hidden">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 text-brand flex items-center justify-center font-bold text-xs overflow-hidden">
                     {chat.contactAvatar ? (
                       <img
                         src={chat.contactAvatar}
@@ -203,7 +203,7 @@ export const InboxSidebarList: React.FC = () => {
 
                     <div className="flex items-center gap-1">
                       {chat.unreadCount > 0 && (
-                        <span className="w-4 h-4 rounded-full bg-[#453372] text-white text-[10px] font-bold flex items-center justify-center">
+                        <span className="w-4 h-4 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center">
                           {chat.unreadCount}
                         </span>
                       )}

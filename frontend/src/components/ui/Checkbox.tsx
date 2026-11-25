@@ -25,8 +25,8 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           <div
             className={`w-4 h-4 rounded-md border transition-all flex items-center justify-center ${
               checked
-                ? 'bg-[#453372] border-[#453372] text-white shadow-xs'
-                : 'border-slate-300 bg-white group-hover:border-[#453372]'
+                ? 'bg-brand border-brand text-white shadow-xs'
+                : 'border-slate-300 bg-white group-hover:border-brand'
             } ${className}`}
           >
             {checked && (

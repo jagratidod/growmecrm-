@@ -7,7 +7,6 @@ import {
   Menu,
   Zap,
   Trash2,
-  Play,
   X,
   Search,
   MessageCircle,
@@ -55,7 +54,7 @@ const TRIGGER_PRESETS: Array<{ label: string; type: BotTriggerType; defaultText:
   {
     label: 'After Hours Auto-Reply',
     type: 'OFF_HOURS',
-    defaultText: 'Message received during off-work hours (8:00 PM - 9:00 AM)',
+    defaultText: 'Message received outside configured business hours',
   },
   {
     label: 'Trip Completed / Post-Travel',
@@ -65,7 +64,7 @@ const TRIGGER_PRESETS: Array<{ label: string; type: BotTriggerType; defaultText:
   {
     label: 'Keyword Match',
     type: 'KEYWORD',
-    defaultText: 'Message contains keywords: quote, price, bali, kashmir',
+    defaultText: 'Message contains configured keywords',
   },
 ]
 
@@ -85,33 +84,20 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
   const [formChannel, setFormChannel] = useState<BotChannel>('all')
   const [formTriggerType, setFormTriggerType] = useState<BotTriggerType>('FIRST_MESSAGE')
   const [formTrigger, setFormTrigger] = useState(TRIGGER_PRESETS[0].defaultText)
-  const [formInitialMessage, setFormInitialMessage] = useState(
-    'Hi there! 👋 Welcome to our travel agency. How can we help you plan your dream holiday today?'
-  )
+  const [formInitialMessage, setFormInitialMessage] = useState('')
 
   // Fetch flows from API
   const fetchFlows = useCallback(async () => {
     try {
       setIsLoading(true)
       const res = await botFlowsService.getBotFlows()
-      if (res?.flows) {
-        setFlows(res.flows)
-        localStorage.setItem('treki_crm_bot_flows', JSON.stringify(res.flows))
-      }
-    } catch {
-      // Fallback to local storage if offline or error
-      const saved = localStorage.getItem('treki_crm_bot_flows')
-      if (saved) {
-        try {
-          setFlows(JSON.parse(saved))
-        } catch {
-          // ignore
-        }
-      }
+      setFlows(res.flows)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not load flows', description: (error as Error).message })
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     fetchFlows()
@@ -173,29 +159,11 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
     }
   }
 
-  // Test / Simulate Trigger
-  const handleTestTrigger = async (id: string, name: string) => {
-    try {
-      const res = await botFlowsService.testBotFlow(id)
-      toast({
-        type: 'success',
-        title: `Trigger Simulated: ${name}`,
-        description: `Bot responded: "${res.sampleResponse}"`,
-      })
-    } catch {
-      toast({
-        type: 'info',
-        title: `Trigger Simulated: ${name}`,
-        description: 'Simulated inbound message trigger executed successfully.',
-      })
-    }
-  }
-
   // Handle Create Submit
   const handleCreateFlow = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formName.trim()) {
-      toast({ type: 'error', title: 'Flow name is required' })
+    if (!formName.trim() || !formInitialMessage.trim()) {
+      toast({ type: 'error', title: 'Enter a flow name and an initial message' })
       return
     }
 
@@ -207,8 +175,8 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
         channel: formChannel,
         trigger: formTrigger.trim(),
         triggerType: formTriggerType,
-        enabled: true,
-        stepsCount: 2,
+        enabled: false,
+        stepsCount: 1,
         steps: [
           {
             id: 'step-1',
@@ -217,14 +185,6 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
             content: formInitialMessage.trim(),
             options: [],
             delaySeconds: 1,
-          },
-          {
-            id: 'step-2',
-            stepNumber: 2,
-            stepType: 'assign_agent' as const,
-            content: 'Assign inquiry to available destination specialist.',
-            options: [],
-            delaySeconds: 0,
           },
         ],
       }
@@ -239,12 +199,12 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
       toast({
         type: 'success',
         title: 'Bot Flow Created',
-        description: `"${formName}" is now ready and live!`,
       })
 
       // Reset and close
       setFormName('')
       setFormDescription('')
+      setFormInitialMessage('')
       setFormChannel('all')
       setFormTriggerType('FIRST_MESSAGE')
       setFormTrigger(TRIGGER_PRESETS[0].defaultText)
@@ -272,7 +232,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
   })
 
   return (
-    <div className="min-h-screen bg-[#f3f4f8] flex text-slate-800 font-sans">
+    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
       <LeadsSidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
@@ -294,7 +254,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
               <div>
                 <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
                   <span>Bot Flows</span>
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-[#453372] border border-purple-200">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-brand border border-purple-200">
                     AI Automated
                   </span>
                 </h1>
@@ -306,7 +266,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
 
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#453372] text-white font-semibold text-xs shadow-md hover:bg-[#382860] transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand text-white font-semibold text-xs shadow-md hover:bg-brand-hover transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Create bot flow</span>
@@ -321,7 +281,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                 onClick={() => setSelectedChannel('all')}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shrink-0 ${
                   selectedChannel === 'all'
-                    ? 'bg-[#453372] text-white'
+                    ? 'bg-brand text-white'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
                 }`}
               >
@@ -360,7 +320,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                 placeholder="Search bot flows..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#453372] focus:bg-white transition"
+                className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand focus:bg-white transition"
               />
             </div>
           </div>
@@ -368,7 +328,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
           {/* Loading State */}
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <Loader2 className="w-8 h-8 animate-spin text-[#453372] mb-3" />
+              <Loader2 className="w-8 h-8 animate-spin text-brand mb-3" />
               <p className="text-xs font-medium">Loading automation flows...</p>
             </div>
           )}
@@ -376,7 +336,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
           {/* Empty State */}
           {!isLoading && filteredFlows.length === 0 && (
             <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-xs">
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-[#453372] flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-brand flex items-center justify-center mx-auto mb-3">
                 <GitFork className="w-6 h-6" />
               </div>
               <h3 className="text-sm font-bold text-slate-800 mb-1">No Bot Flows Found</h3>
@@ -387,7 +347,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
               </p>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#453372] text-white font-semibold text-xs shadow-sm hover:bg-[#382860] transition cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand text-white font-semibold text-xs shadow-sm hover:bg-brand-hover transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create first flow</span>
@@ -407,7 +367,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                     {/* Top row: Icon + Channel + Toggle */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#453372] flex items-center justify-center font-bold">
+                        <div className="w-8 h-8 rounded-xl bg-purple-50 text-brand flex items-center justify-center font-bold">
                           <GitFork className="w-4 h-4" />
                         </div>
                         <span
@@ -416,7 +376,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : flow.channel === 'instagram'
                               ? 'bg-pink-50 text-pink-700 border border-pink-200'
-                              : 'bg-purple-50 text-[#453372] border border-purple-200'
+                              : 'bg-purple-50 text-brand border border-purple-200'
                           }`}
                         >
                           {flow.channel}
@@ -428,7 +388,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                           onClick={() => handleToggle(flow.id)}
                           aria-label={`Toggle ${flow.name}`}
                           className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
-                            flow.enabled ? 'bg-[#453372]' : 'bg-slate-300'
+                            flow.enabled ? 'bg-brand' : 'bg-slate-300'
                           }`}
                         >
                           <div
@@ -457,17 +417,8 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="font-semibold text-slate-600 text-[11px]">
-                        {flow.stepsCount || flow.steps?.length || 1} steps
+                        {flow.stepsCount || flow.steps?.length || 0} steps
                       </span>
-
-                      {/* Test trigger simulation */}
-                      <button
-                        onClick={() => handleTestTrigger(flow.id, flow.name)}
-                        title="Simulate test run"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition cursor-pointer"
-                      >
-                        <Play className="w-3.5 h-3.5" />
-                      </button>
 
                       {/* Delete flow */}
                       <button
@@ -494,7 +445,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
             <div className="flex items-start justify-between mb-5">
               <div>
                 <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                  <GitFork className="w-5 h-5 text-[#453372]" />
+                  <GitFork className="w-5 h-5 text-brand" />
                   <span>Create Bot Flow</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -520,10 +471,10 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Kashmir Honeymoon Qualifier & Welcome"
+
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#453372] focus:ring-1 focus:ring-[#453372] transition"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition"
                 />
               </div>
 
@@ -536,7 +487,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                     onClick={() => setFormChannel('all')}
                     className={`py-2 px-3 rounded-xl text-xs font-semibold border transition cursor-pointer flex items-center justify-center gap-1.5 ${
                       formChannel === 'all'
-                        ? 'bg-purple-50 border-[#453372] text-[#453372]'
+                        ? 'bg-purple-50 border-brand text-brand'
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -584,7 +535,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                       setFormTrigger(selected.defaultText)
                     }
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:border-[#453372] focus:ring-1 focus:ring-[#453372] transition"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 bg-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition"
                 >
                   {TRIGGER_PRESETS.map((preset) => (
                     <option key={preset.type} value={preset.type}>
@@ -604,7 +555,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                   required
                   value={formTrigger}
                   onChange={(e) => setFormTrigger(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#453372] transition"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-brand transition"
                 />
               </div>
 
@@ -618,7 +569,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                   value={formInitialMessage}
                   onChange={(e) => setFormInitialMessage(e.target.value)}
                   placeholder="Enter the automated reply message..."
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#453372] transition"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-brand transition"
                 />
               </div>
 
@@ -632,7 +583,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                   placeholder="What is the business goal of this flow?"
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#453372] transition"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-brand transition"
                 />
               </div>
 
@@ -648,7 +599,7 @@ export const BotFlowsPage: React.FC<BotFlowsPageProps> = ({ onNavigateMenu }) =>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#453372] text-white font-semibold text-xs shadow-md hover:bg-[#382860] disabled:opacity-60 transition cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand text-white font-semibold text-xs shadow-md hover:bg-brand-hover disabled:opacity-60 transition cursor-pointer"
                 >
                   {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Save & Activate Flow</span>

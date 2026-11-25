@@ -1,0 +1,16 @@
+import './index.css';
+import { BrowserRouter } from 'react-router-dom';
+import AppRoutes from './routes/AppRoutes';
+import { ToastProvider } from './context/ToastContext';
+
+export default function App() {
+  return (
+    <div className="growme-marketing">
+    <BrowserRouter>
+      <ToastProvider>
+        <AppRoutes />
+      </ToastProvider>
+    </BrowserRouter>
+    </div>
+  );
+}

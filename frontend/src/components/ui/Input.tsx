@@ -35,10 +35,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </label>
         )}
         <div
-          className={`relative flex items-center bg-[#f3f4f6] rounded-xl transition-all duration-200 border ${
+          className={`relative flex items-center bg-canvas rounded-xl transition-all duration-200 border ${
             error
               ? 'border-red-400 ring-2 ring-red-100 bg-red-50/20'
-              : 'border-transparent focus-within:border-blue-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 focus-within:shadow-sm'
+              : 'border-line focus-within:border-brand focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-soft focus-within:shadow-sm'
           }`}
         >
           {leftIcon && (

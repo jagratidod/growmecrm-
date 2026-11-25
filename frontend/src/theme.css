@@ -1,0 +1,63 @@
+:root {
+  --gm-font: Inter, system-ui, -apple-system, sans-serif;
+  --gm-ink: #181626;
+  --gm-muted: #5e5a70;
+  --gm-subtle: #6f6981;
+  --gm-surface: #fff;
+  --gm-canvas: #f7f8fc;
+  --gm-raised: #f9f8fd;
+  --gm-line: #e5e6ef;
+  --gm-line-subtle: #eff0f5;
+  --gm-accent: #5936e8;
+  --gm-accent-hover: #4b2bcb;
+  --gm-accent-soft: #f2edff;
+  --gm-accent-line: #ded4f9;
+  --gm-blue: #0075d7;
+  --gm-blue-ink: #075ba8;
+  --gm-blue-soft: #edf7ff;
+  --gm-ease: cubic-bezier(.22, 1, .36, 1);
+  --gm-shadow: 0 4px 18px #2820460d;
+  --gm-shadow-raised: 0 8px 28px #28204614;
+  --gm-overview-gradient: linear-gradient(112deg, #f4eeff 0%, #f7f5ff 44%, #eaf5ff 100%);
+  --gm-home-gradient:
+    radial-gradient(ellipse at 92% 27%, #ddecff 0%, transparent 47%),
+    radial-gradient(ellipse at 54% 90%, #eee5ff 0%, transparent 58%),
+    linear-gradient(180deg, #fdfcff, #faf8ff 87%, #fff);
+  --gm-auth-gradient:
+    radial-gradient(ellipse at 14% 80%, #ede5ff 0%, transparent 57%),
+    radial-gradient(ellipse at 89% 19%, #e5f1ff 0%, transparent 53%),
+    #f6f4fb;
+}
+
+@theme inline {
+  --font-sans: var(--gm-font);
+  --font-display: var(--gm-font);
+  --color-brand: var(--gm-accent);
+  --color-brand-hover: var(--gm-accent-hover);
+  --color-brand-soft: var(--gm-accent-soft);
+  --color-brand-line: var(--gm-accent-line);
+  --color-canvas: var(--gm-canvas);
+  --color-ink: var(--gm-ink);
+  --color-copy-muted: var(--gm-muted);
+  --color-line: var(--gm-line);
+  --color-line-subtle: var(--gm-line-subtle);
+  --color-blue-soft: var(--gm-blue-soft);
+  --color-blue-ink: var(--gm-blue-ink);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    font-family: var(--gm-font);
+  }
+
+  body {
+    background: var(--gm-surface);
+    color: var(--gm-ink);
+  }
+
+  :where(button, a, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--gm-accent);
+    outline-offset: 3px;
+  }
+}

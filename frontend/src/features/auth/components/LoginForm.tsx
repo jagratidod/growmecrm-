@@ -1,183 +1,95 @@
-import React, { useState } from 'react'
-import { User as UserIcon, Lock } from 'lucide-react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { ArrowRight } from 'lucide-react'
 import { Input } from '../../../components/ui/Input'
 import { Button } from '../../../components/ui/Button'
 import { Checkbox } from '../../../components/ui/Checkbox'
 import { useAuth } from '../../../context/AuthContext'
-import { useToast } from '../../../components/ui/Toast'
+import { AuthPasswordField } from './AuthPasswordField'
 
 interface LoginFormProps {
-  onSuccess?: () => void
-  onNavigateForgotPassword?: () => void
-  onNavigateRegister?: () => void
+  onNavigateForgotPassword: () => void
+  onNavigateRegister: () => void
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({
-  onSuccess,
-  onNavigateForgotPassword,
-  onNavigateRegister,
-}) => {
+export function LoginForm({ onNavigateForgotPassword, onNavigateRegister }: LoginFormProps) {
   const { login, isLoading } = useAuth()
-  const { toast } = useToast()
-
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('password123')
-  const [showPassword, setShowPassword] = useState(false)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
-  const [errors, setErrors] = useState<{ username?: string; password?: string }>({})
+  const [errors, setErrors] = useState<{ username?: string; password?: string; form?: string }>({})
 
-  const validate = (): boolean => {
-    const newErrors: { username?: string; password?: string } = {}
-    if (!username.trim()) {
-      newErrors.username = 'Please enter your username'
-    }
-    if (!password) {
-      newErrors.password = 'Please enter your password'
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
-    }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validate()) return
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const issues: typeof errors = {}
+    if (!username.trim()) issues.username = 'Enter your email or username.'
+    if (!password) issues.password = 'Enter your password.'
+    setErrors(issues)
+    if (Object.keys(issues).length) return
 
     try {
-      await login({ username, password, rememberMe })
-      toast({
-        type: 'success',
-        title: 'Signed in successfully!',
-        description: `Welcome back, ${username}! Redirecting to CRM dashboard...`,
-      })
-      if (onSuccess) {
-        onSuccess()
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Invalid credentials'
-      toast({
-        type: 'error',
-        title: 'Authentication Failed',
-        description: msg,
-      })
+      await login({ username: username.trim(), password, rememberMe })
+    } catch (error) {
+      setErrors({ form: error instanceof Error ? error.message : 'Could not sign in. Try again.' })
     }
   }
 
   return (
-    <div className="w-full max-w-sm sm:max-w-md mx-auto py-8">
-      {/* Form Header matching reference image */}
-      <div className="mb-8">
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">
-          Sign in
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1.5 font-normal">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit
-        </p>
+    <>
+      <div className="growme-auth-heading">
+        <h1>Sign in</h1>
+        <p>Open your GrowMe workspace.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        {/* User Name input */}
-        <div>
-          <Input
-            id="username"
-            name="username"
-            type="text"
-            autoComplete="username"
-            placeholder="User Name"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value)
-              if (errors.username) setErrors((prev) => ({ ...prev, username: undefined }))
-            }}
-            leftIcon={<UserIcon className="w-5 h-5 text-slate-700 stroke-[2.2]" />}
-            error={errors.username}
-          />
+      <form onSubmit={handleSubmit} className="growme-auth-form" noValidate>
+        <Input
+          id="username"
+          name="username"
+          autoComplete="username"
+          label="Email or username"
+
+          value={username}
+          required
+          aria-invalid={Boolean(errors.username)}
+          containerClassName="growme-auth-field"
+          onChange={(event) => {
+            setUsername(event.target.value)
+            setErrors((previous) => ({ ...previous, username: undefined, form: undefined }))
+          }}
+          error={errors.username}
+        />
+
+        <AuthPasswordField
+          id="password"
+          name="password"
+          autoComplete="current-password"
+          label="Password"
+          placeholder="Enter your password"
+          value={password}
+          required
+          onChange={(event) => {
+            setPassword(event.target.value)
+            setErrors((previous) => ({ ...previous, password: undefined, form: undefined }))
+          }}
+          error={errors.password}
+        />
+
+        <div className="growme-auth-form-options">
+          <Checkbox id="remember-me" name="remember" label="Remember me" checked={rememberMe}
+            onChange={(event) => setRememberMe(event.target.checked)} />
+          <button type="button" className="growme-auth-link" onClick={onNavigateForgotPassword}>Forgot password?</button>
         </div>
 
-        {/* Password input */}
-        <div>
-          <Input
-            id="password"
-            name="password"
-            type={showPassword ? 'text' : 'password'}
-            autoComplete="current-password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value)
-              if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }))
-            }}
-            leftIcon={<Lock className="w-5 h-5 text-slate-700 stroke-[2.2]" />}
-            rightElement={
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-[11px] font-bold text-slate-600 hover:text-blue-600 tracking-wider uppercase py-1 px-1.5 transition-colors focus:outline-none"
-              >
-                {showPassword ? 'HIDE' : 'SHOW'}
-              </button>
-            }
-            error={errors.password}
-          />
-        </div>
-
-        {/* Remember me & Forgot Password row */}
-        <div className="flex items-center justify-between pt-1">
-          <Checkbox
-            id="remember-me"
-            name="remember"
-            label="Remember me"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-          />
-
-          <button
-            type="button"
-            onClick={onNavigateForgotPassword}
-            className="text-xs font-medium text-[#453372] hover:underline transition-colors focus:outline-none"
-          >
-            Forgot Password?
-          </button>
-        </div>
-
-        {/* Primary Action Button: Sign in */}
-        <div className="pt-2">
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            isLoading={isLoading}
-            className="bg-[#453372] hover:bg-[#382760] py-3.5 text-sm font-semibold rounded-xl tracking-wide shadow-md shadow-[#453372]/20 active:scale-[0.99]"
-          >
-            Sign in
-          </Button>
-        </div>
+        {errors.form && <p className="growme-auth-error" role="alert">{errors.form}</p>}
+        <Button type="submit" fullWidth isLoading={isLoading} className="growme-auth-submit" rightIcon={<ArrowRight size={17} />}>
+          Sign in
+        </Button>
       </form>
 
-      {/* Switch to Sign Up */}
-      <div className="mt-5 text-center">
-        <p className="text-xs text-slate-500">
-          Don't have an agency account yet?{' '}
-          <button
-            type="button"
-            onClick={onNavigateRegister}
-            className="text-xs font-bold text-[#453372] hover:text-[#382760] hover:underline transition focus:outline-none"
-          >
-            Create an Account (Sign up)
-          </button>
-        </p>
+      <div className="growme-auth-switch">
+        <span>New to GrowMe?</span>
+        <button type="button" className="growme-auth-secondary" onClick={onNavigateRegister}>Create an account</button>
       </div>
-
-      {/* Demo helper pill */}
-      <div className="mt-8 p-3 rounded-lg bg-slate-50 border border-slate-200 text-center">
-        <p className="text-[11px] text-slate-500">
-          <strong className="text-slate-700">Demo CRM Credentials:</strong> Username:{' '}
-          <code className="text-[#453372] bg-purple-50 px-1 py-0.5 rounded font-bold">admin</code> | Password:{' '}
-          <code className="text-[#453372] bg-purple-50 px-1 py-0.5 rounded font-bold">password123</code>
-        </p>
-      </div>
-    </div>
+    </>
   )
 }

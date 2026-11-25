@@ -84,7 +84,15 @@ export const TenantsPage: React.FC = () => {
 
   const handleImpersonate = async (tenant: Tenant) => {
     try {
-      await superAdminService.impersonateTenant(tenant.id);
+      const support = await superAdminService.impersonateTenant(tenant.id);
+      sessionStorage.setItem('growme_support_return', JSON.stringify({
+        token: localStorage.getItem('crm_auth_token') || sessionStorage.getItem('crm_auth_token'),
+        user: localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user'),
+      }));
+      localStorage.removeItem('crm_auth_token');
+      localStorage.removeItem('crm_auth_user');
+      sessionStorage.setItem('crm_auth_token', support.token);
+      sessionStorage.setItem('crm_auth_user', JSON.stringify(support.user));
       toast({
         type: 'success',
         title: 'Support Session Active',
@@ -130,7 +138,7 @@ export const TenantsPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by agency name, owner, or email..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#453372]/20 focus:border-[#453372] transition bg-white"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition bg-white"
           />
         </div>
 
@@ -139,7 +147,7 @@ export const TenantsPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-[#453372] bg-white shadow-2xs"
+            className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-brand bg-white shadow-2xs"
           >
             <option value="ALL">All Statuses</option>
             <option value="ACTIVE">Active Workspaces</option>
@@ -151,7 +159,7 @@ export const TenantsPage: React.FC = () => {
           <select
             value={planFilter}
             onChange={(e) => setPlanFilter(e.target.value)}
-            className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-[#453372] bg-white shadow-2xs"
+            className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-brand bg-white shadow-2xs"
           >
             <option value="ALL">All Plans</option>
             <option value="STARTER">Starter Tier</option>
@@ -201,7 +209,7 @@ export const TenantsPage: React.FC = () => {
                       {/* Agency Name & Slug */}
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-purple-50 text-[#453372] font-black flex items-center justify-center shrink-0 border border-purple-200/60 shadow-2xs text-xs">
+                          <div className="w-10 h-10 rounded-2xl bg-purple-50 text-brand font-black flex items-center justify-center shrink-0 border border-purple-200/60 shadow-2xs text-xs">
                             {t.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
@@ -232,7 +240,7 @@ export const TenantsPage: React.FC = () => {
                             t.plan === 'ENTERPRISE'
                               ? 'bg-amber-50 text-amber-800 border-amber-300'
                               : t.plan === 'PRO'
-                              ? 'bg-purple-50 text-[#453372] border-purple-300'
+                              ? 'bg-purple-50 text-brand border-purple-300'
                               : 'bg-slate-100 text-slate-700 border-slate-200'
                           }`}
                         >
@@ -294,7 +302,7 @@ export const TenantsPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleImpersonate(t)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#453372] font-extrabold text-[11px] border border-purple-200 transition-all shadow-2xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-brand font-extrabold text-[11px] border border-purple-200 transition-all shadow-2xs"
                             title="Log in to this workspace as administrator"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
@@ -347,7 +355,7 @@ export const TenantsPage: React.FC = () => {
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
                 >
                   <option value="ACTIVE">ACTIVE (Full access)</option>
                   <option value="TRIAL">TRIAL (14-day evaluation)</option>
@@ -361,7 +369,7 @@ export const TenantsPage: React.FC = () => {
                 <select
                   value={editPlan}
                   onChange={(e) => setEditPlan(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
                 >
                   <option value="STARTER">Starter Tier (₹1,499/mo)</option>
                   <option value="PRO">Growth Pro (₹3,999/mo)</option>
@@ -379,7 +387,7 @@ export const TenantsPage: React.FC = () => {
                     min="1"
                     value={editMaxSeats}
                     onChange={(e) => setEditMaxSeats(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -390,7 +398,7 @@ export const TenantsPage: React.FC = () => {
                     step="100"
                     value={editMaxLeads}
                     onChange={(e) => setEditMaxLeads(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-[#453372] focus:outline-none bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
                   />
                 </div>
               </div>
@@ -405,7 +413,7 @@ export const TenantsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#38285e] text-white font-extrabold shadow-md transition"
+                  className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-extrabold shadow-md transition"
                 >
                   Save Changes
                 </button>

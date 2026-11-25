@@ -1,9 +1,13 @@
+import { usePackages } from '../../../context/PackagesContext'
+import { useTeam } from '../../../context/TeamContext'
 import React, { useState } from 'react'
 import { X } from 'lucide-react'
 import { useBookings } from '../../../context/BookingsContext'
 import type { BookingStatus } from '../../../types/booking.types'
 
 export const NewBookingModal: React.FC = () => {
+  const { members } = useTeam()
+  const { packages } = usePackages()
   const { isNewBookingModalOpen, setIsNewBookingModalOpen, addBooking } = useBookings()
 
   const [customerName, setCustomerName] = useState('')
@@ -14,11 +18,11 @@ export const NewBookingModal: React.FC = () => {
   const [departure, setDeparture] = useState('')
   const [returnDate, setReturnDate] = useState('')
   const [travellers, setTravellers] = useState(2)
-  const [totalAmount, setTotalAmount] = useState<number>(100000)
+  const [totalAmount, setTotalAmount] = useState<number>(0)
   const [amountPaid, setAmountPaid] = useState<number>(0)
   const [currency, setCurrency] = useState('INR')
   const [packageName, setPackageName] = useState('No package')
-  const [assignedTo, setAssignedTo] = useState('Rahul Verma')
+  const [assignedTo, setAssignedTo] = useState('Unassigned')
   const [notes, setNotes] = useState('')
 
   const [errors, setErrors] = useState<{ customerName?: string; destination?: string }>({})
@@ -30,7 +34,7 @@ export const NewBookingModal: React.FC = () => {
     setErrors({})
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const newErrors: { customerName?: string; destination?: string } = {}
@@ -46,7 +50,7 @@ export const NewBookingModal: React.FC = () => {
       return
     }
 
-    addBooking({
+    const created = await addBooking({
       customerName: customerName.trim(),
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
@@ -62,6 +66,7 @@ export const NewBookingModal: React.FC = () => {
       assignedTo: assignedTo !== 'Unassigned' ? assignedTo : undefined,
       notes: notes.trim() || undefined,
     })
+    if (!created) return
 
     handleClose()
   }
@@ -106,13 +111,13 @@ export const NewBookingModal: React.FC = () => {
             <input
               type="text"
               required
-              placeholder="e.g. Ananya Sharma"
+
               value={customerName}
               onChange={(e) => {
                 setCustomerName(e.target.value)
                 if (errors.customerName) setErrors((prev) => ({ ...prev, customerName: undefined }))
               }}
-              className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+              className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
             />
             {errors.customerName && (
               <p className="text-[11px] text-[#ff7675] mt-1 font-medium">{errors.customerName}</p>
@@ -125,20 +130,19 @@ export const NewBookingModal: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
               <input
                 type="email"
-                placeholder="customer@example.com"
+
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Phone</label>
               <input
                 type="tel"
-                placeholder="+91 98201 00000"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
           </div>
@@ -152,13 +156,13 @@ export const NewBookingModal: React.FC = () => {
               <input
                 type="text"
                 required
-                placeholder="e.g. Bali, Indonesia"
+
                 value={destination}
                 onChange={(e) => {
                   setDestination(e.target.value)
                   if (errors.destination) setErrors((prev) => ({ ...prev, destination: undefined }))
                 }}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
               {errors.destination && (
                 <p className="text-[11px] text-[#ff7675] mt-1 font-medium">{errors.destination}</p>
@@ -169,7 +173,7 @@ export const NewBookingModal: React.FC = () => {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as BookingStatus)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               >
                 <option value="Pending">Pending</option>
                 <option value="Confirmed">Confirmed</option>
@@ -188,7 +192,7 @@ export const NewBookingModal: React.FC = () => {
                 type="date"
                 value={departure}
                 onChange={(e) => setDeparture(e.target.value)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
             <div>
@@ -197,7 +201,7 @@ export const NewBookingModal: React.FC = () => {
                 type="date"
                 value={returnDate}
                 onChange={(e) => setReturnDate(e.target.value)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
             <div>
@@ -208,7 +212,7 @@ export const NewBookingModal: React.FC = () => {
                 max="100"
                 value={travellers}
                 onChange={(e) => setTravellers(Number(e.target.value))}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
           </div>
@@ -223,7 +227,7 @@ export const NewBookingModal: React.FC = () => {
                 step="1000"
                 value={totalAmount}
                 onChange={(e) => setTotalAmount(Number(e.target.value))}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
             <div>
@@ -234,7 +238,7 @@ export const NewBookingModal: React.FC = () => {
                 step="1000"
                 value={amountPaid}
                 onChange={(e) => setAmountPaid(Number(e.target.value))}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               />
             </div>
             <div>
@@ -242,7 +246,7 @@ export const NewBookingModal: React.FC = () => {
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               >
                 <option value="INR">INR (₹)</option>
                 <option value="USD">USD ($)</option>
@@ -259,14 +263,10 @@ export const NewBookingModal: React.FC = () => {
               <select
                 value={packageName}
                 onChange={(e) => setPackageName(e.target.value)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               >
                 <option value="No package">No package</option>
-                <option value="Honeymoon Special Villa Package">Honeymoon Special Villa Package</option>
-                <option value="Luxury Desert Safari & Marina Tour">Luxury Desert Safari & Marina Tour</option>
-                <option value="Gulmarg Gondola & Dal Lake Houseboat">Gulmarg Gondola & Dal Lake Houseboat</option>
-                <option value="Grand European Winter Wonder">Grand European Winter Wonder</option>
-                <option value="Custom Family Package">Custom Family Package</option>
+                {packages.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
               </select>
             </div>
             <div>
@@ -274,12 +274,10 @@ export const NewBookingModal: React.FC = () => {
               <select
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
-                className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+                className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
               >
                 <option value="Unassigned">Unassigned</option>
-                <option value="Rahul Verma">Rahul Verma</option>
-                <option value="Priya Nair">Priya Nair</option>
-                <option value="Kushal Pareta">Kushal Pareta</option>
+                {members.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
               </select>
             </div>
           </div>
@@ -292,7 +290,7 @@ export const NewBookingModal: React.FC = () => {
               placeholder="Anything useful about this trip..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
+              className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
             />
           </div>
 
@@ -307,7 +305,7 @@ export const NewBookingModal: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-[#453372] hover:bg-[#382760] text-white text-xs sm:text-sm font-semibold shadow-sm shadow-[#453372]/30 transition active:scale-[0.99]"
+              className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99]"
             >
               Create booking
             </button>

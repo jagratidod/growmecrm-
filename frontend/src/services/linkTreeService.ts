@@ -15,6 +15,7 @@ export interface LinkTreeData {
   bioTitle: string;
   bioTagline: string;
   links: BioLinkItem[];
+  publicUrl?: string;
   updatedAt?: string;
 }
 

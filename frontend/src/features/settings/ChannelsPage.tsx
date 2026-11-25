@@ -10,7 +10,6 @@ import {
   Copy,
   Globe,
   Webhook,
-  Zap,
 } from 'lucide-react'
 
 const InstagramIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
@@ -61,79 +60,16 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
   // Webhook integration state
   const [activeTab, setActiveTab] = useState<'website' | 'facebook' | 'whatsapp' | 'instagram'>('website')
   const [copiedUrl, setCopiedUrl] = useState(false)
-  const [copiedSnippet, setCopiedSnippet] = useState(false)
-  const [isSendingTest, setIsSendingTest] = useState(false)
 
   const webhookUrl = `${window.location.origin}/api/webhooks/lead`
 
-  const handleCopy = (text: string, type: 'url' | 'snippet') => {
-    navigator.clipboard.writeText(text)
-    if (type === 'url') {
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(webhookUrl)
       setCopiedUrl(true)
       setTimeout(() => setCopiedUrl(false), 2000)
-    } else {
-      setCopiedSnippet(true)
-      setTimeout(() => setCopiedSnippet(false), 2000)
-    }
-    toast({
-      type: 'success',
-      title: 'Copied to clipboard',
-      description: 'You can now paste it into your website form or automation tool.',
-    })
-  }
-
-  const handleSendTestLead = async (source: 'Website' | 'Facebook' | 'Instagram' | 'WhatsApp') => {
-    setIsSendingTest(true)
-    try {
-      const demoNames: Record<string, string> = {
-        Website: 'Tanvi Joshi (Website Form)',
-        Facebook: 'Kabir Oberoi (FB Lead Ad)',
-        Instagram: 'Ananya Roy (Instagram DM)',
-        WhatsApp: 'Rohan Mehra (WhatsApp Chat)',
-      }
-      const demoDest: Record<string, string> = {
-        Website: 'Dubai Luxury Getaway',
-        Facebook: 'Maldives Overwater Villa',
-        Instagram: 'Kashmir Snow Expedition',
-        WhatsApp: 'Manali Volvo Package',
-      }
-
-      const res = await fetch('/api/webhooks/lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: demoNames[source],
-          phone: '+91 98' + Math.floor(10000000 + Math.random() * 90000000),
-          email: `${source.toLowerCase()}.lead${Math.floor(Math.random() * 100)}@example.com`,
-          source: source,
-          destination: demoDest[source],
-          budget: Math.floor(35000 + Math.random() * 85000),
-          travelers: 2,
-          notes: `Simulated inbound test lead received from ${source} webhook.`,
-        }),
-      })
-
-      if (res.ok) {
-        toast({
-          type: 'success',
-          title: `Test ${source} Lead Received!`,
-          description: `Go to Leads (http://localhost:5173/leads) to view the new lead in your table!`,
-        })
-      } else {
-        toast({
-          type: 'error',
-          title: 'Failed to send test lead',
-          description: 'Please ensure backend server is running.',
-        })
-      }
-    } catch (err: any) {
-      toast({
-        type: 'error',
-        title: 'Network Error',
-        description: err.message,
-      })
-    } finally {
-      setIsSendingTest(false)
+    } catch {
+      toast({ type: 'error', title: 'Could not copy webhook URL' })
     }
   }
 
@@ -141,10 +77,10 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
     toggleChannel('whatsapp')
     toast({
       type: channels.whatsappConnected ? 'info' : 'success',
-      title: channels.whatsappConnected ? 'WhatsApp Disconnected' : 'WhatsApp Connected',
+      title: 'WhatsApp preference updated',
       description: channels.whatsappConnected
-        ? 'WhatsApp integration has been paused.'
-        : 'Meta Embedded Signup verified. WhatsApp is now connected!',
+        ? 'WhatsApp preference disabled.'
+        : 'WhatsApp preference updated.',
     })
   }
 
@@ -152,10 +88,10 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
     toggleChannel('instagram')
     toast({
       type: channels.instagramConnected ? 'info' : 'success',
-      title: channels.instagramConnected ? 'Instagram Disconnected' : 'Instagram Connected',
+      title: 'Instagram preference updated',
       description: channels.instagramConnected
-        ? 'Instagram integration has been disconnected.'
-        : 'Instagram account connected. Direct messages will land in your Inbox!',
+        ? 'Instagram preference disabled.'
+        : 'Instagram preference updated.',
     })
   }
 
@@ -166,7 +102,7 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
     toast({
       type: 'success',
       title: 'Email Settings Saved',
-      description: 'Your Resend / SendGrid credentials have been stored encrypted.',
+      description: 'Sender preferences updated.',
     })
     setTimeout(() => setSavedEmail(false), 2500)
   }
@@ -198,7 +134,7 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
                   Channels
                 </h1>
                 <p className="text-xs text-slate-400 font-medium">
-                  Connect WhatsApp, Instagram and Email — each organization connects its own accounts.
+                  Manage channel preferences and configure lead webhooks.
                 </p>
               </div>
             </div>
@@ -227,7 +163,7 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
                           : 'bg-slate-100 text-slate-500 border-slate-200'
                       }`}
                     >
-                      {channels.whatsappConnected ? 'Connected' : 'Not connected'}
+                      {channels.whatsappConnected ? 'Enabled' : 'Disabled'}
                     </span>
                   </div>
 
@@ -246,7 +182,7 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
                         : 'bg-[#453372] hover:bg-[#382760] text-white shadow-sm shadow-[#453372]/30'
                     }`}
                   >
-                    <span>{channels.whatsappConnected ? 'Disconnect WhatsApp' : 'Connect WhatsApp'}</span>
+                    <span>{channels.whatsappConnected ? 'Disable WhatsApp preference' : 'Enable WhatsApp preference'}</span>
                   </button>
                 </div>
               </div>
@@ -271,7 +207,7 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
                           : 'bg-slate-100 text-slate-500 border-slate-200'
                       }`}
                     >
-                      {channels.instagramConnected ? 'Connected' : 'Not connected'}
+                      {channels.instagramConnected ? 'Enabled' : 'Disabled'}
                     </span>
                   </div>
 
@@ -290,7 +226,7 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
                         : 'bg-[#453372] hover:bg-[#382760] text-white shadow-sm shadow-[#453372]/30'
                     }`}
                   >
-                    <span>{channels.instagramConnected ? 'Disconnect Instagram' : 'Connect Instagram'}</span>
+                    <span>{channels.instagramConnected ? 'Disable Instagram preference' : 'Enable Instagram preference'}</span>
                   </button>
                 </div>
               </div>
@@ -331,7 +267,7 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
                   <input
                     type="email"
                     required
-                    placeholder="bookings@youragency.com"
+
                     value={fromAddress}
                     onChange={(e) => setFromAddress(e.target.value)}
                     className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
@@ -344,7 +280,7 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
                   </label>
                   <input
                     type="password"
-                    placeholder="re_xxxxxxxxxxxx"
+
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     className="w-full bg-[#f3f4f8]/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 font-mono focus:outline-hidden focus:border-[#453372] focus:ring-2 focus:ring-[#453372]/15 transition"
@@ -408,60 +344,11 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
                   </code>
                   <button
                     type="button"
-                    onClick={() => handleCopy(webhookUrl, 'url')}
+                    onClick={handleCopy}
                     className="px-3.5 py-2 rounded-xl bg-[#453372] hover:bg-[#382760] text-white text-xs font-semibold flex items-center gap-1.5 transition shrink-0"
                   >
                     {copiedUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedUrl ? 'Copied' : 'Copy URL'}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Quick Test Ingestion Buttons */}
-              <div className="mb-6 p-4 bg-purple-50/50 border border-purple-100 rounded-2xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-[#453372]" />
-                  <span className="text-xs font-bold text-slate-800">Test Inbound Lead (Simulate Real Inbound Event):</span>
-                </div>
-                <p className="text-[11px] text-slate-500 mb-3">
-                  Click any button below to simulate an automated incoming lead and verify it immediately lands on your Leads page.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={isSendingTest}
-                    onClick={() => handleSendTestLead('Website')}
-                    className="px-3 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-[#453372] text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-50"
-                  >
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>+ Test Website Lead</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isSendingTest}
-                    onClick={() => handleSendTestLead('WhatsApp')}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-50"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    <span>+ Test WhatsApp Lead</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isSendingTest}
-                    onClick={() => handleSendTestLead('Facebook')}
-                    className="px-3 py-1.5 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-50"
-                  >
-                    <FacebookIcon className="w-3.5 h-3.5" />
-                    <span>+ Test Facebook Lead</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isSendingTest}
-                    onClick={() => handleSendTestLead('Instagram')}
-                    className="px-3 py-1.5 rounded-xl bg-pink-100 hover:bg-pink-200 text-pink-800 text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-50"
-                  >
-                    <InstagramIcon className="w-3.5 h-3.5" />
-                    <span>+ Test Instagram Lead</span>
                   </button>
                 </div>
               </div>
@@ -509,55 +396,10 @@ export const ChannelsPage: React.FC<ChannelsPageProps> = ({ onNavigateMenu }) =>
 
                 <div className="p-5 text-xs text-slate-700">
                   {activeTab === 'website' && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="leading-relaxed">
-                          Copy and paste this snippet into your website's contact / package enquiry form submit handler:
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(`const submitLeadToCRM = async (formData) => {
-  await fetch('${webhookUrl}', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: formData.name,
-      phone: formData.phone,
-      email: formData.email,
-      source: 'Website',
-      destination: formData.destination || 'General Enquiry',
-      travelers: formData.travelers || 2,
-      budget: formData.budget || 45000,
-      notes: formData.message || 'Submitted from website'
-    })
-  });
-};`, 'snippet')}
-                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold flex items-center gap-1 transition"
-                        >
-                          {copiedSnippet ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedSnippet ? 'Copied!' : 'Copy Code'}</span>
-                        </button>
-                      </div>
-                      <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-[11px] overflow-x-auto leading-relaxed">
-{`// When customer clicks "Submit Enquiry" on your website:
-const submitLeadToCRM = async (formData) => {
-  await fetch('${webhookUrl}', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: formData.name,            // e.g. "Rohan Sharma"
-      phone: formData.phone,          // e.g. "+91 98765 43210"
-      email: formData.email,          // e.g. "rohan@gmail.com"
-      source: 'Website',              // Auto-tagged in CRM
-      destination: formData.destination || 'Kerala 4N/5D',
-      travelers: formData.travelers || 2,
-      budget: formData.budget || 45000,
-      notes: formData.message || 'Submitted from website contact form'
-    })
-  });
-};`}
-                      </pre>
-                    </div>
+                    <p className="leading-relaxed">
+                      Send enquiry submissions from your website server using your workspace’s webhook configuration.
+                      For websites managed in GrowMe, use the form key from your site’s settings.
+                    </p>
                   )}
 
                   {activeTab === 'facebook' && (

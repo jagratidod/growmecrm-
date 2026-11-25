@@ -7,7 +7,6 @@ interface PipelineStageConfig {
   id: LeadStage
   label: string
   color: string
-  hoverColor: string
 }
 
 export const PipelineChevronBar: React.FC = () => {
@@ -15,13 +14,13 @@ export const PipelineChevronBar: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const stages: PipelineStageConfig[] = [
-    { id: 'New', label: 'New', color: 'bg-[#453372]', hoverColor: 'hover:bg-[#382760]' },
-    { id: 'Contacted', label: 'Contacted', color: 'bg-indigo-600', hoverColor: 'hover:bg-indigo-700' },
-    { id: 'Qualified', label: 'Qualified', color: 'bg-[#ff7675]', hoverColor: 'hover:bg-rose-500' },
-    { id: 'Proposal sent', label: 'Proposal sent', color: 'bg-[#ffb800]', hoverColor: 'hover:bg-amber-600' },
-    { id: 'Negotiation', label: 'Negotiation', color: 'bg-orange-600', hoverColor: 'hover:bg-orange-700' },
-    { id: 'Won', label: 'Won', color: 'bg-[#22c55e]', hoverColor: 'hover:bg-emerald-600' },
-    { id: 'Lost', label: 'Lost', color: 'bg-slate-600', hoverColor: 'hover:bg-slate-700' },
+    { id: 'New', label: 'New', color: 'bg-brand-soft text-brand-hover' },
+    { id: 'Contacted', label: 'Contacted', color: 'bg-blue-soft text-blue-ink' },
+    { id: 'Qualified', label: 'Qualified', color: 'bg-indigo-50 text-indigo-800' },
+    { id: 'Proposal sent', label: 'Proposal sent', color: 'bg-amber-50 text-amber-800' },
+    { id: 'Negotiation', label: 'Negotiation', color: 'bg-orange-50 text-orange-800' },
+    { id: 'Won', label: 'Won', color: 'bg-emerald-50 text-emerald-800' },
+    { id: 'Lost', label: 'Lost', color: 'bg-canvas text-copy-muted' },
   ]
 
   const stageCounts = React.useMemo(() => {
@@ -56,6 +55,7 @@ export const PipelineChevronBar: React.FC = () => {
       <button
         type="button"
         onClick={() => scroll('left')}
+        aria-label="Scroll lead stages left"
         className="w-7 h-7 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-slate-800 shadow-xs flex items-center justify-center shrink-0 transition"
       >
         <ChevronLeft className="w-4 h-4" />
@@ -85,10 +85,9 @@ export const PipelineChevronBar: React.FC = () => {
               type="button"
               onClick={() => handleStageClick(stage.id)}
               style={{ clipPath }}
-              className={`relative px-4 sm:px-5 py-2 text-xs font-semibold text-white transition-all shrink-0 cursor-pointer flex items-center justify-center gap-1.5 ${
-                stage.color
-              } ${stage.hoverColor} ${
-                isSelected ? 'ring-2 ring-[#453372] ring-offset-2 z-10 brightness-110 scale-[1.02]' : 'opacity-95'
+              aria-pressed={isSelected}
+              className={`relative px-4 sm:px-5 py-2 text-xs font-semibold transition-colors shrink-0 cursor-pointer flex items-center justify-center gap-1.5 ${
+                isSelected ? 'bg-brand text-white' : `${stage.color} hover:brightness-95`
               }`}
             >
               <span className="truncate">{stage.label}</span>
@@ -106,6 +105,7 @@ export const PipelineChevronBar: React.FC = () => {
       <button
         type="button"
         onClick={() => scroll('right')}
+        aria-label="Scroll lead stages right"
         className="w-7 h-7 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-slate-800 shadow-xs flex items-center justify-center shrink-0 transition"
       >
         <ChevronRight className="w-4 h-4" />
