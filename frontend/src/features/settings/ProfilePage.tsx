@@ -4,7 +4,6 @@ import { useSettings } from '../../context/SettingsContext'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import { profileService } from '../../services/profileService'
-import { organizationService } from '../../services/organizationService'
 import { Menu, Check } from 'lucide-react'
 
 interface ProfilePageProps {
@@ -13,7 +12,7 @@ interface ProfilePageProps {
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
   const { user, updateUser } = useAuth()
-  const { profile, updateProfile, organization, updateOrganization } = useSettings()
+  const { profile, updateProfile, organization } = useSettings()
   const { toast } = useToast()
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
@@ -50,24 +49,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
         if (data) {
           if (data.fullName) setFullName(data.fullName)
           if (data.email) setEmail(data.email)
-          if (data.organization) {
-            updateOrganization({ agencyName: data.organization })
-            if (updateUser) {
-              updateUser({ organizationName: data.organization })
-            }
-          }
-        }
-      })
-      .catch(() => {})
-
-    organizationService
-      .getOrganization()
-      .then((org) => {
-        const orgName = org?.agencyName || org?.name
-        if (orgName) {
-          updateOrganization({ agencyName: orgName })
-          if (updateUser) {
-            updateUser({ organizationName: orgName })
+          if (data.organization && updateUser) {
+            updateUser({ organizationName: data.organization })
           }
         }
       })

@@ -3,6 +3,7 @@ import { useWorkspace } from '../features/workspace/WorkspaceAccess'
 import { useAuth } from './AuthContext'
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { settingsService } from '../services/settingsService'
+import { organizationService } from '../services/organizationService'
 
 export interface UserProfileSettings {
   fullName: string
@@ -29,6 +30,7 @@ export interface AiAgentSettings {
 
 export interface OrganizationSettings {
   agencyName: string
+  name?: string
   logoUrl?: string
   primaryColor: string
   secondaryColor: string
@@ -75,7 +77,7 @@ interface SettingsContextType {
   aiAgent: AiAgentSettings
   updateAiAgent: (updates: Partial<AiAgentSettings>) => void
   organization: OrganizationSettings
-  updateOrganization: (updates: Partial<OrganizationSettings>) => void
+  updateOrganization: (updates: Partial<OrganizationSettings>) => Promise<void>
   invoiceDetail: InvoiceDetailSettings
   updateInvoiceDetail: (updates: Partial<InvoiceDetailSettings>) => Promise<void>
   automation: AutomationSettings
@@ -193,6 +195,28 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (communicationsSettings && user?.organizationId) void fetchSettings()
   }, [communicationsSettings, user?.organizationId])
 
+  useEffect(() => {
+    if (!user?.organizationId) return
+    let active = true
+    organizationService.getOrganization().then(
+      (data) => {
+        if (active && data) {
+          setOrganization((prev) => ({
+            ...prev,
+            agencyName: data.agencyName || data.name || prev.agencyName,
+            logoUrl: data.logoUrl || prev.logoUrl,
+            primaryColor: data.primaryColor || prev.primaryColor,
+            secondaryColor: data.secondaryColor || prev.secondaryColor,
+          }))
+        }
+      },
+      (error: Error) => {
+        if (active) console.warn('Could not load organization details:', error.message)
+      }
+    )
+    return () => { active = false }
+  }, [user?.organizationId])
+
   const updateProfile = (updates: Partial<UserProfileSettings>) => {
     setProfile((prev) => ({ ...prev, ...updates }))
   }
@@ -245,8 +269,19 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }
 
-  const updateOrganization = (updates: Partial<OrganizationSettings>) => {
-    setOrganization((prev) => ({ ...prev, ...updates }))
+  const updateOrganization = async (updates: Partial<OrganizationSettings>) => {
+    const res = await organizationService.updateOrganization(updates)
+    if (res?.organization) {
+      setOrganization((prev) => ({
+        ...prev,
+        agencyName: res.organization.agencyName || res.organization.name || prev.agencyName,
+        logoUrl: res.organization.logoUrl !== undefined ? res.organization.logoUrl : prev.logoUrl,
+        primaryColor: res.organization.primaryColor || prev.primaryColor,
+        secondaryColor: res.organization.secondaryColor || prev.secondaryColor,
+      }))
+    } else {
+      setOrganization((prev) => ({ ...prev, ...updates }))
+    }
   }
 
   const updateInvoiceDetail = async (updates: Partial<InvoiceDetailSettings>) => {

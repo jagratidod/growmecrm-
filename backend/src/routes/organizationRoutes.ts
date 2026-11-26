@@ -7,6 +7,6 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', getOrganization);
-router.put('/', authorizeRoles('OWNER', 'ADMIN'), updateOrganization);
+router.put('/', authorizeRoles('OWNER', 'ADMIN', 'SUPER_ADMIN'), updateOrganization);
 
 export default router;

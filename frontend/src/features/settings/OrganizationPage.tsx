@@ -19,10 +19,11 @@ interface OrganizationPageProps {
 
 export const OrganizationPage: React.FC<OrganizationPageProps> = ({ onNavigateMenu }) => {
   const { organization, updateOrganization } = useSettings()
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const { toast } = useToast()
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // Local form state
   const defaultOrgName =
@@ -74,27 +75,42 @@ export const OrganizationPage: React.FC<OrganizationPageProps> = ({ onNavigateMe
     toast({ title: 'Logo URL applied', type: 'success' })
   }
 
-  const handleSaveChanges = (e: React.FormEvent) => {
+  const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!agencyName.trim()) {
       toast({ title: 'Please enter an agency name', type: 'error' })
       return
     }
 
-    updateOrganization({
-      agencyName: agencyName.trim(),
-      logoUrl: logoUrl.trim() || undefined,
-      primaryColor,
-      secondaryColor,
-    })
+    setIsSaving(true)
+    try {
+      await updateOrganization({
+        agencyName: agencyName.trim(),
+        logoUrl: logoUrl.trim(),
+        primaryColor,
+        secondaryColor,
+      })
 
-    setIsSaved(true)
-    toast({
-      type: 'success',
-      title: 'Organization Updated',
-      description: 'Your agency branding has been saved across the workspace.',
-    })
-    setTimeout(() => setIsSaved(false), 2500)
+      if (updateUser) {
+        updateUser({ organizationName: agencyName.trim() })
+      }
+
+      setIsSaved(true)
+      toast({
+        type: 'success',
+        title: 'Organization Updated',
+        description: 'Your agency branding has been saved across the workspace.',
+      })
+      setTimeout(() => setIsSaved(false), 2500)
+    } catch (err: any) {
+      toast({
+        type: 'error',
+        title: 'Update Failed',
+        description: err.message || 'Could not update organization settings.',
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const initials = agencyName
@@ -321,7 +337,8 @@ export const OrganizationPage: React.FC<OrganizationPageProps> = ({ onNavigateMe
                 <div className="flex justify-end pt-4 border-t border-slate-100">
                   <button
                     type="submit"
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+                    disabled={isSaving}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
                   >
                     {isSaved ? (
                       <>
@@ -329,7 +346,7 @@ export const OrganizationPage: React.FC<OrganizationPageProps> = ({ onNavigateMe
                         <span>Saved</span>
                       </>
                     ) : (
-                      <span>Save changes</span>
+                      <span>{isSaving ? 'Saving...' : 'Save changes'}</span>
                     )}
                   </button>
                 </div>
