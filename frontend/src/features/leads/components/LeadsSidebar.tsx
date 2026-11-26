@@ -7,6 +7,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { useRouter } from '../../../context/RouterContext'
 import { useWorkspace } from '../../workspace/WorkspaceAccess'
 import { routeModules } from '../../workspace/workspaceApi'
+import '../../workspace/workspace.css'
 
 const navigation = [
   { title: 'Workspace', items: [['Dashboard', '/dashboard', LayoutGrid], ['Websites', '/websites', Globe]] },

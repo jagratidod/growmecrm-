@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./theme.css";
+@import "./features/workspace/workspace.css";
 @config "./features/marketing/tailwind.config.js";
 
 @layer utilities {

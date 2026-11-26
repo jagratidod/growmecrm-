@@ -10,7 +10,7 @@ export const connectDB = async (): Promise<void> => {
     const conn = await mongoose.connect(mongoUri);
     console.log(`[MongoDB Connected]: Host -> ${conn.connection.host}`);
   } catch (error) {
-    console.error('[MongoDB Connection Error]:', error instanceof Error ? error.name : 'Connection failed');
+    console.error('[MongoDB Connection Error]:', error instanceof Error ? (error.stack || error.message) : error);
     process.exit(1);
   }
 };

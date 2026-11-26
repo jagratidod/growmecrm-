@@ -3,6 +3,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from '../../../context/RouterContext'
 import { useAuth } from '../../../context/AuthContext'
+import '../../workspace/workspace.css'
 
 interface SuperAdminSidebarProps {
   isOpen?: boolean

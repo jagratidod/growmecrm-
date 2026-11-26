@@ -17,6 +17,7 @@ import { CallLogProvider } from './context/CallLogContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
 import { WorkspaceAccess, useWorkspace } from './features/workspace/WorkspaceAccess'
 import { routeModules } from './features/workspace/workspaceApi'
+import './features/workspace/workspace.css'
 
 const AuthPage = lazy(() => import('./features/auth/AuthPage').then((page) => ({ default: page.AuthPage })))
 const AcceptInvitePage = lazy(() => import('./features/workspace/AcceptInvitePage').then((page) => ({ default: page.AcceptInvitePage })))

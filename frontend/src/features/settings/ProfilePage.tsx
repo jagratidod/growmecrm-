@@ -88,23 +88,51 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [savedPassword, setSavedPassword] = useState(false)
+  const [isSavingPersonal, setIsSavingPersonal] = useState(false)
+  const [isSavingPassword, setIsSavingPassword] = useState(false)
 
-  const handleSavePersonal = (e: React.FormEvent) => {
+  const handleSavePersonal = async (e: React.FormEvent) => {
     e.preventDefault()
-    updateProfile({ fullName, email })
-    if (updateUser) {
-      updateUser({ name: fullName, email })
+    if (!fullName.trim()) {
+      toast({ type: 'error', title: 'Validation Error', description: 'Please enter your full name.' })
+      return
     }
-    setSavedPersonal(true)
-    toast({
-      type: 'success',
-      title: 'Profile Updated',
-      description: 'Your personal details have been saved successfully.',
-    })
-    setTimeout(() => setSavedPersonal(false), 2500)
+    if (!email.trim()) {
+      toast({ type: 'error', title: 'Validation Error', description: 'Please enter your email address.' })
+      return
+    }
+
+    setIsSavingPersonal(true)
+    try {
+      const response = await profileService.updateProfile({
+        fullName: fullName.trim(),
+        email: email.trim().toLowerCase(),
+      })
+
+      updateProfile({ fullName: response.fullName, email: response.email })
+      if (updateUser) {
+        updateUser({ name: response.fullName, email: response.email })
+      }
+
+      setSavedPersonal(true)
+      toast({
+        type: 'success',
+        title: 'Profile Updated',
+        description: response.message || 'Your personal details have been saved successfully.',
+      })
+      setTimeout(() => setSavedPersonal(false), 2500)
+    } catch (err: any) {
+      toast({
+        type: 'error',
+        title: 'Update Failed',
+        description: err.message || 'Could not update profile details.',
+      })
+    } finally {
+      setIsSavingPersonal(false)
+    }
   }
 
-  const handleSavePassword = (e: React.FormEvent) => {
+  const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setPasswordError('')
 
@@ -121,16 +149,34 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
       return
     }
 
-    setSavedPassword(true)
-    toast({
-      type: 'success',
-      title: 'Password Changed',
-      description: 'Your password has been updated successfully.',
-    })
-    setCurrentPassword('')
-    setNewPassword('')
-    setConfirmPassword('')
-    setTimeout(() => setSavedPassword(false), 2500)
+    setIsSavingPassword(true)
+    try {
+      const response = await profileService.changePassword({
+        currentPassword,
+        newPassword,
+      })
+
+      setSavedPassword(true)
+      toast({
+        type: 'success',
+        title: 'Password Changed',
+        description: response.message || 'Your password has been updated successfully.',
+      })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setTimeout(() => setSavedPassword(false), 2500)
+    } catch (err: any) {
+      const msg = err.message || 'Failed to change password.'
+      setPasswordError(msg)
+      toast({
+        type: 'error',
+        title: 'Password Change Failed',
+        description: msg,
+      })
+    } finally {
+      setIsSavingPassword(false)
+    }
   }
 
   return (
@@ -248,7 +294,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                   <div className="pt-2 flex justify-end">
                     <button
                       type="submit"
-                      className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99] flex items-center gap-1.5"
+                      disabled={isSavingPersonal}
+                      className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99] flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {savedPersonal ? (
                         <>
@@ -256,7 +303,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                           <span>Saved!</span>
                         </>
                       ) : (
-                        <span>Save changes</span>
+                        <span>{isSavingPersonal ? 'Saving...' : 'Save changes'}</span>
                       )}
                     </button>
                   </div>
@@ -325,7 +372,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                   <div className="pt-2 flex justify-end">
                     <button
                       type="submit"
-                      className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99] flex items-center gap-1.5"
+                      disabled={isSavingPassword}
+                      className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99] flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {savedPassword ? (
                         <>
@@ -333,7 +381,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
                           <span>Password Changed!</span>
                         </>
                       ) : (
-                        <span>Change password</span>
+                        <span>{isSavingPassword ? 'Updating...' : 'Change password'}</span>
                       )}
                     </button>
                   </div>
