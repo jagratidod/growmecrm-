@@ -6,7 +6,7 @@ import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { useRouter } from '../../context/RouterContext'
 import { request } from '../../services/api'
 import { useWorkspace } from './WorkspaceAccess'
-import { apiBase, moduleNames, save } from './workspaceApi'
+import { moduleNames, save } from './workspaceApi'
 import type { Entry, Section, Site, SiteEditor } from './workspaceApi'
 import './workspace.css'
 
@@ -131,11 +131,8 @@ function WebsiteEditor({ siteId }: { siteId: string }) {
   const uploadImage = async (file: File) => {
     const form = new FormData()
     form.set('file', file)
-    const token = localStorage.getItem('crm_auth_token') || sessionStorage.getItem('crm_auth_token')
-    const response = await fetch(`${apiBase}${base}/media`, { method: 'POST', body: form, headers: { Authorization: `Bearer ${token}` } })
-    const data = await response.json()
-    if (!response.ok) throw new Error(data.error || 'Upload failed.')
-    edit({ image: data.url })
+    const { url } = await request<{ url: string }>(`${base}/media`, { method: 'POST', body: form })
+    edit({ image: url })
     setNotice('Image uploaded. Save the draft to keep it.')
   }
 
@@ -161,7 +158,7 @@ function WebsiteEditor({ siteId }: { siteId: string }) {
         <fieldset disabled={!canEdit || busy}>
           <label>{section === 'seo' ? 'Meta title' : 'Title'}<input value={draft.title} maxLength={180} onChange={(e) => edit({ title: e.target.value })} /></label>
           <label>{section === 'seo' ? 'Meta description' : 'Content'}<textarea rows={7} value={draft.body} maxLength={40000} onChange={(e) => edit({ body: e.target.value })} /></label>
-          <label>Image URL<input type="url" value={draft.image} onChange={(e) => edit({ image: e.target.value })} /></label>
+          <label>Cloudinary image URL<input type="url" value={draft.image} onChange={(e) => edit({ image: e.target.value })} /></label>
           {access?.modules.includes('media') && <label className="gm-upload"><Upload size={16} /> Upload image<input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" onChange={(e) => {
             const file = e.target.files?.[0]
             if (file) void perform(() => uploadImage(file))
@@ -173,7 +170,7 @@ function WebsiteEditor({ siteId }: { siteId: string }) {
               <label>URL slug<input value={entry.slug} onChange={(e) => replaceEntry(index, { slug: e.target.value })} /></label>
               <label>Title<input value={entry.title} onChange={(e) => replaceEntry(index, { title: e.target.value })} /></label>
               <label>Content<textarea rows={3} value={entry.body} onChange={(e) => replaceEntry(index, { body: e.target.value })} /></label>
-              <label>Image URL<input type="url" value={entry.image} onChange={(e) => replaceEntry(index, { image: e.target.value })} /></label>
+              <label>Cloudinary image URL<input type="url" value={entry.image} onChange={(e) => replaceEntry(index, { image: e.target.value })} /></label>
               <div className="gm-actions">
                 <button type="button" className="gm-text-button" disabled={index === 0} onClick={() => {
                   const entries = [...(draft.entries || [])]

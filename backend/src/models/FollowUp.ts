@@ -52,13 +52,13 @@ const FollowUpSchema = new Schema<IFollowUp>(
     },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
+      default: '',
       trim: true,
     },
     destination: {
       type: String,
       trim: true,
-      default: 'Custom Travel Inquiry',
+      default: '',
     },
     dueDate: {
       type: String,

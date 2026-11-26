@@ -1,4 +1,6 @@
-import { useAuth } from './AuthContext'
+import { useRouter } from './RouterContext'
+import { useToast } from '../components/ui/Toast'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { Itinerary, ItineraryDay, ItineraryFilters } from '../types/itinerary.types'
 import { itinerariesService } from '../services/itinerariesService'
@@ -22,13 +24,12 @@ interface ItinerariesContextType {
   refreshItineraries: () => Promise<void>
 }
 
-const STORAGE_PREFIX = 'treki_crm_itineraries_data'
-
 const ItinerariesContext = createContext<ItinerariesContextType | undefined>(undefined)
 
 export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth()
-  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
+  const { path } = useRouter()
+  const enabled = (useWorkspace().access?.modules.includes('catalog')) && ('/itineraries' === path)
+  const { toast } = useToast()
   const [itineraries, setItineraries] = useState<Itinerary[]>([])
 
   const [filters, setFilters] = useState<ItineraryFilters>({
@@ -41,28 +42,17 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Fetch from backend API
   const refreshItineraries = useCallback(async () => {
+    if (!enabled) return
     try {
-      const res = await itinerariesService.getItineraries()
-      if (res?.itineraries) {
-        setItineraries(res.itineraries)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(res.itineraries))
-      }
-    } catch {
-      // offline fallback
+      setItineraries((await itinerariesService.getItineraries()).itineraries)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not load itineraries', description: (error as Error).message })
     }
-  }, [])
+  }, [enabled, toast])
 
   useEffect(() => {
-    refreshItineraries()
+    void refreshItineraries()
   }, [refreshItineraries])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(itineraries))
-    } catch (e) {
-      console.error('Failed to save itineraries to localStorage:', e)
-    }
-  }, [itineraries])
 
   const setSearch = (search: string) => {
     setFilters((prev) => ({ ...prev, search }))
@@ -72,122 +62,43 @@ export const ItinerariesProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setFilters((prev) => ({ ...prev, status }))
   }
 
-  const addItinerary = async (
-    data: Omit<Itinerary, 'id' | 'createdAt' | 'updatedAt' | 'days'> & { days?: ItineraryDay[] }
-  ): Promise<Itinerary> => {
-    const tempId = `itn-${Date.now()}`
-    const newItinerary: Itinerary = {
-      ...data,
-      id: tempId,
-      days: data.days || [
-        {
-          id: `day-${Date.now()}-1`,
-          dayNumber: 1,
-          title: 'Arrival & Welcome',
-          description: `Welcome to ${data.destination}! Private check-in and leisure evening.`,
-          activities: ['Airport pickup', 'Hotel check-in', 'Evening welcome dinner'],
-          meals: ['Dinner'],
-        },
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+  const addItinerary: ItinerariesContextType['addItinerary'] = async (data) => {
+    const { itinerary } = await itinerariesService.createItinerary(data)
+    setItineraries((prev) => [itinerary, ...prev])
+    return itinerary
+  }
+
+  const applyUpdate = async (operation: Promise<{ itinerary: Itinerary }>) => {
+    try {
+      const { itinerary } = await operation
+      setItineraries((prev) => prev.map((item) => item.id === itinerary.id ? itinerary : item))
+      setSelectedItinerary((item) => item?.id === itinerary.id ? itinerary : item)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not update itinerary', description: (error as Error).message })
     }
-
-    setItineraries((prev) => [newItinerary, ...prev])
-
-    itinerariesService
-      .createItinerary(data)
-      .then((res) => {
-        if (res?.itinerary) {
-          setItineraries((prev) => prev.map((itn) => (itn.id === tempId ? res.itinerary : itn)))
-          if (selectedItinerary && selectedItinerary.id === tempId) {
-            setSelectedItinerary(res.itinerary)
-          }
-        }
-      })
-      .catch(() => {})
-
-    return newItinerary
   }
 
-  const updateItinerary = async (id: string, updates: Partial<Itinerary>) => {
-    setItineraries((prev) =>
-      prev.map((itn) =>
-        itn.id === id ? { ...itn, ...updates, updatedAt: new Date().toISOString() } : itn
-      )
-    )
-    if (selectedItinerary && selectedItinerary.id === id) {
-      setSelectedItinerary((prev) => (prev ? { ...prev, ...updates, updatedAt: new Date().toISOString() } : null))
+  const updateItinerary: ItinerariesContextType['updateItinerary'] = (id, updates) =>
+    applyUpdate(itinerariesService.updateItinerary(id, updates))
+
+  const deleteItinerary: ItinerariesContextType['deleteItinerary'] = async (id) => {
+    try {
+      await itinerariesService.deleteItinerary(id)
+      setItineraries((prev) => prev.filter((item) => item.id !== id))
+      setSelectedItinerary((item) => item?.id === id ? null : item)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not delete itinerary', description: (error as Error).message })
     }
-
-    itinerariesService.updateItinerary(id, updates).catch(() => {})
   }
 
-  const deleteItinerary = async (id: string) => {
-    setItineraries((prev) => prev.filter((itn) => itn.id !== id))
-    if (selectedItinerary && selectedItinerary.id === id) {
-      setSelectedItinerary(null)
-    }
+  const addDay: ItinerariesContextType['addDay'] = (id, day) =>
+    applyUpdate(itinerariesService.addDay(id, day))
 
-    itinerariesService.deleteItinerary(id).catch(() => {})
-  }
+  const updateDay: ItinerariesContextType['updateDay'] = (id, dayId, updates) =>
+    applyUpdate(itinerariesService.updateDay(id, dayId, updates))
 
-  const addDay = async (itineraryId: string, day: Omit<ItineraryDay, 'id' | 'dayNumber'>) => {
-    const tempDayId = `day-${Date.now()}`
-    setItineraries((prev) =>
-      prev.map((itn) => {
-        if (itn.id !== itineraryId) return itn
-        const newDayNumber = (itn.days?.length || 0) + 1
-        const newDay: ItineraryDay = {
-          ...day,
-          id: tempDayId,
-          dayNumber: newDayNumber,
-        }
-        const updatedDays = [...(itn.days || []), newDay]
-        const updated = { ...itn, days: updatedDays, updatedAt: new Date().toISOString() }
-        if (selectedItinerary && selectedItinerary.id === itineraryId) {
-          setSelectedItinerary(updated)
-        }
-        return updated
-      })
-    )
-
-    itinerariesService.addDay(itineraryId, day).catch(() => {})
-  }
-
-  const updateDay = async (itineraryId: string, dayId: string, updates: Partial<ItineraryDay>) => {
-    setItineraries((prev) =>
-      prev.map((itn) => {
-        if (itn.id !== itineraryId) return itn
-        const updatedDays = itn.days.map((d) => (d.id === dayId ? { ...d, ...updates } : d))
-        const updated = { ...itn, days: updatedDays, updatedAt: new Date().toISOString() }
-        if (selectedItinerary && selectedItinerary.id === itineraryId) {
-          setSelectedItinerary(updated)
-        }
-        return updated
-      })
-    )
-
-    itinerariesService.updateDay(itineraryId, dayId, updates).catch(() => {})
-  }
-
-  const deleteDay = async (itineraryId: string, dayId: string) => {
-    setItineraries((prev) =>
-      prev.map((itn) => {
-        if (itn.id !== itineraryId) return itn
-        const remaining = itn.days
-          .filter((d) => d.id !== dayId)
-          .map((d, index) => ({ ...d, dayNumber: index + 1 }))
-        const updated = { ...itn, days: remaining, updatedAt: new Date().toISOString() }
-        if (selectedItinerary && selectedItinerary.id === itineraryId) {
-          setSelectedItinerary(updated)
-        }
-        return updated
-      })
-    )
-
-    itinerariesService.deleteDay(itineraryId, dayId).catch(() => {})
-  }
+  const deleteDay: ItinerariesContextType['deleteDay'] = (id, dayId) =>
+    applyUpdate(itinerariesService.deleteDay(id, dayId))
 
   const filteredItineraries = useMemo(() => {
     return itineraries.filter((itn) => {

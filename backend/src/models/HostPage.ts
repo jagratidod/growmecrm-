@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import { Schema, Document, Types } from 'mongoose';
 
 export interface IHostReview {
   id: string;
@@ -55,7 +55,7 @@ const HostContactSchema = new Schema<IHostContact>(
   { _id: false }
 );
 
-const HostPageSchema = new Schema<IHostPage>(
+export const HostPageSchema = new Schema<IHostPage>(
   {
     organizationId: {
       type: Schema.Types.ObjectId,
@@ -111,9 +111,3 @@ const HostPageSchema = new Schema<IHostPage>(
     timestamps: true,
   }
 );
-
-// Indexes
-HostPageSchema.index({ organizationId: 1 });
-HostPageSchema.index({ websiteSlug: 1 });
-
-export const HostPage = mongoose.model<IHostPage>('HostPage', HostPageSchema);

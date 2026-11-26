@@ -29,27 +29,55 @@ export function validateMongoUri(uri: string): string {
       !url.username || !url.password || url.port || !/^\/[\w-]+$/.test(url.pathname) || [...url.searchParams.keys()].some((key) => !permittedQuery.has(key)) || url.hash) {
     throw new Error('Use an Atlas mongodb+srv URI with credentials and a dedicated database name, with standard Atlas options.');
   }
+  rejectPlatformServer(url.href);
   return url.href;
 }
 
+function rejectPlatformServer(uri: string) {
+  const platformUri = process.env.MONGODB_URI;
+  if (platformUri && new URL(uri).hostname === new URL(platformUri).hostname) {
+    throw new Error('Assign a client-owned MongoDB cluster separate from GrowMe.');
+  }
+}
+
+let platformTopology: Promise<{ setName?: string; hosts?: string[] }> | undefined;
+
 export async function withMongo<T>(uri: string, run: (connection: Connection) => Promise<T>) {
+  rejectPlatformServer(uri);
   const connection = mongoose.createConnection(uri, { serverSelectionTimeoutMS: 5000, maxPoolSize: 3 });
   try {
     await connection.asPromise();
+    platformTopology ??= mongoose.connection.db!.command({ hello: 1 }).catch((error) => {
+      platformTopology = undefined;
+      throw error;
+    });
+    const [platform, client] = await Promise.all([platformTopology, connection.db!.command({ hello: 1 })]);
+    if ((platform.setName && platform.setName === client.setName) ||
+        platform.hosts?.some((host) => client.hosts?.includes(host))) {
+      throw new Error('Assign a client-owned MongoDB cluster separate from GrowMe.');
+    }
     return await run(connection);
   } finally {
     await connection.close();
   }
 }
 
-export async function withContent<T>(
+export function withClientWebsiteDatabase<T>(
   settings: Pick<WorkspaceSettings, 'mongo'> | null | undefined,
-  run: (collection: ReturnType<typeof getContentCollection>) => Promise<T>,
+  run: (connection: Connection) => Promise<T>,
 ) {
   if (!settings?.mongo) {
-    throw Object.assign(new Error("Connect the client's MongoDB in Super Admin → Connections before managing website content."), { status: 400 });
+    throw Object.assign(new Error("Connect the client's MongoDB in Super Admin → Connections before managing website content."), { status: 409 });
   }
-  return withMongo(open(settings.mongo), (connection) => run(getContentCollection(connection)));
+  return withMongo(open(settings.mongo), run);
+}
+
+export function withContent<T>(
+  settings: Pick<WorkspaceSettings, 'mongo' | 'cloudinary'> | null | undefined,
+  run: (collection: ReturnType<typeof getContentCollection>) => Promise<T>,
+) {
+  requireWebsiteServices(settings);
+  return withClientWebsiteDatabase(settings, (connection) => run(getContentCollection(connection)));
 }
 
 function getContentCollection(connection: Connection) {
@@ -67,9 +95,34 @@ export async function testCloudinary({ cloudName, apiKey, apiSecret }: CloudCred
   if (!response.ok) throw new Error('Cloudinary credentials could not be verified.');
 }
 
-export function mediaCredentials(settings: WorkspaceSettings | null): CloudCredentials {
-  if (settings?.cloudinary) return JSON.parse(open(settings.cloudinary)) as CloudCredentials;
-  const { CLOUDINARY_CLOUD_NAME: cloudName, CLOUDINARY_API_KEY: apiKey, CLOUDINARY_API_SECRET: apiSecret } = process.env;
-  if (!cloudName || !apiKey || !apiSecret) throw new Error('Cloudinary is not configured for this website.');
-  return { cloudName, apiKey, apiSecret };
+export function requireWebsiteServices(settings?: Pick<WorkspaceSettings, 'mongo' | 'cloudinary'> | null) {
+  if (!settings?.mongo || !settings.cloudinary) {
+    throw Object.assign(new Error('Assign the client’s MongoDB and Cloudinary in Super Admin before managing this website.'), { status: 409 });
+  }
+}
+
+export function assertClientCloudName(cloudName: string) {
+  if (cloudName.trim().toLowerCase() === process.env.CLOUDINARY_CLOUD_NAME?.trim().toLowerCase()) {
+    throw new Error('Assign the client’s own Cloudinary account.');
+  }
+}
+
+export function mediaCredentials(settings: Pick<WorkspaceSettings, 'cloudinary'> | null): CloudCredentials {
+  if (!settings?.cloudinary) {
+    throw Object.assign(new Error('Assign the client’s Cloudinary account in Super Admin.'), { status: 409 });
+  }
+  const cloud = JSON.parse(open(settings.cloudinary)) as CloudCredentials;
+  assertClientCloudName(cloud.cloudName);
+  return cloud;
+}
+
+export function isClientImage(image: string, cloudName: string): boolean {
+  if (!image) return true;
+  try {
+    const url = new URL(image);
+    return url.protocol === 'https:' && url.host === 'res.cloudinary.com' &&
+      !url.username && !url.password && url.pathname.startsWith(`/${cloudName}/image/upload/`);
+  } catch {
+    return false;
+  }
 }

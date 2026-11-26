@@ -1,13 +1,14 @@
+import { lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 
 // Pages
 import HomePage from '../pages/Home/HomePage';
-import ServicesPage from '../pages/Services/ServicesPage';
-import ContactPage from '../pages/Contact/ContactPage';
-import PrivacyPolicyPage from '../pages/Legal/PrivacyPolicyPage';
-import TermsPage from '../pages/Legal/TermsPage';
-import NotFoundPage from '../pages/NotFound/NotFoundPage';
+const ServicesPage = lazy(() => import('../pages/Services/ServicesPage'));
+const ContactPage = lazy(() => import('../pages/Contact/ContactPage'));
+const PrivacyPolicyPage = lazy(() => import('../pages/Legal/PrivacyPolicyPage'));
+const TermsPage = lazy(() => import('../pages/Legal/TermsPage'));
+const NotFoundPage = lazy(() => import('../pages/NotFound/NotFoundPage'));
 
 export default function AppRoutes() {
   return (

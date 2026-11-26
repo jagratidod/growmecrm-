@@ -317,7 +317,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
               <input
                 type="text"
                 required
-                placeholder="Ubud"
+
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
@@ -412,7 +412,7 @@ export const AddHotelModal: React.FC<AddHotelModalProps> = ({
               <label className="block text-xs font-bold text-slate-800 mb-1.5">Reservations Email</label>
               <input
                 type="email"
-                placeholder="reservations@hotel.com"
+
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import { Schema, Document, Types } from 'mongoose';
 
 export type BioLinkIcon = 'whatsapp' | 'package' | 'web' | 'review';
 
@@ -34,7 +34,7 @@ const BioLinkItemSchema = new Schema<IBioLinkItem>(
   { _id: false }
 );
 
-const LinkTreeSchema = new Schema<ILinkTree>(
+export const LinkTreeSchema = new Schema<ILinkTree>(
   {
     organizationId: {
       type: Schema.Types.ObjectId,
@@ -58,5 +58,3 @@ const LinkTreeSchema = new Schema<ILinkTree>(
     timestamps: true,
   }
 );
-
-export const LinkTree = mongoose.model<ILinkTree>('LinkTree', LinkTreeSchema);

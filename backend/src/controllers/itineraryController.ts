@@ -130,17 +130,7 @@ export const createItinerary = async (req: AuthenticatedRequest, res: Response):
           hotel: d.hotel || '',
           meals: d.meals || [],
         }))
-      : [
-          {
-            id: `day-${Date.now()}-1`,
-            dayNumber: 1,
-            title: 'Arrival & Welcome',
-            description: `Welcome to ${destination}! Private airport check-in and evening at leisure.`,
-            activities: ['Airport pickup', 'Hotel check-in', 'Evening welcome dinner'],
-            hotel: '',
-            meals: ['Dinner'],
-          },
-        ];
+      : [];
 
     const newItinerary = new Itinerary({
       organizationId: orgId,

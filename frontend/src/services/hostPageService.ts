@@ -36,6 +36,13 @@ export interface PublicHostPageResponse {
 }
 
 export const hostPageService = {
+  async uploadImage(file: File): Promise<string> {
+    const body = new FormData();
+    body.set('file', file);
+    const { url } = await request<{ url: string }>('/host-page/media', { method: 'POST', body });
+    return url;
+  },
+
   // 1. Fetch current agency host page data
   async getHostPage(): Promise<HostPageResponse> {
     return request<HostPageResponse>('/host-page', {

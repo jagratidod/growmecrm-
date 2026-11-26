@@ -1,3 +1,5 @@
+import { useRouter } from './RouterContext'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
 import { useAuth } from './AuthContext'
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { settingsService } from '../services/settingsService'
@@ -75,12 +77,10 @@ interface SettingsContextType {
   organization: OrganizationSettings
   updateOrganization: (updates: Partial<OrganizationSettings>) => void
   invoiceDetail: InvoiceDetailSettings
-  updateInvoiceDetail: (updates: Partial<InvoiceDetailSettings>) => void
+  updateInvoiceDetail: (updates: Partial<InvoiceDetailSettings>) => Promise<void>
   automation: AutomationSettings
   updateAutomation: (updates: Partial<AutomationSettings>) => void
 }
-
-const INVOICE_STORAGE_PREFIX = 'growme_invoice_preferences'
 
 const DEFAULT_PROFILE: UserProfileSettings = {
   fullName: '',
@@ -143,97 +143,36 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth()
-  const invoiceStorageKey = user?.organizationId ? `${INVOICE_STORAGE_PREFIX}:${user.organizationId}` : ''
-  const [profile, setProfile] = useState<UserProfileSettings>(() => {
-    try {
-      const authUserStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')
-      if (authUserStr) {
-        const authUser = JSON.parse(authUserStr)
-        if (authUser?.name) {
-          const orgName = authUser.organizationName || ''
-          return {
-            fullName: authUser.name,
-            email: authUser.email || '',
-            role: authUser.role ? (authUser.role.charAt(0).toUpperCase() + authUser.role.slice(1)) : 'Owner',
-            organization: orgName,
-            memberSince: authUser.memberSince || '',
-            lastSignIn: authUser.lastSignIn || '',
-          }
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return DEFAULT_PROFILE
-  })
-
+  const { path } = useRouter()
+  const { access } = useWorkspace()
+  const financeEnabled = access?.modules.includes('finance') && ['/invoices', '/invoice-detail'].includes(path)
+  const communicationsSettings = access?.modules.includes('communications') && ['/channels', '/ai-agent', '/automation'].includes(path)
+  const [profile, setProfile] = useState<UserProfileSettings>(() => user ? {
+    fullName: user.name,
+    email: user.email,
+    role: user.role.charAt(0).toUpperCase() + user.role.slice(1),
+    organization: user.organizationName || '',
+    memberSince: user.memberSince || '',
+    lastSignIn: user.lastSignIn || '',
+  } : DEFAULT_PROFILE)
   const [channels, setChannels] = useState<ChannelsSettings>(DEFAULT_CHANNELS)
-
   const [aiAgent, setAiAgent] = useState<AiAgentSettings>(DEFAULT_AI_AGENT)
-
-  useEffect(() => {
-    try {
-      const authUserStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')
-      if (authUserStr) {
-        const authUser = JSON.parse(authUserStr)
-        const orgName = authUser.organizationName || ''
-
-        if (authUser?.name) {
-          setProfile((prev) => ({
-            ...prev,
-            fullName: authUser.name,
-            email: authUser.email || prev.email,
-            role: authUser.role ? (authUser.role.charAt(0).toUpperCase() + authUser.role.slice(1)) : prev.role,
-            organization: orgName,
-          }))
-        }
-        if (orgName) {
-          setOrganization((prev) => ({
-            ...prev,
-            agencyName: orgName,
-          }))
-        }
-      }
-    } catch {}
-  }, [])
-
-  const [organization, setOrganization] = useState<OrganizationSettings>(() => {
-    try {
-      const authUserStr = localStorage.getItem('crm_auth_user') || sessionStorage.getItem('crm_auth_user')
-      if (authUserStr) {
-        const authUser = JSON.parse(authUserStr)
-        if (authUser?.organizationName) {
-          return {
-            agencyName: authUser.organizationName,
-            logoUrl: '',
-            primaryColor: '#4F46E5',
-            secondaryColor: '#0D9488',
-          }
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return DEFAULT_ORGANIZATION
+  const [organization, setOrganization] = useState<OrganizationSettings>({
+    ...DEFAULT_ORGANIZATION,
+    agencyName: user?.organizationName || '',
   })
 
-  const [invoiceDetail, setInvoiceDetail] = useState<InvoiceDetailSettings>(() => {
-    try {
-      const saved = invoiceStorageKey ? localStorage.getItem(invoiceStorageKey) : null
-      if (saved) return JSON.parse(saved)
-    } catch {
-      // ignore
-    }
-    return DEFAULT_INVOICE_DETAIL
-  })
+  const [invoiceDetail, setInvoiceDetail] = useState(DEFAULT_INVOICE_DETAIL)
 
   useEffect(() => {
-    try {
-      if (invoiceStorageKey) localStorage.setItem(invoiceStorageKey, JSON.stringify(invoiceDetail))
-    } catch {
-      // ignore
-    }
-  }, [invoiceDetail, invoiceStorageKey])
+    if (!financeEnabled) return
+    let active = true
+    settingsService.getInvoiceDetail().then(
+      ({ invoiceDetail }) => { if (active) setInvoiceDetail({ ...DEFAULT_INVOICE_DETAIL, ...invoiceDetail }) },
+      (error: Error) => { if (active) console.warn('Could not load invoice details:', error.message) },
+    )
+    return () => { active = false }
+  }, [financeEnabled])
 
   const [automation, setAutomation] = useState<AutomationSettings>(DEFAULT_AUTOMATION)
 
@@ -251,8 +190,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.warn('Could not fetch workspace settings:', err)
       }
     }
-    if (user?.organizationId) fetchSettings()
-  }, [user?.organizationId])
+    if (communicationsSettings && user?.organizationId) void fetchSettings()
+  }, [communicationsSettings, user?.organizationId])
 
   const updateProfile = (updates: Partial<UserProfileSettings>) => {
     setProfile((prev) => ({ ...prev, ...updates }))
@@ -310,8 +249,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setOrganization((prev) => ({ ...prev, ...updates }))
   }
 
-  const updateInvoiceDetail = (updates: Partial<InvoiceDetailSettings>) => {
-    setInvoiceDetail((prev) => ({ ...prev, ...updates }))
+  const updateInvoiceDetail = async (updates: Partial<InvoiceDetailSettings>) => {
+    const { invoiceDetail } = await settingsService.updateInvoiceDetail(updates)
+    setInvoiceDetail({ ...DEFAULT_INVOICE_DETAIL, ...invoiceDetail })
   }
 
   const updateAutomation = async (updates: Partial<AutomationSettings>) => {

@@ -5,6 +5,7 @@ import { UserRole } from '../types';
 export interface IUser extends Document {
   organizationId?: Types.ObjectId;
   name: string;
+  username?: string;
   email: string;
   phone?: string;
   password: string;
@@ -25,6 +26,7 @@ const UserSchema = new Schema<IUser>(
       required: false,
       index: true,
     },
+    username: { type: String, trim: true, lowercase: true, unique: true, sparse: true },
     name: {
       type: String,
       required: [true, 'User name is required'],

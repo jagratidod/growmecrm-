@@ -35,7 +35,6 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
         const data = await campaignsService.getCampaigns()
         if (Array.isArray(data)) {
           setCampaigns(data)
-          localStorage.setItem('treki_crm_campaigns', JSON.stringify(data))
         }
       } catch (err) {
         console.warn('Could not load campaigns from server, using local cache:', err)

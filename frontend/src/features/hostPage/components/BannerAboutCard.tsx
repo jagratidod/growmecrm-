@@ -1,3 +1,4 @@
+import { hostPageService } from '../../../services/hostPageService'
 import React, { useState } from 'react'
 import { UploadCloud, Link as LinkIcon, Trash2, Image as ImageIcon } from 'lucide-react'
 import { useHostPage } from '../../../context/HostPageContext'
@@ -9,17 +10,15 @@ export const BannerAboutCard: React.FC = () => {
   const [showUrlInput, setShowUrlInput] = useState(false)
   const [urlInput, setUrlInput] = useState('')
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          updateBannerImage(reader.result)
-          toast({ title: 'Hero banner uploaded successfully', type: 'success' })
-        }
-      }
-      reader.readAsDataURL(file)
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    try {
+      updateBannerImage(await hostPageService.uploadImage(file))
+      toast({ title: 'Image uploaded', type: 'success' })
+    } catch (error) {
+      toast({ title: 'Could not upload image', description: (error as Error).message, type: 'error' })
     }
   }
 
@@ -86,7 +85,7 @@ export const BannerAboutCard: React.FC = () => {
             </div>
             <p className="text-sm font-bold text-slate-900 pointer-events-none">Upload image</p>
             <p className="text-xs text-slate-400 mt-1 pointer-events-none">
-              Drag & drop or click · PNG/JPG/WEBP · max 5 MB
+              Drag & drop or click · PNG/JPG/WEBP · max 8 MB
             </p>
           </div>
         )}

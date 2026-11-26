@@ -1,3 +1,5 @@
+import { useRouter } from './RouterContext'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { ChannelType, ChatFilterType, ChatConversation } from '../types/inbox.types'
 import { useToast } from '../components/ui/Toast'
@@ -31,6 +33,9 @@ const InboxContext = createContext<InboxContextType | undefined>(undefined)
 export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast()
   const { user } = useAuth()
+  const { path } = useRouter()
+  const { access } = useWorkspace()
+  const enabled = path === '/inbox' && access?.modules.includes('communications')
 
   const [conversations, setConversations] = useState<ChatConversation[]>([])
 
@@ -64,8 +69,8 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [activeChannel, selectedChat])
 
   useEffect(() => {
-    refreshConversations()
-  }, [])
+    if (enabled) void refreshConversations()
+  }, [enabled])
 
   // Reset selected chat if channel changes and chat isn't in that channel
   useEffect(() => {

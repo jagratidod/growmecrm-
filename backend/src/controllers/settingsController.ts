@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
-import { Settings } from '../models/Settings';
+import { Settings, invoiceDetailFields } from '../models/Settings';
 import { Types } from 'mongoose';
 
 const DEFAULT_SETTINGS = {
@@ -122,5 +122,33 @@ export const updateAutomation = async (req: AuthenticatedRequest, res: Response)
   } catch (error: any) {
     console.error('Error updating automation settings:', error);
     res.status(500).json({ error: 'Failed to update automation settings' });
+  }
+};
+
+
+export const getInvoiceDetail = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const settings = await Settings.findOne({ organizationId: req.user!.organizationId }).select('invoiceDetail').lean();
+    res.json({ invoiceDetail: settings?.invoiceDetail ?? {} });
+  } catch {
+    res.status(500).json({ error: 'Could not load invoice details.' });
+  }
+};
+
+export const updateInvoiceDetail = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const details = req.body.invoiceDetail;
+    const fields = details && typeof details === 'object' && !Array.isArray(details) ? Object.keys(details) : [];
+    if (!fields.length || fields.some((key) => !invoiceDetailFields.some((field) => field === key) ||
+        typeof details[key] !== 'string' || details[key].length > (key === 'signatureImage' ? 2_000_000 : 4000))) {
+      res.status(400).json({ error: 'Enter valid invoice details.' });
+      return;
+    }
+    const updates = Object.fromEntries(fields.map((key) => [`invoiceDetail.${key}`, details[key]]));
+    const settings = await Settings.findOneAndUpdate({ organizationId: req.user!.organizationId },
+      { $set: updates }, { new: true, upsert: true, runValidators: true });
+    res.json({ invoiceDetail: settings.invoiceDetail ?? {} });
+  } catch {
+    res.status(500).json({ error: 'Could not save invoice details.' });
   }
 };

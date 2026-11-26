@@ -1,4 +1,6 @@
-import { useAuth } from './AuthContext'
+import { useRouter } from './RouterContext'
+import { useToast } from '../components/ui/Toast'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react'
 import type { Bill, BillFilters, BillStats } from '../types/bill.types'
 import { billsService } from '../services/billsService'
@@ -11,7 +13,7 @@ interface BillsContextType {
   setFilters: React.Dispatch<React.SetStateAction<BillFilters>>
   updateFilter: <K extends keyof BillFilters>(key: K, value: BillFilters[K]) => void
   resetFilters: () => void
-  addBill: (billData: Omit<Bill, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => Bill
+  addBill: (billData: Omit<Bill, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => Promise<Bill>
   updateBill: (id: string, updates: Partial<Bill>) => void
   deleteBill: (id: string) => void
   recordPayment: (id: string, additionalPaid: number) => void
@@ -20,13 +22,12 @@ interface BillsContextType {
   refreshBills: () => Promise<void>
 }
 
-const STORAGE_PREFIX = 'treki_crm_bills_data'
-
 const BillsContext = createContext<BillsContextType | undefined>(undefined)
 
 export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth()
-  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
+  const { path } = useRouter()
+  const enabled = (useWorkspace().access?.modules.includes('finance')) && ('/bills' === path)
+  const { toast } = useToast()
   const [bills, setBills] = useState<Bill[]>([])
 
   const [filters, setFilters] = useState<BillFilters>({
@@ -38,29 +39,17 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Fetch from backend API
   const refreshBills = useCallback(async () => {
+    if (!enabled) return
     try {
-      const res = await billsService.getBills()
-      if (res?.bills) {
-        setBills(res.bills)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(res.bills))
-      }
-    } catch {
-      // Keep local cache if offline
+      setBills((await billsService.getBills()).bills)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not load bills', description: (error as Error).message })
     }
-  }, [])
+  }, [enabled, toast])
 
   useEffect(() => {
-    refreshBills()
+    void refreshBills()
   }, [refreshBills])
-
-  // Sync to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(bills))
-    } catch {
-      // ignore
-    }
-  }, [bills])
 
   const updateFilter = <K extends keyof BillFilters>(key: K, value: BillFilters[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
@@ -116,76 +105,31 @@ export const BillsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     })
   }, [bills, filters])
 
-  const determineStatus = (total: number, paid: number): 'Paid' | 'Unpaid' | 'Partial' => {
-    if (paid >= total && total > 0) return 'Paid'
-    if (paid > 0) return 'Partial'
-    return 'Unpaid'
+  const addBill: BillsContextType['addBill'] = async (data) => {
+    const { bill } = await billsService.createBill(data)
+    setBills((prev) => [bill, ...prev])
+    return bill
   }
 
-  const addBill = (billData: Omit<Bill, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Bill => {
-    const now = new Date().toISOString()
-    const status = determineStatus(billData.totalAmount, billData.amountPaid)
-
-    const tempId = 'bill-' + Date.now()
-    const newBill: Bill = {
-      ...billData,
-      id: tempId,
-      status,
-      createdAt: now,
-      updatedAt: now,
+  const applyUpdate = async (operation: Promise<{ bill: Bill }>) => {
+    try {
+      const { bill } = await operation
+      setBills((prev) => prev.map((item) => item.id === bill.id ? bill : item))
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not update bill', description: (error as Error).message })
     }
-
-    setBills((prev) => [newBill, ...prev])
-
-    // Sync to backend asynchronously
-    billsService
-      .createBill(billData)
-      .then((res) => {
-        if (res?.bill) {
-          setBills((prev) => prev.map((b) => (b.id === tempId ? res.bill : b)))
-        }
-      })
-      .catch(() => {
-        // Fallback already saved locally
-      })
-
-    return newBill
   }
 
-  const updateBill = (id: string, updates: Partial<Bill>) => {
-    const now = new Date().toISOString()
-    setBills((prev) =>
-      prev.map((b) => {
-        if (b.id !== id) return b
-        const merged = { ...b, ...updates, updatedAt: now }
-        merged.status = determineStatus(merged.totalAmount, merged.amountPaid)
-        return merged
-      })
-    )
+  const updateBill = (id: string, updates: Partial<Bill>) => applyUpdate(billsService.updateBill(id, updates))
+  const recordPayment = (id: string, amount: number) => applyUpdate(billsService.recordPayment(id, amount))
 
-    billsService.updateBill(id, updates).catch(() => {})
-  }
-
-  const deleteBill = (id: string) => {
-    setBills((prev) => prev.filter((b) => b.id !== id))
-    billsService.deleteBill(id).catch(() => {})
-  }
-
-  const recordPayment = (id: string, additionalPaid: number) => {
-    setBills((prev) =>
-      prev.map((b) => {
-        if (b.id !== id) return b
-        const newPaid = Math.min(b.totalAmount, (b.amountPaid || 0) + additionalPaid)
-        return {
-          ...b,
-          amountPaid: newPaid,
-          status: determineStatus(b.totalAmount, newPaid),
-          updatedAt: new Date().toISOString(),
-        }
-      })
-    )
-
-    billsService.recordPayment(id, additionalPaid).catch(() => {})
+  const deleteBill = async (id: string) => {
+    try {
+      await billsService.deleteBill(id)
+      setBills((prev) => prev.filter((item) => item.id !== id))
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not delete bill', description: (error as Error).message })
+    }
   }
 
   return (

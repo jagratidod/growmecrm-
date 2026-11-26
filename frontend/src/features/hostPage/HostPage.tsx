@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { useHostPage } from '../../context/HostPageContext'
+import React, { useEffect, useState } from 'react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { HostHeader } from './components/HostHeader'
 import { WebsiteLinkCard } from './components/WebsiteLinkCard'
@@ -14,6 +15,9 @@ interface HostPageProps {
 }
 
 export const HostPage: React.FC<HostPageProps> = ({ onNavigateMenu }) => {
+  const { refreshHostPage } = useHostPage()
+  useEffect(() => { void refreshHostPage() }, [refreshHostPage])
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   return (

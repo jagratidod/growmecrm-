@@ -124,10 +124,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Match by email or name
-    const user = await User.findOne({
-      $or: [{ email: identifier }, { name: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }],
-    });
+    const user = await User.findOne({ username: identifier }) ??
+      await User.findOne({ email: identifier }) ??
+      await User.findOne({ name: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
 
     if (!user) {
       res.status(401).json({ error: 'Invalid username/email or password.' });

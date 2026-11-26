@@ -18,12 +18,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
-  const storedAgency = typeof window !== 'undefined' ? localStorage.getItem('crm_current_agency') : null
   const activeOrg =
     user?.organizationName
       ? user.organizationName
-      : storedAgency
-      ? storedAgency
+
       : organization?.agencyName
       ? organization.agencyName
       : 'GrowMe CRM'

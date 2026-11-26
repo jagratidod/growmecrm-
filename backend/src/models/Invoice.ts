@@ -65,7 +65,7 @@ const InvoiceSchema = new Schema<IInvoice>(
     },
     customerPhone: {
       type: String,
-      required: true,
+      default: '',
       trim: true,
     },
     customerEmail: {

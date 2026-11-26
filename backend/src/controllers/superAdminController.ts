@@ -110,46 +110,50 @@ export const getTenants = async (req: AuthenticatedRequest, res: Response): Prom
       filter.$or = [{ name: pattern }, { slug: pattern }, { _id: { $in: owners } }];
     }
 
-    const total = await Organization.countDocuments(filter);
-    const organizations = await Organization.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((pageNum - 1) * limitNum)
-      .limit(limitNum)
-      .lean();
+    const [total, organizations] = await Promise.all([
+      Organization.countDocuments(filter),
+      Organization.find(filter).sort({ createdAt: -1 }).skip((pageNum - 1) * limitNum).limit(limitNum).lean(),
+    ]);
 
-    // Enrich each organization with owner and counters
-    const enrichedTenants = await Promise.all(
-      organizations.map(async (org) => {
-        const [owner, leadCount, userCount] = await Promise.all([
-          User.findOne({ organizationId: org._id, role: 'OWNER' }).select('name email phone status lastActive').lean(),
-          Lead.countDocuments({ organizationId: org._id }),
-          User.countDocuments({ organizationId: org._id }),
-        ]);
+    const ids = organizations.map((org) => org._id);
+    const [owners, leadsByOrg, usersByOrg] = ids.length ? await Promise.all([
+      User.aggregate([
+        { $match: { organizationId: { $in: ids }, role: 'OWNER' } },
+        { $sort: { _id: 1 } },
+        { $group: { _id: '$organizationId', owner: { $first: {
+          name: '$name', email: '$email', phone: '$phone', status: '$status', lastActive: '$lastActive',
+        } } } },
+      ]),
+      Lead.aggregate([
+        { $match: { organizationId: { $in: ids } } },
+        { $group: { _id: '$organizationId', count: { $sum: 1 } } },
+      ]),
+      User.aggregate([
+        { $match: { organizationId: { $in: ids } } },
+        { $group: { _id: '$organizationId', count: { $sum: 1 } } },
+      ]),
+    ]) : [[], [], []];
 
-        return {
-          id: org._id.toString(),
-          name: org.name,
-          slug: org.slug,
-          logoUrl: org.logoUrl || '',
-          plan: org.plan || 'STARTER',
-          status: org.status || 'ACTIVE',
-          maxSeats: org.maxSeats || 2,
-          maxLeads: org.maxLeads || 500,
-          leadCount,
-          userCount,
-          createdAt: org.createdAt,
-          owner: owner
-            ? {
-                name: owner.name,
-                email: owner.email,
-                phone: owner.phone,
-                status: owner.status,
-                lastActive: owner.lastActive,
-              }
-            : null,
-        };
-      })
-    );
+    const ownersById = new Map(owners.map(({ _id, owner }) => [String(_id), owner]));
+    const leadCounts = new Map(leadsByOrg.map(({ _id, count }) => [String(_id), count]));
+    const userCounts = new Map(usersByOrg.map(({ _id, count }) => [String(_id), count]));
+    const enrichedTenants = organizations.map((org) => {
+      const id = org._id.toString();
+      return {
+        id,
+        name: org.name,
+        slug: org.slug,
+        logoUrl: org.logoUrl || '',
+        plan: org.plan || 'STARTER',
+        status: org.status || 'ACTIVE',
+        maxSeats: org.maxSeats || 2,
+        maxLeads: org.maxLeads || 500,
+        leadCount: leadCounts.get(id) ?? 0,
+        userCount: userCounts.get(id) ?? 0,
+        createdAt: org.createdAt,
+        owner: ownersById.get(id) ?? null,
+      };
+    });
 
     res.status(200).json({
       tenants: enrichedTenants,
@@ -320,17 +324,8 @@ export const updateSubscriptionPlan = async (req: AuthenticatedRequest, res: Res
 // 6. GET & UPDATE PLATFORM SETTINGS
 export const getPlatformSettings = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    let settings = await PlatformSetting.findOne();
-    if (!settings) {
-      settings = await PlatformSetting.create({
-        platformName: 'GrowMe CRM',
-        supportEmail: 'support@growmecrm.com',
-        contactPhone: '+91 89822 92201',
-        defaultCurrency: 'INR',
-        defaultTrialDays: 14,
-        maintenanceMode: false,
-      });
-    }
+    const settings = await PlatformSetting.findOne().sort({ updatedAt: -1 }) ??
+      await PlatformSetting.create({});
     res.status(200).json({ settings });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Error fetching platform settings' });
@@ -339,7 +334,7 @@ export const getPlatformSettings = async (req: AuthenticatedRequest, res: Respon
 
 export const updatePlatformSettings = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    let settings = await PlatformSetting.findOne();
+    let settings = await PlatformSetting.findOne().sort({ updatedAt: -1 });
     if (!settings) {
       settings = new PlatformSetting(req.body);
     } else {

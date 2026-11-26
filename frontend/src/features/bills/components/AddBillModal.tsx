@@ -33,7 +33,7 @@ export const AddBillModal: React.FC = () => {
     setError('')
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!vendor.trim()) {
       setError('Vendor name is required')
@@ -49,19 +49,23 @@ export const AddBillModal: React.FC = () => {
       ? `${linkedBooking.customerName} (${linkedBooking.destination})`
       : undefined
 
-    addBill({
-      vendor: vendor.trim(),
-      category,
-      totalAmount: Number(totalAmount),
-      amountPaid: Number(amountPaid) || 0,
-      currency,
-      billDate: billDate || new Date().toISOString().slice(0, 10),
-      linkedTripId: linkedTripId || undefined,
-      linkedTripName,
-      notes: notes.trim() || undefined,
-    })
+    try {
+      await addBill({
+        vendor: vendor.trim(),
+        category,
+        totalAmount: Number(totalAmount),
+        amountPaid: Number(amountPaid) || 0,
+        currency,
+        billDate: billDate || new Date().toISOString().slice(0, 10),
+        linkedTripId: linkedTripId || undefined,
+        linkedTripName,
+        notes: notes.trim() || undefined,
+      })
 
-    handleClose()
+      handleClose()
+    } catch (saveError) {
+      setError((saveError as Error).message)
+    }
   }
 
   return (

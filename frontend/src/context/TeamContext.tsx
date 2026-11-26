@@ -1,3 +1,4 @@
+import { useRouter } from './RouterContext'
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useToast } from '../components/ui/Toast'
@@ -23,7 +24,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const { toast } = useToast()
   const { access } = useWorkspace()
-  const enabled = access?.modules.includes('team')
+  const { path } = useRouter()
+  const enabled = (access?.modules.includes('team')) && (['/team', '/leads', '/bookings', '/itineraries', '/call-log', '/follow-ups'].includes(path))
 
   useEffect(() => {
     if (!enabled) return

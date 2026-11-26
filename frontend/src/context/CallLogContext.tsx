@@ -1,4 +1,6 @@
-import { useAuth } from './AuthContext'
+import { useRouter } from './RouterContext'
+import { useToast } from '../components/ui/Toast'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { CallLogEntry, CallLogFilters } from '../types/callLog.types'
 import { callLogsService } from '../services/callLogsService'
@@ -16,13 +18,12 @@ interface CallLogContextType {
   refreshCallLogs: () => Promise<void>
 }
 
-const STORAGE_PREFIX = 'treki_crm_call_logs_data'
-
 const CallLogContext = createContext<CallLogContextType | undefined>(undefined)
 
 export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth()
-  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
+  const { path } = useRouter()
+  const enabled = (useWorkspace().access?.modules.includes('communications')) && ('/call-log' === path)
+  const { toast } = useToast()
   const [callLogs, setCallLogs] = useState<CallLogEntry[]>([])
 
   const [filters, setFilters] = useState<CallLogFilters>({
@@ -34,28 +35,17 @@ export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Fetch call logs from backend
   const refreshCallLogs = useCallback(async () => {
+    if (!enabled) return
     try {
-      const res = await callLogsService.getCallLogs()
-      if (res?.callLogs) {
-        setCallLogs(res.callLogs)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(res.callLogs))
-      }
-    } catch {
-      // offline fallback
+      setCallLogs((await callLogsService.getCallLogs()).callLogs)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not load call logs', description: (error as Error).message })
     }
-  }, [])
+  }, [enabled, toast])
 
   useEffect(() => {
-    refreshCallLogs()
+    void refreshCallLogs()
   }, [refreshCallLogs])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(callLogs))
-    } catch (e) {
-      console.error('Failed to save call logs to localStorage', e)
-    }
-  }, [callLogs])
 
   const setUserFilter = (user: string) => {
     setFilters((prev) => ({ ...prev, user }))
@@ -65,32 +55,19 @@ export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setFilters((prev) => ({ ...prev, searchLead }))
   }
 
-  const logCall = async (
-    data: Omit<CallLogEntry, 'id' | 'createdAt'>
-  ): Promise<CallLogEntry> => {
-    const tempId = `call-${Date.now()}`
-    const newEntry: CallLogEntry = {
-      ...data,
-      id: tempId,
-      createdAt: new Date().toISOString(),
-    }
-    setCallLogs((prev) => [newEntry, ...prev])
-
-    callLogsService
-      .logCall(data)
-      .then((res) => {
-        if (res?.callLog) {
-          setCallLogs((prev) => prev.map((c) => (c.id === tempId ? res.callLog : c)))
-        }
-      })
-      .catch(() => {})
-
-    return newEntry
+  const logCall: CallLogContextType['logCall'] = async (data) => {
+    const { callLog } = await callLogsService.logCall(data)
+    setCallLogs((prev) => [callLog, ...prev])
+    return callLog
   }
 
-  const deleteCallLog = async (id: string) => {
-    setCallLogs((prev) => prev.filter((c) => c.id !== id))
-    callLogsService.deleteCallLog(id).catch(() => {})
+  const deleteCallLog: CallLogContextType['deleteCallLog'] = async (id) => {
+    try {
+      await callLogsService.deleteCallLog(id)
+      setCallLogs((prev) => prev.filter((item) => item.id !== id))
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not delete call', description: (error as Error).message })
+    }
   }
 
   const filteredCallLogs = useMemo(() => {

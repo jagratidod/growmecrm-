@@ -2,21 +2,17 @@ import React from 'react'
 import {
   X,
   Globe,
-  MapPin,
   Phone,
   Mail,
   Star,
-  Clock,
   Sparkles,
 } from 'lucide-react'
 import { useHostPage } from '../../../context/HostPageContext'
-import { usePackages } from '../../../context/PackagesContext'
 import { useSettings } from '../../../context/SettingsContext'
 import { useAuth } from '../../../context/AuthContext'
 
 export const PublicWebsitePreviewModal: React.FC = () => {
   const { hostData, isPublicPreviewOpen, setIsPublicPreviewOpen } = useHostPage()
-  const { packages } = usePackages()
   const { organization } = useSettings()
   const { user } = useAuth()
 
@@ -112,84 +108,6 @@ export const PublicWebsitePreviewModal: React.FC = () => {
                   'Your trusted travel curator for scenic getaways, group adventures, and unforgettable stays.'}
               </p>
             </div>
-          </section>
-
-          {/* Featured Packages Section */}
-          <section className="p-6 sm:p-10 max-w-6xl mx-auto space-y-6">
-            <div className="text-center space-y-1">
-              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                Our Curated Packages
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-500">
-                Pick a trip and experience hassle-free travel planning with local experts.
-              </p>
-            </div>
-
-            {packages.length === 0 ? (
-              <div className="text-center py-10 bg-slate-50 rounded-2xl border border-slate-200/60">
-                <p className="text-sm text-slate-500">No public packages published yet.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {packages.map((pkg) => (
-                  <div
-                    key={pkg.id}
-                    className="bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow overflow-hidden flex flex-col justify-between"
-                  >
-                    <div className="relative h-44 bg-slate-100">
-                      {pkg.bannerImage ? (
-                        <img
-                          src={pkg.bannerImage}
-                          alt={pkg.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-purple-50 text-brand">
-                          TT
-                        </div>
-                      )}
-                      <span className="absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-xs text-white text-[11px] font-bold flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-rose-400" />
-                        {pkg.destination || 'Destination'}
-                      </span>
-                    </div>
-
-                    <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                      <div className="space-y-1.5">
-                        <h4 className="text-sm font-bold text-slate-900 line-clamp-2">
-                          {pkg.bookingTitle || pkg.name}
-                        </h4>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          <span>
-                            {pkg.duration?.nights} Nights / {pkg.duration?.days} Days
-                          </span>
-                        </div>
-                        {pkg.description && (
-                          <p className="text-xs text-slate-600 line-clamp-2">
-                            {pkg.description}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                        <div>
-                          <p className="text-[10px] text-slate-400 font-semibold uppercase">
-                            Starting from
-                          </p>
-                          <p className="text-base font-extrabold text-brand">
-                            ₹{(pkg.price || 0).toLocaleString('en-IN')}
-                          </p>
-                        </div>
-                        <button className="px-3.5 py-1.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold transition-all">
-                          Enquire Now
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </section>
 
           {/* Customer Reviews Section */}

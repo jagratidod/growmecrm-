@@ -45,8 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsRestoringSession(false)
       }
     }, () => {
-      // Keep the saved session during temporary API outages.
-      useSession(storedUser)
+      if (!controller.signal.aborted) setIsRestoringSession(false)
     })
     return () => controller.abort()
   }, [])

@@ -20,7 +20,7 @@ export async function request<T>(
   const token = localStorage.getItem('crm_auth_token') || sessionStorage.getItem('crm_auth_token')
 
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   }

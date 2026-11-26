@@ -1,6 +1,5 @@
-import { Request, Response } from 'express';
-import { AuthenticatedRequest } from '../types';
-import { LinkTree, IBioLinkItem } from '../models/LinkTree';
+import { websiteHandler } from '../platform/websiteDatabase';
+import { LinkTreeSchema, IBioLinkItem } from '../models/LinkTree';
 import { Organization } from '../models/Organization';
 import { Types } from 'mongoose';
 
@@ -12,9 +11,8 @@ const formatLinkTree = (lt: any) => ({
   updatedAt: lt.updatedAt,
 });
 
-export const getLinkTree = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const getLinkTree = websiteHandler('LinkTree', LinkTreeSchema, async (req, res, LinkTree, organizationId) => {
   try {
-    const organizationId = req.user?.organizationId;
     if (!organizationId) {
       res.status(400).json({ error: 'Organization ID is required' });
       return;
@@ -43,11 +41,10 @@ export const getLinkTree = async (req: AuthenticatedRequest, res: Response): Pro
     console.error('Error fetching LinkTree:', error);
     res.status(500).json({ error: 'Failed to fetch LinkTree configuration' });
   }
-};
+});
 
-export const updateLinkTree = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const updateLinkTree = websiteHandler('LinkTree', LinkTreeSchema, async (req, res, LinkTree, organizationId) => {
   try {
-    const organizationId = req.user?.organizationId;
     if (!organizationId) {
       res.status(400).json({ error: 'Organization ID is required' });
       return;
@@ -71,11 +68,10 @@ export const updateLinkTree = async (req: AuthenticatedRequest, res: Response): 
     console.error('Error updating LinkTree:', error);
     res.status(500).json({ error: 'Failed to update LinkTree' });
   }
-};
+});
 
-export const addLink = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const addLink = websiteHandler('LinkTree', LinkTreeSchema, async (req, res, LinkTree, organizationId) => {
   try {
-    const organizationId = req.user?.organizationId;
     if (!organizationId) {
       res.status(400).json({ error: 'Organization ID is required' });
       return;
@@ -107,11 +103,10 @@ export const addLink = async (req: AuthenticatedRequest, res: Response): Promise
     console.error('Error adding link:', error);
     res.status(500).json({ error: 'Failed to add link' });
   }
-};
+});
 
-export const deleteLink = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const deleteLink = websiteHandler('LinkTree', LinkTreeSchema, async (req, res, LinkTree, organizationId) => {
   try {
-    const organizationId = req.user?.organizationId;
     const { linkId } = req.params;
 
     const linkTree = await LinkTree.findOneAndUpdate(
@@ -130,11 +125,10 @@ export const deleteLink = async (req: AuthenticatedRequest, res: Response): Prom
     console.error('Error deleting link:', error);
     res.status(500).json({ error: 'Failed to delete link' });
   }
-};
+});
 
-export const toggleLink = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const toggleLink = websiteHandler('LinkTree', LinkTreeSchema, async (req, res, LinkTree, organizationId) => {
   try {
-    const organizationId = req.user?.organizationId;
     const { linkId } = req.params;
 
     const linkTree = await LinkTree.findOne({ organizationId });
@@ -157,47 +151,13 @@ export const toggleLink = async (req: AuthenticatedRequest, res: Response): Prom
     console.error('Error toggling link:', error);
     res.status(500).json({ error: 'Failed to toggle link' });
   }
-};
+});
 
 // Public visitor bio link endpoint (no auth required)
-export const getPublicLinkTree = async (req: Request, res: Response): Promise<void> => {
+export const getPublicLinkTree = websiteHandler('LinkTree', LinkTreeSchema, async (_req, res, LinkTree, organizationId) => {
   try {
-    const slug = req.params.slug;
-    if (!slug) {
-      res.status(400).json({ error: 'Agency slug is required' });
-      return;
-    }
-
-    const slugStr = Array.isArray(slug) ? slug[0] : String(slug);
-
-    // Try finding organization by slug, direct ID, or name match
-    let org: any = null;
-    if (Types.ObjectId.isValid(slugStr)) {
-      org = await Organization.findById(slugStr);
-    }
-    if (!org) {
-      org = await Organization.findOne({ slug: slugStr.toLowerCase() });
-    }
-    if (!org) {
-      const cleanName = slugStr.replace(/-/g, ' ');
-      org = await Organization.findOne({
-        name: { $regex: new RegExp(`^${cleanName}$`, 'i') },
-      });
-    }
-
-    let linkTree: any = null;
-    if (org) {
-      linkTree = await LinkTree.findOne({ organizationId: org._id });
-      if (!linkTree) {
-        linkTree = await LinkTree.create({
-          organizationId: org._id,
-          bioTitle: org.name || 'GrowMe CRM',
-          bioTagline: '',
-          links: [],
-        });
-      }
-    }
-
+    const org = await Organization.findById(organizationId);
+    const linkTree = await LinkTree.findOne({ organizationId });
     if (!linkTree) {
       res.status(404).json({ error: 'Bio page not found' });
       return;
@@ -216,4 +176,4 @@ export const getPublicLinkTree = async (req: Request, res: Response): Promise<vo
     console.error('Error fetching public bio link:', error);
     res.status(500).json({ error: 'Failed to load public bio page' });
   }
-};
+}, true);

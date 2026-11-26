@@ -1,3 +1,4 @@
+import { hostPageService } from '../../../services/hostPageService'
 import React, { useState } from 'react'
 import { Plus, Star, Trash2, Upload, User } from 'lucide-react'
 import { useHostPage } from '../../../context/HostPageContext'
@@ -12,17 +13,15 @@ export const HostReviewsCard: React.FC = () => {
   const [quote, setQuote] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setAvatarUrl(reader.result)
-          toast({ title: 'Reviewer photo uploaded', type: 'success' })
-        }
-      }
-      reader.readAsDataURL(file)
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    try {
+      setAvatarUrl(await hostPageService.uploadImage(file))
+      toast({ title: 'Image uploaded', type: 'success' })
+    } catch (error) {
+      toast({ title: 'Could not upload image', description: (error as Error).message, type: 'error' })
     }
   }
 

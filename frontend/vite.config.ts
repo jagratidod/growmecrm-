@@ -8,6 +8,15 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [{ name: 'icons', test: /node_modules[/\\]lucide-react[/\\]/ }],
+        },
+      },
+    },
+  },
   server: {
     open: '/',
     proxy: {

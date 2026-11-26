@@ -1,3 +1,4 @@
+import { useRouter } from './RouterContext'
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import { useToast } from '../components/ui/Toast'
@@ -31,7 +32,8 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { token } = useAuth()
   const { access } = useWorkspace()
   const { toast } = useToast()
-  const enabled = Boolean(token && access?.modules.includes('bookings'))
+  const { path } = useRouter()
+  const enabled = (Boolean(token && access?.modules.includes('bookings'))) && (['/bookings', '/bills', '/calendar', '/events'].includes(path))
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')

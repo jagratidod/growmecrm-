@@ -1,3 +1,4 @@
+import { useRouter } from './RouterContext'
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useWorkspace } from '../features/workspace/WorkspaceAccess'
 import { useToast } from '../components/ui/Toast'
@@ -59,7 +60,8 @@ const PackagesContext = createContext<PackagesContextType | undefined>(undefined
 export const PackagesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { access } = useWorkspace()
   const { toast } = useToast()
-  const enabled = access?.modules.includes('catalog')
+  const { path } = useRouter()
+  const enabled = (access?.modules.includes('catalog')) && (['/packages', '/leads', '/bookings', '/itineraries', '/host-page'].includes(path))
   const [packages, setPackages] = useState<TravelPackage[]>([])
 
   const [activePackage, setActivePackage] = useState<TravelPackage | null>(null)

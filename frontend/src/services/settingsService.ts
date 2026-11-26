@@ -3,6 +3,7 @@ import type {
   ChannelsSettings,
   AiAgentSettings,
   AutomationSettings,
+  InvoiceDetailSettings,
 } from '../context/SettingsContext';
 
 export interface SettingsResponse {
@@ -14,6 +15,17 @@ export interface SettingsResponse {
 }
 
 export const settingsService = {
+  getInvoiceDetail() {
+    return request<{ invoiceDetail: Partial<InvoiceDetailSettings> }>('/settings/invoice-detail');
+  },
+
+  updateInvoiceDetail(invoiceDetail: Partial<InvoiceDetailSettings>) {
+    return request<{ invoiceDetail: Partial<InvoiceDetailSettings> }>('/settings/invoice-detail', {
+      method: 'PUT',
+      body: JSON.stringify({ invoiceDetail }),
+    });
+  },
+
   async getSettings(): Promise<SettingsResponse> {
     return request<SettingsResponse>('/settings');
   },

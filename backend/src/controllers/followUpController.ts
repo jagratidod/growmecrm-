@@ -126,7 +126,7 @@ export const createFollowUp = async (req: AuthenticatedRequest, res: Response): 
 
     const taskTitle = title?.trim() || leadName?.trim() || 'Follow-up Task';
     const finalLeadName = leadName?.trim() || taskTitle;
-    const finalPhone = phone?.trim() || '+91 98765 00000';
+    const finalPhone = phone?.trim() || '';
 
     if (!dueDate?.trim()) {
       res.status(400).json({ error: 'Due date is required' });
@@ -144,7 +144,7 @@ export const createFollowUp = async (req: AuthenticatedRequest, res: Response): 
       title: taskTitle,
       leadName: finalLeadName,
       phone: finalPhone,
-      destination: destination?.trim() || 'Custom Travel Inquiry',
+      destination: destination?.trim() || '',
       dueDate: dueDate.trim(),
       dueTime: dueTime?.trim() || '10:00',
       type: ['call', 'whatsapp', 'email', 'meeting', 'follow-up'].includes(type) ? type : 'follow-up',

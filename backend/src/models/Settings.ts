@@ -30,9 +30,14 @@ export interface IAutomationConfig {
   logs: IAutomationLog[];
 }
 
+export const invoiceDetailFields = ['secondPhone', 'secondEmail', 'state', 'stateCode', 'bankName', 'bankAccountNumber', 'ifscCode', 'gstin', 'pan', 'hsnSacCode', 'signatureImage', 'signatoryTitle', 'termsAndConditions'] as const;
+
+type InvoiceDetails = Partial<Record<typeof invoiceDetailFields[number], string>>;
+
 export interface ISettings extends Document {
   organizationId: Types.ObjectId;
   channels: IChannelsConfig;
+  invoiceDetail?: InvoiceDetails;
   aiAgent: IAiAgentConfig;
   automation: IAutomationConfig;
   createdAt: Date;
@@ -74,6 +79,9 @@ const SettingsSchema = new Schema<ISettings>(
       emailFromAddress: { type: String, default: '' },
       emailApiKey: { type: String, default: '' },
     },
+    invoiceDetail: new Schema<InvoiceDetails>(Object.fromEntries(
+      invoiceDetailFields.map((key) => [key, { type: String, trim: true }])
+    ), { _id: false }),
     aiAgent: {
       tone: { type: String, default: '' },
       systemPrompt: {

@@ -20,7 +20,7 @@ Set `VITE_MARKETING_CONTACT_EMAIL` to publish the GrowMe contact address. Set `V
 
 ## Onboard a client
 
-In Super Admin, create the client, select the subscription plan, and assign any extra modules. In **Connections**, test and activate the client's MongoDB Atlas and Cloudinary accounts if applicable. Assign MongoDB before creating website records. Existing websites require a content migration to change database targets. CRM leads and bookings use the GrowMe database and are scoped by client organization.
+In Super Admin, create the client, select the subscription plan, and assign any extra modules. In **Connections**, test and activate the client's MongoDB Atlas and Cloudinary accounts before creating website records. Managed website images must use the assigned Cloudinary account. Existing websites require a content migration to change database targets. The GrowMe database stores accounts, CRM, subscriptions, and website connection metadata. Website drafts, published sections, hosted page content, and bio links require a client-owned MongoDB cluster. The GrowMe cluster cannot be assigned as a website database.
 
 In **Billing**, use a checkout link from GrowMe's own merchant account. Record a confirmed payment reference and the paid-through date after verifying payment in the bank or payment provider dashboard. Access expires after that date, and published content remains available. Payment confirmation is manual. Client website checkout runs independently using the client's own gateway.
 

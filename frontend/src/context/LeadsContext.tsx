@@ -53,10 +53,9 @@ const LeadsContext = createContext<LeadsContextType | undefined>(undefined)
 export const LeadsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, user } = useAuth()
   const { path } = useRouter()
-  const onLeadsPage = path === '/leads'
   const { access } = useWorkspace()
   const { toast } = useToast()
-  const enabled = Boolean(token && access?.modules.includes('leads'))
+  const enabled = (Boolean(token && access?.modules.includes('leads'))) && (['/leads', '/follow-ups', '/call-log'].includes(path))
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -80,7 +79,7 @@ export const LeadsProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     load()
     window.addEventListener('focus', load)
     return () => { active = false; window.removeEventListener('focus', load) }
-  }, [enabled, token, onLeadsPage])
+  }, [enabled, token])
 
   // Sync selectedLead when list updates
   useEffect(() => {

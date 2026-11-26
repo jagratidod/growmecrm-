@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
-import { AuthenticatedRequest } from '../types';
-import { HostPage, IHostPage } from '../models/HostPage';
+import { isClientImage } from '../platform/connections';
+import { websiteHandler } from '../platform/websiteDatabase';
+import { HostPageSchema, IHostPage } from '../models/HostPage';
 import { Organization } from '../models/Organization';
 import { TravelPackageModel, ITravelPackage } from '../models/Package';
 
@@ -21,9 +21,8 @@ const formatHostPage = (doc: IHostPage) => {
 };
 
 // 1. GET HOST PAGE FOR AUTHENTICATED TENANT
-export const getHostPage = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const getHostPage = websiteHandler('HostPage', HostPageSchema, async (req, res, HostPage, organizationId) => {
   try {
-    const organizationId = req.user?.organizationId;
     if (!organizationId) {
       res.status(401).json({ error: 'Tenant context missing' });
       return;
@@ -55,12 +54,11 @@ export const getHostPage = async (req: AuthenticatedRequest, res: Response): Pro
     console.error('[Get HostPage Error]:', error);
     res.status(500).json({ error: error.message || 'Error fetching host page data' });
   }
-};
+});
 
 // 2. UPDATE HOST PAGE DETAILS
-export const updateHostPage = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const updateHostPage = websiteHandler('HostPage', HostPageSchema, async (req, res, HostPage, organizationId) => {
   try {
-    const organizationId = req.user?.organizationId;
     if (!organizationId) {
       res.status(401).json({ error: 'Tenant context missing' });
       return;
@@ -72,14 +70,13 @@ export const updateHostPage = async (req: AuthenticatedRequest, res: Response): 
       aboutUs,
       contact,
       isPublished,
-      websiteSlug,
     } = req.body;
 
     let hostPage = await HostPage.findOne({ organizationId });
 
     if (!hostPage) {
       const org = await Organization.findById(organizationId);
-      const slug = websiteSlug?.trim() || org?.slug || `agency-${Date.now()}`;
+      const slug = org?.slug || `agency-${Date.now()}`;
       hostPage = new HostPage({
         organizationId,
         websiteSlug: slug,
@@ -87,7 +84,13 @@ export const updateHostPage = async (req: AuthenticatedRequest, res: Response): 
       });
     }
 
-    if (bannerImage !== undefined) hostPage.bannerImage = bannerImage;
+    if (bannerImage !== undefined) {
+      if (typeof bannerImage !== 'string' || !isClientImage(bannerImage, res.locals.websiteCloud.cloudName)) {
+        res.status(400).json({ error: 'Use an image from the client’s assigned Cloudinary account.' });
+        return;
+      }
+      hostPage.bannerImage = bannerImage;
+    }
     if (tagline !== undefined) hostPage.tagline = tagline.trim();
     if (aboutUs !== undefined) hostPage.aboutUs = aboutUs.trim();
     if (isPublished !== undefined) hostPage.isPublished = !!isPublished;
@@ -97,19 +100,6 @@ export const updateHostPage = async (req: AuthenticatedRequest, res: Response): 
         ...hostPage.contact,
         ...contact,
       };
-    }
-
-    if (websiteSlug && websiteSlug.trim() && websiteSlug.trim() !== hostPage.websiteSlug) {
-      const cleanSlug = websiteSlug.toLowerCase().trim().replace(/[^a-z0-9-]+/g, '-');
-      // Check collision
-      const collision = await HostPage.findOne({
-        websiteSlug: cleanSlug,
-        organizationId: { $ne: organizationId },
-      });
-      if (!collision) {
-        hostPage.websiteSlug = cleanSlug;
-        hostPage.websiteUrl = publicWebsiteUrl(cleanSlug);
-      }
     }
 
     await hostPage.save();
@@ -122,12 +112,11 @@ export const updateHostPage = async (req: AuthenticatedRequest, res: Response): 
     console.error('[Update HostPage Error]:', error);
     res.status(500).json({ error: error.message || 'Error updating host page' });
   }
-};
+});
 
 // 3. ADD REVIEW TO HOST PAGE
-export const addReview = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const addReview = websiteHandler('HostPage', HostPageSchema, async (req, res, HostPage, organizationId) => {
   try {
-    const organizationId = req.user?.organizationId;
     if (!organizationId) {
       res.status(401).json({ error: 'Tenant context missing' });
       return;
@@ -135,6 +124,10 @@ export const addReview = async (req: AuthenticatedRequest, res: Response): Promi
 
     const { name, rating, quote, avatarUrl } = req.body;
 
+    if (avatarUrl && (typeof avatarUrl !== 'string' || !isClientImage(avatarUrl, res.locals.websiteCloud.cloudName))) {
+      res.status(400).json({ error: 'Use an image from the client’s assigned Cloudinary account.' });
+      return;
+    }
     if (!name?.trim() || !quote?.trim()) {
       res.status(400).json({ error: 'Reviewer name and quote are required' });
       return;
@@ -167,12 +160,11 @@ export const addReview = async (req: AuthenticatedRequest, res: Response): Promi
     console.error('[Add Review Error]:', error);
     res.status(500).json({ error: error.message || 'Error adding review' });
   }
-};
+});
 
 // 4. DELETE REVIEW FROM HOST PAGE
-export const deleteReview = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const deleteReview = websiteHandler('HostPage', HostPageSchema, async (req, res, HostPage, organizationId) => {
   try {
-    const organizationId = req.user?.organizationId;
     const { reviewId } = req.params;
 
     if (!organizationId) {
@@ -197,29 +189,12 @@ export const deleteReview = async (req: AuthenticatedRequest, res: Response): Pr
     console.error('[Delete Review Error]:', error);
     res.status(500).json({ error: error.message || 'Error deleting review' });
   }
-};
+});
 
 // 5. PUBLIC VISITOR VIEW (Unauthenticated)
-export const getPublicHostPage = async (req: Request, res: Response): Promise<void> => {
+export const getPublicHostPage = websiteHandler('HostPage', HostPageSchema, async (_req, res, HostPage, organizationId) => {
   try {
-    const { slug } = req.params;
-    if (!slug) {
-      res.status(400).json({ error: 'Website slug is required' });
-      return;
-    }
-
-    const slugParam = Array.isArray(slug) ? slug[0] : slug;
-    const cleanSlug = String(slugParam).toLowerCase().trim();
-    let hostPage = await HostPage.findOne({ websiteSlug: cleanSlug });
-
-    // Fallback: check by Organization slug if HostPage not found directly
-    if (!hostPage) {
-      const org = await Organization.findOne({ slug: cleanSlug });
-      if (org) {
-        hostPage = await HostPage.findOne({ organizationId: org._id });
-      }
-    }
-
+    const hostPage = await HostPage.findOne({ organizationId });
     if (!hostPage?.isPublished) {
       res.status(404).json({ error: 'Travel agency website not found' });
       return;
@@ -231,12 +206,6 @@ export const getPublicHostPage = async (req: Request, res: Response): Promise<vo
     // Fetch tenant organization branding
     const org = await Organization.findById(hostPage.organizationId);
 
-    // Fetch published packages for this agency
-    const packages = await TravelPackageModel.find({
-      organizationId: hostPage.organizationId,
-      status: 'PUBLISHED',
-    }).sort({ createdAt: -1 });
-
     res.status(200).json({
       agency: {
         name: org?.name || 'Travel Agency',
@@ -246,21 +215,10 @@ export const getPublicHostPage = async (req: Request, res: Response): Promise<vo
         slug: org?.slug || hostPage.websiteSlug,
       },
       hostPage: formatHostPage(hostPage),
-      packages: packages.map((p: any) => ({
-        id: p._id.toString(),
-        name: p.name,
-        destination: p.destination,
-        price: p.price,
-        originalPrice: p.originalPrice,
-        currency: p.currency,
-        duration: p.duration,
-        bannerImage: p.bannerImage,
-        categories: p.categories,
-        itineraryDaysCount: p.itineraryDays?.length || 0,
-      })),
+      packages: [],
     });
   } catch (error: any) {
     console.error('[Get Public HostPage Error]:', error);
     res.status(500).json({ error: error.message || 'Error loading public host page' });
   }
-};
+}, true);

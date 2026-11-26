@@ -72,7 +72,7 @@ export const AddEventModal: React.FC = () => {
             </label>
             <input
               type="text"
-              placeholder="Goa group departure briefing"
+
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"

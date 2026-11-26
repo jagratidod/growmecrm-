@@ -5,7 +5,6 @@ import { Module, requireModule } from './platform/access';
 import { platformAdmin, workspaceRouter, publicWebsites } from './platform/routes';
 import cors from 'cors';
 import { connectDB } from './config/db';
-import { seedDefaultUsers } from './config/seedDefaults';
 import authRoutes from './routes/authRoutes';
 import leadRoutes from './routes/leadRoutes';
 import packageRoutes from './routes/packageRoutes';
@@ -105,6 +104,10 @@ const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
   const knownStatus = error?.status;
   if (knownStatus === 400 || error?.name === 'CastError') {
     res.status(400).json({ error: 'Invalid request.' });
+  } else if (knownStatus === 409) {
+    res.status(409).json({ error: error.message });
+  } else if (knownStatus === 502) {
+    res.status(502).json({ error: error.message });
   } else if (error?.code === 11000) {
     res.status(409).json({ error: 'A record with this value already exists.' });
   } else if (error?.code === 'LIMIT_FILE_SIZE') {
@@ -120,7 +123,6 @@ app.use(errorHandler);
 const start = async () => {
   if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
   await connectDB();
-  await seedDefaultUsers();
   app.listen(PORT, () => {
     console.log(`[GrowMe CRM Backend] Server running at http://localhost:${PORT}`);
   });

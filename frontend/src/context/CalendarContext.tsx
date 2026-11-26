@@ -1,4 +1,5 @@
-import { useAuth } from './AuthContext'
+import { useRouter } from './RouterContext'
+import { useWorkspace } from '../features/workspace/WorkspaceAccess'
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import type { CalendarEvent } from '../types/calendar.types'
 import { useBookings } from './BookingsContext'
@@ -22,13 +23,11 @@ interface CalendarContextType {
   refreshEvents: () => Promise<void>
 }
 
-const STORAGE_PREFIX = 'treki_crm_calendar_events'
-
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined)
 
 export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth()
-  const STORAGE_KEY = `${STORAGE_PREFIX}:${user?.organizationId || 'guest'}`
+  const { path } = useRouter()
+  const enabled = (useWorkspace().access?.modules.includes('calendar')) && (['/calendar', '/events'].includes(path))
   const { bookings } = useBookings()
   const { toast } = useToast()
 
@@ -43,31 +42,17 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Fetch from backend API
   const refreshEvents = useCallback(async () => {
+    if (!enabled) return
     try {
-      const res = await calendarService.getEvents()
-      if (res?.events) {
-        // filter out booking auto events for manual events state
-        const manualOnly = res.events.filter((e) => e.type === 'manual')
-        setEvents(manualOnly)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(manualOnly))
-      }
-    } catch {
-      // offline fallback
+      setEvents((await calendarService.getEvents()).events.filter((event) => event.type === 'manual'))
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not load calendar events', description: (error as Error).message })
     }
-  }, [])
+  }, [enabled, toast])
 
   useEffect(() => {
-    refreshEvents()
+    void refreshEvents()
   }, [refreshEvents])
-
-  // Save manual events to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(events))
-    } catch (e) {
-      console.error('Failed to save calendar events', e)
-    }
-  }, [events])
 
   // Combine manual events + booking departures/returns automatically
   const allEvents = useMemo(() => {
@@ -113,36 +98,24 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentDate(new Date())
   }
 
-  const addEvent = (data: { title: string; date: string; notes?: string }) => {
-    const tempId = `evt-${Date.now()}`
-    const newEvent: CalendarEvent = {
-      id: tempId,
-      title: data.title,
-      date: data.date,
-      notes: data.notes,
-      type: 'manual',
-      color: '#453372',
-      createdAt: new Date().toISOString(),
+  const addEvent = async (data: { title: string; date: string; notes?: string }) => {
+    try {
+      const { event } = await calendarService.createEvent(data)
+      setEvents((prev) => [event, ...prev])
+      setIsAddEventModalOpen(false)
+      toast({ title: 'Event added to calendar', type: 'success' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not add event', description: (error as Error).message })
     }
-
-    setEvents((prev) => [newEvent, ...prev])
-    setIsAddEventModalOpen(false)
-    toast({ title: 'Event added to calendar', type: 'success' })
-
-    calendarService
-      .createEvent(data)
-      .then((res) => {
-        if (res?.event) {
-          setEvents((prev) => prev.map((e) => (e.id === tempId ? res.event : e)))
-        }
-      })
-      .catch(() => {})
   }
 
-  const deleteEvent = (id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id))
-    toast({ title: 'Event removed', type: 'info' })
-    calendarService.deleteEvent(id).catch(() => {})
+  const deleteEvent = async (id: string) => {
+    try {
+      await calendarService.deleteEvent(id)
+      setEvents((prev) => prev.filter((item) => item.id !== id))
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not delete event', description: (error as Error).message })
+    }
   }
 
   return (

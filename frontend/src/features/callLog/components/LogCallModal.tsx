@@ -44,7 +44,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
   )
 
   const handleSelectLead = (lead: { name: string; phone?: string }) => {
-    setSelectedLead({ name: lead.name, phone: lead.phone || '+91 98765 43210' })
+    setSelectedLead({ name: lead.name, phone: lead.phone || '' })
     setLeadQuery(`${lead.name} (${lead.phone || 'No phone'})`)
     setIsLeadDropdownOpen(false)
   }
@@ -58,7 +58,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
     e.preventDefault()
 
     const finalLeadName = selectedLead?.name || leadQuery.trim()
-    const finalLeadPhone = selectedLead?.phone || '+91 98765 43210'
+    const finalLeadPhone = selectedLead?.phone || ''
     const finalOutcome = customOutcome.trim() || selectedOutcome
 
     if (!finalLeadName) {

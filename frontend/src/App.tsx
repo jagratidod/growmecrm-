@@ -15,42 +15,44 @@ import { InboxProvider } from './context/InboxContext'
 import { CalendarProvider } from './context/CalendarContext'
 import { CallLogProvider } from './context/CallLogContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
-import { AuthPage } from './features/auth/AuthPage'
 import { WorkspaceAccess, useWorkspace } from './features/workspace/WorkspaceAccess'
-import { WorkspaceHome, WebsitesPage } from './features/workspace/WorkspacePages'
-import { AcceptInvitePage } from './features/workspace/AcceptInvitePage'
-import { PlatformConsole } from './features/workspace/PlatformConsole'
 import { routeModules } from './features/workspace/workspaceApi'
-import { LeadsPage } from './features/leads/LeadsPage'
-import { BookingsPage } from './features/bookings/BookingsPage'
-import { TeamPage } from './features/team/TeamPage'
-import { BillsPage } from './features/bills/BillsPage'
-import { ItinerariesPage } from './features/itineraries/ItinerariesPage'
-import { PackagesPage } from './features/packages/PackagesPage'
-import { HotelsPage } from './features/hotels/HotelsPage'
-import { SightseeingPage } from './features/sightseeing/SightseeingPage'
-import { HostPage } from './features/hostPage/HostPage'
-import { InboxPage } from './features/inbox/InboxPage'
-import { CalendarPage } from './features/calendar/CalendarPage'
-import { CallLogPage } from './features/callLog/CallLogPage'
-import { FollowUpsPage } from './features/followUps/FollowUpsPage'
-import { InvoicesPage } from './features/invoices/InvoicesPage'
-import { LinkTreePage } from './features/linkTree/LinkTreePage'
-import { CommunicationsPage } from './features/communications/CommunicationsPage'
-import { BotFlowsPage } from './features/botFlows/BotFlowsPage'
-import { ProfilePage } from './features/settings/ProfilePage'
-import { ChannelsPage } from './features/settings/ChannelsPage'
-import { AiAgentPage } from './features/settings/AiAgentPage'
-import { OrganizationPage } from './features/settings/OrganizationPage'
-import { InvoiceDetailPage } from './features/settings/InvoiceDetailPage'
-import { AutomationPage } from './features/settings/AutomationPage'
-import { SuperAdminDashboard } from './features/superAdmin/SuperAdminDashboard'
-import { TenantsPage } from './features/superAdmin/TenantsPage'
-import { SubscriptionsPage } from './features/superAdmin/SubscriptionsPage'
-import { AnnouncementsPage } from './features/superAdmin/AnnouncementsPage'
-import { AuditLogsPage } from './features/superAdmin/AuditLogsPage'
-import { WebhookHealthPage } from './features/superAdmin/WebhookHealthPage'
-import { PlatformSettingsPage } from './features/superAdmin/PlatformSettingsPage'
+
+const AuthPage = lazy(() => import('./features/auth/AuthPage').then((page) => ({ default: page.AuthPage })))
+const AcceptInvitePage = lazy(() => import('./features/workspace/AcceptInvitePage').then((page) => ({ default: page.AcceptInvitePage })))
+const PlatformConsole = lazy(() => import('./features/workspace/PlatformConsole').then((page) => ({ default: page.PlatformConsole })))
+const LeadsPage = lazy(() => import('./features/leads/LeadsPage').then((page) => ({ default: page.LeadsPage })))
+const BookingsPage = lazy(() => import('./features/bookings/BookingsPage').then((page) => ({ default: page.BookingsPage })))
+const TeamPage = lazy(() => import('./features/team/TeamPage').then((page) => ({ default: page.TeamPage })))
+const BillsPage = lazy(() => import('./features/bills/BillsPage').then((page) => ({ default: page.BillsPage })))
+const ItinerariesPage = lazy(() => import('./features/itineraries/ItinerariesPage').then((page) => ({ default: page.ItinerariesPage })))
+const PackagesPage = lazy(() => import('./features/packages/PackagesPage').then((page) => ({ default: page.PackagesPage })))
+const HotelsPage = lazy(() => import('./features/hotels/HotelsPage').then((page) => ({ default: page.HotelsPage })))
+const SightseeingPage = lazy(() => import('./features/sightseeing/SightseeingPage').then((page) => ({ default: page.SightseeingPage })))
+const HostPage = lazy(() => import('./features/hostPage/HostPage').then((page) => ({ default: page.HostPage })))
+const InboxPage = lazy(() => import('./features/inbox/InboxPage').then((page) => ({ default: page.InboxPage })))
+const CalendarPage = lazy(() => import('./features/calendar/CalendarPage').then((page) => ({ default: page.CalendarPage })))
+const CallLogPage = lazy(() => import('./features/callLog/CallLogPage').then((page) => ({ default: page.CallLogPage })))
+const FollowUpsPage = lazy(() => import('./features/followUps/FollowUpsPage').then((page) => ({ default: page.FollowUpsPage })))
+const InvoicesPage = lazy(() => import('./features/invoices/InvoicesPage').then((page) => ({ default: page.InvoicesPage })))
+const LinkTreePage = lazy(() => import('./features/linkTree/LinkTreePage').then((page) => ({ default: page.LinkTreePage })))
+const CommunicationsPage = lazy(() => import('./features/communications/CommunicationsPage').then((page) => ({ default: page.CommunicationsPage })))
+const BotFlowsPage = lazy(() => import('./features/botFlows/BotFlowsPage').then((page) => ({ default: page.BotFlowsPage })))
+const ProfilePage = lazy(() => import('./features/settings/ProfilePage').then((page) => ({ default: page.ProfilePage })))
+const ChannelsPage = lazy(() => import('./features/settings/ChannelsPage').then((page) => ({ default: page.ChannelsPage })))
+const AiAgentPage = lazy(() => import('./features/settings/AiAgentPage').then((page) => ({ default: page.AiAgentPage })))
+const OrganizationPage = lazy(() => import('./features/settings/OrganizationPage').then((page) => ({ default: page.OrganizationPage })))
+const InvoiceDetailPage = lazy(() => import('./features/settings/InvoiceDetailPage').then((page) => ({ default: page.InvoiceDetailPage })))
+const AutomationPage = lazy(() => import('./features/settings/AutomationPage').then((page) => ({ default: page.AutomationPage })))
+const SuperAdminDashboard = lazy(() => import('./features/superAdmin/SuperAdminDashboard').then((page) => ({ default: page.SuperAdminDashboard })))
+const TenantsPage = lazy(() => import('./features/superAdmin/TenantsPage').then((page) => ({ default: page.TenantsPage })))
+const SubscriptionsPage = lazy(() => import('./features/superAdmin/SubscriptionsPage').then((page) => ({ default: page.SubscriptionsPage })))
+const AnnouncementsPage = lazy(() => import('./features/superAdmin/AnnouncementsPage').then((page) => ({ default: page.AnnouncementsPage })))
+const AuditLogsPage = lazy(() => import('./features/superAdmin/AuditLogsPage').then((page) => ({ default: page.AuditLogsPage })))
+const WebhookHealthPage = lazy(() => import('./features/superAdmin/WebhookHealthPage').then((page) => ({ default: page.WebhookHealthPage })))
+const PlatformSettingsPage = lazy(() => import('./features/superAdmin/PlatformSettingsPage').then((page) => ({ default: page.PlatformSettingsPage })))
+const WorkspaceHome = lazy(() => import('./features/workspace/WorkspacePages').then((page) => ({ default: page.WorkspaceHome })))
+const WebsitesPage = lazy(() => import('./features/workspace/WorkspacePages').then((page) => ({ default: page.WebsitesPage })))
 
 const MarketingApp = lazy(() => import('./features/marketing/App.jsx'))
 const marketingRoutes = new Set([
@@ -317,7 +319,9 @@ export default function App() {
                               <CalendarProvider>
                                 <CallLogProvider>
                                   <SettingsProvider>
-                                    <AppContent />
+                                    <Suspense fallback={<div className="min-h-screen bg-canvas" role="status" aria-label="Loading page" />}>
+                                      <AppContent />
+                                    </Suspense>
                                   </SettingsProvider>
                                 </CallLogProvider>
                               </CalendarProvider>

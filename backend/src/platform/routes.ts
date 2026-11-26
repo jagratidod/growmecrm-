@@ -1,8 +1,6 @@
 import { Router, Response, RequestHandler } from 'express';
-import multer from 'multer';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { isValidObjectId } from 'mongoose';
-import { v2 as cloudinary } from 'cloudinary';
 import jwt from 'jsonwebtoken';
 import { authenticate, authorizeRoles } from '../middleware/authMiddleware';
 import { requireSuperAdmin } from '../middleware/superAdminAuth';
@@ -15,7 +13,9 @@ import { User } from '../models/User';
 import { AuthenticatedRequest } from '../types';
 import { Module, modules, requireModule, workspaceAccess } from './access';
 import { Workspace, Website } from './models';
-import { seal, open, mediaCredentials, testCloudinary, validateMongoUri, withContent, withMongo } from './connections';
+import { seal, open, assertClientCloudName, isClientImage, mediaCredentials, requireWebsiteServices, testCloudinary, validateMongoUri, withContent, withMongo } from './connections';
+
+import { readWebsiteImage, uploadWebsiteImage } from './websiteMedia';
 
 const sectionModules: Record<string, Module> = {
   homepage: 'websites', packages: 'websites', contact: 'websites', reviews: 'websites',
@@ -110,7 +110,7 @@ platformAdmin.post('/clients/:id/connections', safe(async (req, res) => {
         const settings = await Workspace.findOne({ organizationId: id }).lean();
         const current = settings?.mongo && new URL(open(settings.mongo));
         const next = new URL(uri);
-        if (!current || current.hostname !== next.hostname || current.pathname !== next.pathname) {
+        if (current && (current.hostname !== next.hostname || current.pathname !== next.pathname)) {
           return res.status(409).json({ error: 'Moving an existing website to another database requires a content migration.' });
         }
       }
@@ -123,6 +123,7 @@ platformAdmin.post('/clients/:id/connections', safe(async (req, res) => {
       if (activate) encrypted = seal(uri);
     } else if (provider === 'cloudinary') {
       const cloud = { cloudName: String(req.body.cloudName || ''), apiKey: String(req.body.apiKey || ''), apiSecret: String(req.body.apiSecret || '') };
+      assertClientCloudName(cloud.cloudName);
       await testCloudinary(cloud);
       if (activate) encrypted = seal(JSON.stringify(cloud));
     } else {
@@ -147,6 +148,7 @@ platformAdmin.post('/clients/:id/websites', safe(async (req, res) => {
     return res.status(400).json({ error: 'Enter a site name, domain, and up to 25 valid section slugs.' });
   }
   if (!await Organization.exists({ _id: id })) return res.status(404).json({ error: 'Client not found.' });
+  requireWebsiteServices(await Workspace.findOne({ organizationId: id }).select('mongo cloudinary').lean());
   if (await Website.exists({ domain })) return res.status(409).json({ error: 'This domain is already connected.' });
   const formKey = randomBytes(32).toString('hex');
   const site = await Website.create({ organizationId: id, name: name.trim(), domain, sections: [...new Set(sections)], formKeyHash: digest(formKey) });
@@ -191,6 +193,7 @@ async function editorSite(req: AuthenticatedRequest, res: Response) {
     res.status(404).json({ error: 'Website not found.' });
     return null;
   }
+  requireWebsiteServices(access.workspace);
   const sections = site.sections.filter((section) => access.enabled.includes(sectionModule(section)!));
   return { site, access, sections };
 }
@@ -221,6 +224,10 @@ workspaceRouter.put('/websites/:siteId/sections/:section', authorizeRoles('OWNER
     typeof entry.image !== 'string' || entry.image.length > 2048 || (entry.image && !/^https:\/\//i.test(entry.image))
   ) || new Set(entries.map((entry) => entry.slug)).size !== entries.length) {
     return res.status(400).json({ error: 'Entries need unique URL slugs and valid content.' });
+  }
+  const { cloudName } = mediaCredentials(result.access.workspace ?? null);
+  if (!isClientImage(image, cloudName) || entries.some((entry) => !isClientImage(entry.image, cloudName))) {
+    return res.status(400).json({ error: 'Use images from the client’s assigned Cloudinary account.' });
   }
   const orderedEntries = entries.map(({ slug, title, body, image }) => ({ slug, title, body, image }));
   if (Buffer.byteLength(JSON.stringify({ title, body, image, entries: orderedEntries })) > 200000) {
@@ -254,27 +261,12 @@ workspaceRouter.post('/websites/:siteId/publish', authorizeRoles('OWNER', 'ADMIN
   res.json({ ok: true });
 }));
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
-workspaceRouter.post('/websites/:siteId/media', requireModule('media'), authorizeRoles('OWNER', 'ADMIN', 'MANAGER'), upload.single('file'), safe(async (req, res) => {
+workspaceRouter.post('/websites/:siteId/media', requireModule('media'), authorizeRoles('OWNER', 'ADMIN', 'MANAGER'), safe(async (req, res) => {
   const result = await editorSite(req, res);
   if (!result) return;
-  const file = req.file;
-  if (!file || !['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'].includes(file.mimetype)) {
-    return res.status(400).json({ error: 'Choose a JPEG, PNG, WebP, GIF or AVIF image.' });
-  }
-  const { cloudName, apiKey, apiSecret } = mediaCredentials(result.access.workspace);
-  const folder = `growme/${result.site.id}`;
-  const timestamp = Math.floor(Date.now() / 1000);
-  const form = new FormData();
-  form.set('file', new Blob([new Uint8Array(file.buffer)], { type: file.mimetype }), file.originalname);
-  form.set('folder', folder);
-  form.set('timestamp', String(timestamp));
-  form.set('api_key', apiKey);
-  form.set('signature', cloudinary.utils.api_sign_request({ folder, timestamp }, apiSecret));
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: form, signal: AbortSignal.timeout(20000) });
-  if (!response.ok) return res.status(502).json({ error: 'Cloudinary could not upload the image.' });
-  const media = await response.json() as { secure_url: string };
-  res.json({ url: media.secure_url });
+  const credentials = mediaCredentials(result.access.workspace ?? null);
+  const file = await readWebsiteImage(req, res);
+  res.json({ url: await uploadWebsiteImage(file, credentials, `growme/${result.site.id}`) });
 }));
 
 export const publicWebsites = Router();

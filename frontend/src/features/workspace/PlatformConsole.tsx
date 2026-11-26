@@ -211,7 +211,7 @@ function ClientConsole({ clientId }: { clientId: string }) {
 
 function Connection({ title, assigned, busy, onSubmit, children }: { title: string; assigned: boolean; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void; children: ReactNode }) {
   return <form className="gm-card gm-form" onSubmit={onSubmit}>
-    <div className="gm-row"><h2>{title}</h2><span className="gm-tag">{assigned ? 'Assigned' : 'Platform default'}</span></div>
+    <div className="gm-row"><h2>{title}</h2><span className="gm-tag">{assigned ? 'Assigned' : 'Not assigned'}</span></div>
     {children}
     <div className="gm-actions"><button className="gm-button secondary" value="test" disabled={busy}>Test connection</button><button className="gm-button" value="activate" disabled={busy}>Activate</button></div>
   </form>

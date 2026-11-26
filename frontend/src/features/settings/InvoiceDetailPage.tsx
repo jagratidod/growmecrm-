@@ -82,32 +82,36 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
     toast({ title: 'Signature image URL applied', type: 'success' })
   }
 
-  const handleSaveChanges = (e: React.FormEvent) => {
+  const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    updateInvoiceDetail({
-      secondPhone,
-      secondEmail,
-      state,
-      stateCode,
-      bankName,
-      bankAccountNumber,
-      ifscCode,
-      gstin,
-      pan,
-      hsnSacCode,
-      signatureImage,
-      signatoryTitle,
-      termsAndConditions,
-    })
+    try {
+      await updateInvoiceDetail({
+        secondPhone,
+        secondEmail,
+        state,
+        stateCode,
+        bankName,
+        bankAccountNumber,
+        ifscCode,
+        gstin,
+        pan,
+        hsnSacCode,
+        signatureImage,
+        signatoryTitle,
+        termsAndConditions,
+      })
 
-    setIsSaved(true)
-    toast({
-      type: 'success',
-      title: 'Tax Invoice Details Saved',
-      description: 'Your invoice details have been updated across all generated tax invoices.',
-    })
-    setTimeout(() => setIsSaved(false), 2500)
+      setIsSaved(true)
+      toast({
+        type: 'success',
+        title: 'Tax Invoice Details Saved',
+        description: 'Your invoice details have been updated across all generated tax invoices.',
+      })
+      setTimeout(() => setIsSaved(false), 2500)
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not save invoice details', description: (error as Error).message })
+    }
   }
 
   return (

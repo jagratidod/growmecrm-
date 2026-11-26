@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { SiteFooter, SiteHeader } from './SiteNavigation';
 import ScrollToTop from '../../utils/ScrollToTop';
@@ -27,7 +27,9 @@ export default function MainLayout() {
       <a className="growme-skip" href="#product">Skip to content</a>
       <SiteHeader />
       <main id="product">
-        <Outlet />
+        <Suspense fallback={<div aria-label="Loading page" role="status" />}>
+          <Outlet />
+        </Suspense>
       </main>
       <SiteFooter />
     </div>

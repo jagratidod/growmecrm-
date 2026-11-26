@@ -97,52 +97,35 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
       note: editNote,
     }
 
-    // Optimistic UI update
-    setFollowUps((prev) =>
-      prev.map((f) => (f.id === editingItem.id ? { ...f, ...updatedData } : f))
-    )
-    setIsEditModalOpen(false)
-
     try {
       const res = await followUpsService.updateFollowUp(editingItem.id, updatedData)
       if (res?.followUp) {
         setFollowUps((prev) => prev.map((f) => (f.id === editingItem.id ? res.followUp : f)))
       }
+      setIsEditModalOpen(false)
       toast({
         type: 'success',
         title: 'Task Updated',
         description: 'Changes saved successfully.',
       })
-    } catch (err) {
-      console.warn('Backend update failed:', err)
-      toast({
-        type: 'success',
-        title: 'Task Updated',
-        description: 'Changes saved locally.',
-      })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not update task', description: (error as Error).message })
     }
   }
 
   const handleDeleteFollowUp = async (id: string, name: string) => {
     if (!window.confirm(`Are you sure you want to delete the follow-up for ${name}?`)) return
 
-    // Optimistic removal
-    setFollowUps((prev) => prev.filter((f) => f.id !== id))
-
     try {
       await followUpsService.deleteFollowUp(id)
+      setFollowUps((prev) => prev.filter((item) => item.id !== id))
       toast({
         type: 'success',
         title: 'Follow-up Deleted',
         description: `Follow-up for ${name} removed.`,
       })
-    } catch (err) {
-      console.warn('Backend delete failed:', err)
-      toast({
-        type: 'success',
-        title: 'Follow-up Deleted',
-        description: 'Removed locally.',
-      })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not delete follow-up', description: (error as Error).message })
     }
   }
 
@@ -154,16 +137,9 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
       if (res?.followUps) {
         setFollowUps(res.followUps)
         if (res.stats) setServerStats(res.stats)
-        localStorage.setItem('treki_crm_follow_ups', JSON.stringify(res.followUps))
       }
-    } catch (err) {
-      console.warn('Backend follow-ups fetch failed, using local fallback:', err)
-      const saved = localStorage.getItem('treki_crm_follow_ups')
-      if (saved) {
-        try {
-          setFollowUps(JSON.parse(saved))
-        } catch {}
-      }
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not load follow-ups', description: (error as Error).message })
     } finally {
       setIsLoading(false)
     }
@@ -173,26 +149,8 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
     fetchFollowUps()
   }, [])
 
-  // Sync to local cache whenever followUps changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('treki_crm_follow_ups', JSON.stringify(followUps))
-    } catch {}
-  }, [followUps])
-
   // 2. Toggle Status (Completed <-> Pending)
   const handleToggleComplete = async (id: string) => {
-    // Optimistic UI update
-    setFollowUps((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const nextStatus = item.status === 'completed' ? 'pending' : 'completed'
-          return { ...item, status: nextStatus as 'pending' | 'completed' }
-        }
-        return item
-      })
-    )
-
     try {
       const res = await followUpsService.toggleStatus(id)
       if (res?.followUp) {
@@ -203,13 +161,8 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
         title: 'Status Updated',
         description: res.message || 'Follow-up status updated.',
       })
-    } catch (err) {
-      console.warn('Backend toggle failed, saving locally:', err)
-      toast({
-        type: 'success',
-        title: 'Status Updated',
-        description: 'Follow-up marked as completed.',
-      })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not update task status', description: (error as Error).message })
     }
   }
 
@@ -239,7 +192,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
     const matchedLead = leads.find(
       (l) =>
         lowerTitle.includes(l.name.toLowerCase()) ||
-        lowerTitle.includes(l.destination.toLowerCase())
+        (l.destination && lowerTitle.includes(l.destination.toLowerCase()))
     )
 
     const selectedMember = members.find((m) => m.id === taskAssignee)
@@ -253,8 +206,8 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
       title: taskTitle.trim(),
       leadId: matchedLead?.id || undefined,
       leadName: matchedLead ? matchedLead.name : taskTitle.trim(),
-      phone: matchedLead ? matchedLead.phone : '+91 98765 00000',
-      destination: matchedLead ? matchedLead.destination : 'Travel Inquiry',
+      phone: matchedLead?.phone || '',
+      destination: matchedLead?.destination || '',
       dueDate: taskDate,
       dueTime: taskTime || '10:00',
       type: taskType,
@@ -273,19 +226,9 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
         title: 'Task Scheduled',
         description: `Scheduled "${payload.title}" for ${payload.dueDate}.`,
       })
-    } catch (err) {
-      console.warn('Backend create failed, fallback to local:', err)
-      const newItem: FollowUpItem = {
-        id: `fu-${Date.now()}`,
-        ...payload,
-        status: taskDate < todayStr ? 'overdue' : 'pending',
-      }
-      setFollowUps((prev) => [newItem, ...prev])
-      toast({
-        type: 'success',
-        title: 'Task Scheduled',
-        description: `Scheduled "${newItem.title}" for ${newItem.dueDate}.`,
-      })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not schedule task', description: (error as Error).message })
+      return
     }
 
     setIsAddModalOpen(false)
