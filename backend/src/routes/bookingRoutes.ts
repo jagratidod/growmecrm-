@@ -5,6 +5,7 @@ import {
   createBooking,
   updateBooking,
   recordPayment,
+  retryBookingLeadSync,
   updateBookingStatus,
   deleteBooking,
 } from '../controllers/bookingController';
@@ -20,6 +21,7 @@ router.post('/', createBooking);
 router.get('/:id', getBookingById);
 router.put('/:id', updateBooking);
 router.patch('/:id/payment', recordPayment);
+router.post('/:id/sync-lead', retryBookingLeadSync);
 router.patch('/:id/status', updateBookingStatus);
 router.delete('/:id', deleteBooking);
 

@@ -8,15 +8,16 @@ import { useAuth } from '../../../context/AuthContext'
 import { AuthPasswordField } from './AuthPasswordField'
 
 interface LoginFormProps {
+  superAdmin?: boolean
   onNavigateForgotPassword: () => void
-  onNavigateRegister: () => void
+  onNavigateRegister?: () => void
 }
 
-export function LoginForm({ onNavigateForgotPassword, onNavigateRegister }: LoginFormProps) {
+export function LoginForm({ superAdmin = false, onNavigateForgotPassword, onNavigateRegister }: LoginFormProps) {
   const { login, isLoading } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(true)
+  const [rememberMe, setRememberMe] = useState(!superAdmin)
   const [errors, setErrors] = useState<{ username?: string; password?: string; form?: string }>({})
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -28,7 +29,7 @@ export function LoginForm({ onNavigateForgotPassword, onNavigateRegister }: Logi
     if (Object.keys(issues).length) return
 
     try {
-      await login({ username: username.trim(), password, rememberMe })
+      await login({ username: username.trim(), password, rememberMe }, superAdmin)
     } catch (error) {
       setErrors({ form: error instanceof Error ? error.message : 'Could not sign in. Try again.' })
     }
@@ -37,8 +38,8 @@ export function LoginForm({ onNavigateForgotPassword, onNavigateRegister }: Logi
   return (
     <>
       <div className="growme-auth-heading">
-        <h1>Sign in</h1>
-        <p>Open your GrowMe workspace.</p>
+        <h1>{superAdmin ? 'Super Admin sign in' : 'Sign in'}</h1>
+        <p>{superAdmin ? 'Open the GrowMe administration console.' : 'Open your GrowMe workspace.'}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="growme-auth-form" noValidate>
@@ -86,10 +87,10 @@ export function LoginForm({ onNavigateForgotPassword, onNavigateRegister }: Logi
         </Button>
       </form>
 
-      <div className="growme-auth-switch">
+      {onNavigateRegister && <div className="growme-auth-switch">
         <span>New to GrowMe?</span>
         <button type="button" className="growme-auth-secondary" onClick={onNavigateRegister}>Create an account</button>
-      </div>
+      </div>}
     </>
   )
 }

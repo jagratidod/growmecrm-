@@ -8,7 +8,7 @@ GrowMe is the shared dashboard for client CRM, custom website content, and GrowM
 2. Copy `backend/.env.example` to `backend/.env` and configure the GrowMe control database and JWT secret. Set `GROWME_CONNECTION_KEY` to a stable base64 key generated with `openssl rand -base64 32` before saving client service credentials.
 3. For a local MongoDB on port 27018, run `mkdir -p backend/.local-mongo`, then `mongod --dbpath backend/.local-mongo --bind_ip 127.0.0.1 --port 27018`. Use `mongodb://127.0.0.1:27018/growme` for `MONGODB_URI`. Keep the same directory and JWT secret across restarts.
 4. Run `npm run dev:backend` and `npm run dev` in separate terminals.
-5. Create the initial platform administrator with `npm run create:super-admin --prefix backend`, supplying `GROWME_ADMIN_EMAIL` and `GROWME_ADMIN_PASSWORD` in that command's environment. Sign in through the normal login page.
+5. Create the initial platform administrator with `npm run create:super-admin --prefix backend`, supplying `GROWME_ADMIN_EMAIL` and `GROWME_ADMIN_PASSWORD` in that command's environment. Sign in at `/super-admin/login`. Workspace users sign in at `/login`.
 
 For a separate frontend deployment, set `VITE_API_BASE_URL` to the GrowMe API origin plus `/api` and `FRONTEND_URL` on the backend to the frontend origin.
 
@@ -33,6 +33,10 @@ Register its domain and editable section slugs in **Super Admin → Clients → 
 | Read published content | `GET /api/public/websites/:siteId` |
 | Send an enquiry from the website server | `POST /api/public/websites/:siteId/enquiries` with the `x-growme-site-key` header and a JSON body containing `name`, `phone`, and optional `email`, `destination`, `package`, and `message` |
 | Read a draft preview | `GET /api/public/websites/:siteId/preview` with the preview token as an Authorization bearer |
+
+Website servers should send a stable `Idempotency-Key` header on enquiry retries, using a unique value per form submission. For legacy forms, GrowMe also suppresses consecutive identical submissions in a short retry window.
+
+For Meta Lead Ads, set `META_APP_SECRET`, `META_VERIFY_TOKEN`, and `META_GRAPH_VERSION` on the API server. Set `META_LEAD_PAGE_TOKENS` to a JSON object shaped as `{"organizationId":{"pageId":"pageAccessToken"}}`. Use a Page token with lead retrieval permissions. GrowMe looks up forms by `leadgen_id` and stores one enquiry per Meta lead ID. Keep these settings and website form keys on the server.
 
 The site's frontend maps each slug to its UI. Each section contains `title`, `body`, `image`, and optional ordered `entries`. Each entry has a `slug`, `title`, `body`, and `image`. Render text safely. Read published content when a page loads or revalidate any cache configured by the website. The API cache lasts 30 seconds with a 60-second stale-while-revalidate window.
 

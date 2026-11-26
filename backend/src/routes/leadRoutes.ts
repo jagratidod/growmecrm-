@@ -7,9 +7,9 @@ import {
   changeLeadStage,
   addLeadActivity,
   importLeads,
-  deleteLead,
+  setLeadArchived,
 } from '../controllers/leadController';
-import { authenticate } from '../middleware/authMiddleware';
+import { authenticate, authorizeRoles } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -26,6 +26,7 @@ router.get('/:id', getLeadById);
 router.put('/:id', updateLead);
 router.patch('/:id/stage', changeLeadStage);
 router.post('/:id/activities', addLeadActivity);
-router.delete('/:id', deleteLead);
+router.patch('/:id/archive', authorizeRoles('OWNER', 'ADMIN', 'MANAGER'), setLeadArchived);
+router.delete('/:id', authorizeRoles('OWNER', 'ADMIN', 'MANAGER'), setLeadArchived);
 
 export default router;

@@ -1,6 +1,7 @@
+import { useRouter } from '../../context/RouterContext'
 import React, { useState, useEffect, useMemo } from 'react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
-import { useLeads } from '../../context/LeadsContext'
+import { useLeadOptions } from '../leads/useLeadOptions'
 import { useTeam } from '../../context/TeamContext'
 import { useToast } from '../../components/ui/Toast'
 import { followUpsService, type FollowUpItem } from '../../services/followUpsService'
@@ -27,27 +28,25 @@ interface FollowUpsPageProps {
 }
 
 export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) => {
-  const { leads } = useLeads()
+  const { search, navigate } = useRouter()
   const { members } = useTeam()
   const { toast } = useToast()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue' | 'completed'>('all')
+  const [filter, setFilter] = useState<'all' | 'due' | 'today' | 'upcoming' | 'overdue' | 'completed'>(() => new URLSearchParams(search).get('status') === 'due' ? 'due' : 'all')
   const [searchQuery, setSearchQuery] = useState('')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(() => !followUpsService.getCachedFollowUps())
+  const [loadError, setLoadError] = useState('')
 
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], [])
+  const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' })
 
-  const [followUps, setFollowUps] = useState<FollowUpItem[]>([])
-
-  const [serverStats, setServerStats] = useState({
-    total: 0,
-    today: 0,
-    overdue: 0,
-    completed: 0,
-  })
+  const [followUps, setFollowUps] = useState<FollowUpItem[]>(() => followUpsService.getCachedFollowUps()?.followUps || [])
 
   // New task modal states (matching uploaded design)
+  const [taskLeadId, setTaskLeadId] = useState('')
+  const [leadSearch, setLeadSearch] = useState('')
+  const { options: leads, error: leadOptionsError } = useLeadOptions(isAddModalOpen, leadSearch, taskLeadId)
+  const [isSaving, setIsSaving] = useState(false)
   const [taskTitle, setTaskTitle] = useState('')
   const [taskType, setTaskType] = useState<'follow-up' | 'call' | 'meeting' | 'email' | 'whatsapp'>('follow-up')
   const [taskDate, setTaskDate] = useState(todayStr)
@@ -65,6 +64,16 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
   const [editAssignee, setEditAssignee] = useState('unassigned')
   const [editNote, setEditNote] = useState('')
 
+  useEffect(() => {
+    const query = new URLSearchParams(search)
+    if (query.get('status') === 'due') setFilter('due')
+    const leadId = query.get('lead')
+    if (!leadId) return
+    setTaskLeadId(leadId)
+    setIsAddModalOpen(true)
+    navigate('/follow-ups', { replace: true })
+  }, [search, navigate])
+
   const handleOpenEdit = (item: FollowUpItem) => {
     setEditingItem(item)
     setEditTitle(item.title || item.leadName)
@@ -78,7 +87,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingItem) return
+    if (!editingItem || isSaving) return
 
     const selectedMember = members.find((m) => m.id === editAssignee)
     const assignedName = selectedMember
@@ -92,11 +101,12 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
       dueDate: editDueDate,
       dueTime: editDueTime,
       type: editType,
-      assignedTo: editAssignee !== 'unassigned' ? editAssignee : undefined,
+      assignedTo: editAssignee !== 'unassigned' ? editAssignee : '',
       assignedToName: assignedName,
       note: editNote,
     }
 
+    setIsSaving(true)
     try {
       const res = await followUpsService.updateFollowUp(editingItem.id, updatedData)
       if (res?.followUp) {
@@ -110,6 +120,8 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
       })
     } catch (error) {
       toast({ type: 'error', title: 'Could not update task', description: (error as Error).message })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -130,23 +142,25 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
   }
 
   // 1. Fetch Follow-ups from Backend API on mount
-  const fetchFollowUps = async () => {
-    setIsLoading(true)
+  const fetchFollowUps = async (signal?: AbortSignal, fresh = false) => {
+    if (!followUpsService.getCachedFollowUps()) setIsLoading(true)
+    setLoadError('')
     try {
-      const res = await followUpsService.getFollowUps()
+      const res = await followUpsService.getFollowUps(undefined, signal, fresh)
       if (res?.followUps) {
         setFollowUps(res.followUps)
-        if (res.stats) setServerStats(res.stats)
       }
     } catch (error) {
-      toast({ type: 'error', title: 'Could not load follow-ups', description: (error as Error).message })
+      if (!signal?.aborted) setLoadError((error as Error).message)
     } finally {
-      setIsLoading(false)
+      if (!signal?.aborted) setIsLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchFollowUps()
+    const controller = new AbortController()
+    void fetchFollowUps(controller.signal)
+    return () => controller.abort()
   }, [])
 
   // 2. Toggle Status (Completed <-> Pending)
@@ -169,6 +183,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
   // 3. Create Follow-Up / Task
   const handleCreateFollowUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSaving) return
     if (!taskTitle.trim()) {
       toast({
         type: 'error',
@@ -187,13 +202,11 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
       return
     }
 
-    // Attempt matching an existing lead
-    const lowerTitle = taskTitle.toLowerCase()
-    const matchedLead = leads.find(
-      (l) =>
-        lowerTitle.includes(l.name.toLowerCase()) ||
-        (l.destination && lowerTitle.includes(l.destination.toLowerCase()))
-    )
+    const matchedLead = leads.find((lead) => lead.id === taskLeadId)
+    if (taskLeadId && !matchedLead) {
+      toast({ type: 'error', title: 'Select an available lead.' })
+      return
+    }
 
     const selectedMember = members.find((m) => m.id === taskAssignee)
     const assignedName = selectedMember
@@ -213,9 +226,10 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
       type: taskType,
       assignedTo: taskAssignee !== 'unassigned' ? taskAssignee : undefined,
       assignedToName: assignedName,
-      note: taskNotes.trim() || taskTitle.trim(),
+      note: taskNotes.trim(),
     }
 
+    setIsSaving(true)
     try {
       const res = await followUpsService.createFollowUp(payload)
       if (res?.followUp) {
@@ -229,10 +243,13 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
     } catch (error) {
       toast({ type: 'error', title: 'Could not schedule task', description: (error as Error).message })
       return
+    } finally {
+      setIsSaving(false)
     }
 
     setIsAddModalOpen(false)
     setTaskTitle('')
+    setTaskLeadId('')
     setTaskNotes('')
     setTaskDate(todayStr)
     setTaskTime('10:00')
@@ -254,8 +271,9 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
       if (!matchesSearch) return false
 
       if (filter === 'all') return true
+      if (filter === 'due') return item.dueDate <= todayStr && item.status !== 'completed'
       if (filter === 'completed') return item.status === 'completed'
-      if (filter === 'overdue') return item.status === 'overdue' || (item.dueDate < todayStr && item.status !== 'completed')
+      if (filter === 'overdue') return item.dueDate < todayStr && item.status !== 'completed'
       if (filter === 'today') return item.dueDate === todayStr && item.status !== 'completed'
       if (filter === 'upcoming') return item.dueDate > todayStr && item.status !== 'completed'
       return true
@@ -264,16 +282,13 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
 
   // Calculated Stats
   const stats = useMemo(() => {
-    if (serverStats.total > 0 && followUps.length === serverStats.total) {
-      return serverStats
-    }
     return {
       total: followUps.length,
       today: followUps.filter((i) => i.dueDate === todayStr && i.status !== 'completed').length,
-      overdue: followUps.filter((i) => i.status === 'overdue' || (i.dueDate < todayStr && i.status !== 'completed')).length,
+      overdue: followUps.filter((i) => i.dueDate < todayStr && i.status !== 'completed').length,
       completed: followUps.filter((i) => i.status === 'completed').length,
     }
-  }, [followUps, serverStats, todayStr])
+  }, [followUps, todayStr])
 
   return (
     <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
@@ -307,7 +322,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
 
             <div className="flex items-center gap-2">
               <button
-                onClick={fetchFollowUps}
+                onClick={() => void fetchFollowUps(undefined, true)}
                 disabled={isLoading}
                 className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-brand hover:bg-purple-50 transition cursor-pointer"
                 title="Refresh from server"
@@ -315,7 +330,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
-                onClick={() => setIsAddModalOpen(true)}
+                onClick={() => { setTaskLeadId(''); setIsAddModalOpen(true) }}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand text-white font-semibold text-xs shadow-md hover:bg-brand-hover transition cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
@@ -380,11 +395,15 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
               />
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-              {(['all', 'today', 'upcoming', 'overdue', 'completed'] as const).map((tab) => (
+            <div className="flex items-center gap-1.5 flex-wrap w-full sm:w-auto pb-1 sm:pb-0">
+              {(['all', 'due', 'today', 'upcoming', 'overdue', 'completed'] as const).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setFilter(tab)}
+                  aria-pressed={filter === tab}
+                  onClick={() => {
+                    setFilter(tab)
+                    if (new URLSearchParams(search).has('status')) navigate('/follow-ups', { replace: true })
+                  }}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize whitespace-nowrap transition cursor-pointer ${
                     filter === tab
                       ? 'bg-brand text-white shadow-xs'
@@ -399,12 +418,17 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
 
           {/* Follow-up Task List */}
           <div className="space-y-3">
-            {filteredItems.length === 0 ? (
+            {isLoading ? <p role="status">Loading follow-ups…</p> : loadError ? (
+              <div className="gm-card gm-list">
+                <p role="alert" className="gm-error">{loadError}</p>
+                <button type="button" className="gm-button secondary" onClick={() => void fetchFollowUps(undefined, true)}>Retry</button>
+              </div>
+            ) : filteredItems.length === 0 ? (
               <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-xs">
                 <Clock className="w-10 h-10 text-purple-300 mx-auto mb-3" />
                 <h3 className="text-sm font-bold text-slate-700">No follow-ups found</h3>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                  You're all caught up! Schedule a new follow-up reminder for your travel inquiries.
+                  {followUps.length ? 'Try a different filter or search.' : 'Schedule a task to track your next action.'}
                 </p>
               </div>
             ) : (
@@ -414,7 +438,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   className={`bg-white rounded-2xl p-4 sm:p-5 border transition-all shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                     item.status === 'completed'
                       ? 'border-slate-100 opacity-60'
-                      : item.status === 'overdue' || item.dueDate < todayStr
+                      : item.dueDate < todayStr
                       ? 'border-amber-200'
                       : 'border-slate-100 hover:border-purple-200'
                   }`}
@@ -450,7 +474,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                             {item.assignedToName}
                           </span>
                         )}
-                        {(item.status === 'overdue' || (item.dueDate < todayStr && item.status !== 'completed')) && (
+                        {(item.dueDate < todayStr && item.status !== 'completed') && (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                             Overdue
                           </span>
@@ -538,6 +562,16 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
             </div>
 
             <form onSubmit={handleCreateFollowUp} className="space-y-4">
+              <label className="gm-form text-sm font-medium">
+                Linked lead
+                <input type="search" aria-label="Search leads for follow-up" placeholder="Search leads by name or phone" value={leadSearch} onChange={(event) => setLeadSearch(event.target.value)} />
+                {leadOptionsError && <small role="alert">{leadOptionsError}</small>}
+                <select value={taskLeadId} onChange={(event) => setTaskLeadId(event.target.value)}>
+                  <option value="">No lead</option>
+                  {taskLeadId && !leads.some((lead) => lead.id === taskLeadId) && <option value={taskLeadId}>Loading selected lead…</option>}
+                  {leads.map((lead) => <option key={lead.id} value={lead.id}>{lead.name} · {lead.destination}</option>)}
+                </select>
+              </label>
               {/* Field 1: What needs doing? * */}
               <div>
                 <label className="block text-sm font-medium text-slate-800 mb-1.5">
@@ -658,7 +692,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="submit" disabled={isSaving}
                   className="px-5 py-2.5 text-sm font-semibold text-white bg-brand hover:bg-[#4338ca] rounded-xl shadow-md shadow-indigo-500/20 transition cursor-pointer"
                 >
                   Schedule task
@@ -801,7 +835,7 @@ export const FollowUpsPage: React.FC<FollowUpsPageProps> = ({ onNavigateMenu }) 
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="submit" disabled={isSaving}
                   className="px-5 py-2.5 text-sm font-semibold text-white bg-brand hover:bg-[#4338ca] rounded-xl shadow-md shadow-indigo-500/20 transition cursor-pointer"
                 >
                   Save changes

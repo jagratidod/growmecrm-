@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { formatBookingAmount } from '../formatBookingAmount'
+import React, { useEffect, useState } from 'react'
 import {
   X,
   MapPin,
@@ -10,15 +11,21 @@ import { useBookings } from '../../../context/BookingsContext'
 import type { BookingStatus } from '../../../types/booking.types'
 
 export const BookingDetailsDrawer: React.FC = () => {
-  const { selectedBooking, setSelectedBooking, updateBooking, deleteBooking } = useBookings()
+  const { selectedBooking, setSelectedBooking, updateBookingStatus, recordBookingPayment, retryLeadSync, deleteBooking } = useBookings()
   const [addPaymentAmount, setAddPaymentAmount] = useState('')
   const [isAddingPayment, setIsAddingPayment] = useState(false)
 
+  const [isSavingPayment, setIsSavingPayment] = useState(false)
+  useEffect(() => {
+    setAddPaymentAmount('')
+    setIsAddingPayment(false)
+  }, [selectedBooking?.id])
+
+  const [syncingLead, setSyncingLead] = useState(false)
+
   if (!selectedBooking) return null
 
-  const formatCurrency = (val: number) => {
-    return '₹' + Number(val || 0).toLocaleString('en-IN')
-  }
+  const formatCurrency = (amount: number) => formatBookingAmount(amount, selectedBooking.currency)
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-'
@@ -32,17 +39,19 @@ export const BookingDetailsDrawer: React.FC = () => {
     Math.round(((selectedBooking.amountPaid || 0) / (selectedBooking.totalAmount || 1)) * 100)
   )
 
-  const handleRecordPayment = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleRecordPayment = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (isSavingPayment) return
     const amount = Number(addPaymentAmount)
-    if (!amount || amount <= 0) return
+    if (!Number.isFinite(amount) || amount <= 0 || amount > balanceDue) return
 
-    const newPaid = (selectedBooking.amountPaid || 0) + amount
-    updateBooking(selectedBooking.id, {
-      amountPaid: Math.min(selectedBooking.totalAmount, newPaid),
-    })
-    setAddPaymentAmount('')
-    setIsAddingPayment(false)
+    setIsSavingPayment(true)
+    const booking = await recordBookingPayment(selectedBooking.id, amount)
+    setIsSavingPayment(false)
+    if (booking) {
+      setAddPaymentAmount('')
+      setIsAddingPayment(false)
+    }
   }
 
   return (
@@ -54,7 +63,7 @@ export const BookingDetailsDrawer: React.FC = () => {
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <aside className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
+        <aside role="dialog" aria-modal="true" aria-label="Booking details" className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
           {/* Header */}
           <div className="p-5 border-b border-slate-100 flex items-start justify-between bg-slate-50/60">
             <div>
@@ -65,7 +74,7 @@ export const BookingDetailsDrawer: React.FC = () => {
                 <select
                   value={selectedBooking.status}
                   onChange={(e) =>
-                    updateBooking(selectedBooking.id, { status: e.target.value as BookingStatus })
+                    updateBookingStatus(selectedBooking.id, e.target.value as BookingStatus)
                   }
                   className="text-xs font-bold px-2.5 py-0.5 rounded-full border border-slate-200 bg-white cursor-pointer focus:outline-hidden"
                 >
@@ -88,6 +97,7 @@ export const BookingDetailsDrawer: React.FC = () => {
 
             <button
               type="button"
+              aria-label="Close booking details"
               onClick={() => setSelectedBooking(null)}
               className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
             >
@@ -97,6 +107,12 @@ export const BookingDetailsDrawer: React.FC = () => {
 
           {/* Body Content */}
           <div className="p-5 space-y-5 flex-1">
+            {selectedBooking.leadConversionPending && ['Confirmed', 'Ongoing', 'Completed'].includes(selectedBooking.status) && <div className="gm-error" role="status">
+              Linked lead update pending. <button className="gm-text-button" type="button" disabled={syncingLead} onClick={async () => {
+                setSyncingLead(true)
+                try { await retryLeadSync(selectedBooking.id) } finally { setSyncingLead(false) }
+              }}>{syncingLead ? 'Retrying…' : 'Retry lead update'}</button>
+            </div>}
             {/* Quick Contacts */}
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-canvas border border-slate-100">
@@ -157,10 +173,11 @@ export const BookingDetailsDrawer: React.FC = () => {
                 </h4>
                 <button
                   type="button"
+                  disabled={balanceDue <= 0 || selectedBooking.status === 'Cancelled' || isSavingPayment}
                   onClick={() => setIsAddingPayment(!isAddingPayment)}
                   className="text-xs font-bold text-brand hover:underline"
                 >
-                  + Add Deposit
+                  Record payment
                 </button>
               </div>
 
@@ -198,14 +215,18 @@ export const BookingDetailsDrawer: React.FC = () => {
                 <form onSubmit={handleRecordPayment} className="pt-2 border-t border-slate-100 flex gap-2">
                   <input
                     type="number"
-                    min="1"
-                    placeholder="Amount (₹)..."
+                    min="0.01"
+                    max={balanceDue}
+                    step="0.01"
+                    required
+                    aria-label="Payment amount"
+                    placeholder={`Amount (${selectedBooking.currency})`}
                     value={addPaymentAmount}
                     onChange={(e) => setAddPaymentAmount(e.target.value)}
                     className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 focus:outline-hidden focus:border-brand"
                   />
                   <button
-                    type="submit"
+                    type="submit" disabled={isSavingPayment}
                     className="px-3 py-1.5 rounded-xl bg-brand text-white text-xs font-bold hover:bg-brand-hover transition"
                   >
                     Save

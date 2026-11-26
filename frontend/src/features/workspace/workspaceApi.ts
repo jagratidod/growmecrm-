@@ -6,6 +6,12 @@ export const moduleNames: Record<string, string> = {
   pages: 'Pages', blog: 'Blog', media: 'Media uploads', seo: 'SEO',
 }
 
+export const websitePaths = {
+  sites: '/websites',
+  linkTree: '/websites/linktree',
+  hostPage: '/websites/host-page',
+} as const
+
 export const routeModules: Record<string, string> = {
   '/leads': 'leads', '/follow-ups': 'leads', '/bookings': 'bookings', '/bills': 'finance',
   '/invoices': 'finance', '/invoice-detail': 'finance', '/team': 'team', '/calendar': 'calendar',
@@ -13,7 +19,7 @@ export const routeModules: Record<string, string> = {
   '/communications': 'communications', '/bot-flows': 'communications', '/channels': 'communications',
   '/ai-agent': 'communications', '/automation': 'communications', '/packages': 'catalog',
   '/hotels': 'catalog', '/itineraries': 'catalog', '/sightseeing': 'catalog',
-  '/websites': 'websites', '/host-page': 'websites', '/linktree': 'websites',
+  [websitePaths.sites]: 'websites',
 }
 
 export interface Access {

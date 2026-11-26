@@ -4,7 +4,7 @@ import { authService } from '../services/authService'
 
 interface AuthContextType extends AuthState {
   isRestoringSession: boolean
-  login: (credentials: LoginCredentials) => Promise<void>
+  login: (credentials: LoginCredentials, superAdmin?: boolean) => Promise<void>
   register: (data: RegisterData) => Promise<void>
   updateUser: (updates: Partial<User>) => void
   logout: () => Promise<void>
@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return
     }
 
-    const useSession = (verifiedUser: Partial<User>) => {
+    const restoreVerifiedSession = (verifiedUser: Partial<User>) => {
       if (controller.signal.aborted) return
       setUser({ ...storedUser, ...verifiedUser })
       setToken(storedToken)
@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     authService.verifySession(storedToken, signal).then(async (verifiedUser) => {
       if (controller.signal.aborted) return
       if (verifiedUser) {
-        useSession(verifiedUser)
+        restoreVerifiedSession(verifiedUser)
       } else {
         await authService.logout()
         setIsRestoringSession(false)
@@ -50,11 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => controller.abort()
   }, [])
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (credentials: LoginCredentials, superAdmin = false) => {
     setIsProcessing(true)
     setError(null)
     try {
-      const response = await authService.login(credentials)
+      const response = await authService.login(credentials, superAdmin)
       setUser(response.user)
       setToken(response.token)
     } catch (err) {
@@ -87,7 +87,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!prev) return null
       const updated = { ...prev, ...updates }
       try {
-        localStorage.setItem('crm_auth_user', JSON.stringify(updated))
+        const storage = localStorage.getItem('crm_auth_token') ? localStorage : sessionStorage
+        storage.setItem('crm_auth_user', JSON.stringify(updated))
       } catch {}
       return updated
     })

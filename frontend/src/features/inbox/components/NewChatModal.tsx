@@ -12,16 +12,19 @@ export const NewChatModal: React.FC = () => {
   const [contactPhone, setContactPhone] = useState('')
   const [contactHandle, setContactHandle] = useState('')
   const [initialMessage, setInitialMessage] = useState('')
+  const [saving, setSaving] = useState(false)
 
   if (!isNewChatModalOpen) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (saving) return
     if (!contactName.trim()) {
       toast({ title: 'Please enter a contact name', type: 'error' })
       return
     }
 
+    setSaving(true)
     try {
       await startNewChat({
         contactName: contactName.trim(),
@@ -35,6 +38,8 @@ export const NewChatModal: React.FC = () => {
       setInitialMessage('')
     } catch {
       // Keep the form available for retry.
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -56,7 +61,7 @@ export const NewChatModal: React.FC = () => {
               )}
             </div>
             <h3 className="text-base font-bold text-slate-900">
-              Start new {activeChannel === 'whatsapp' ? 'WhatsApp' : 'Instagram'} chat
+              Log a {activeChannel === 'whatsapp' ? 'WhatsApp' : 'Instagram'} conversation
             </h3>
           </div>
 
@@ -114,11 +119,11 @@ export const NewChatModal: React.FC = () => {
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-700 block">
-              Initial message (optional)
+              Message to log (optional)
             </label>
             <textarea
               rows={3}
-              placeholder="Type initial message to send..."
+              placeholder="Enter message text"
               value={initialMessage}
               onChange={(e) => setInitialMessage(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
@@ -135,13 +140,14 @@ export const NewChatModal: React.FC = () => {
             </button>
             <button
               type="submit"
+              disabled={saving}
               className={`px-5 py-2 rounded-xl text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all ${
                 activeChannel === 'whatsapp'
                   ? 'bg-[#00a884] hover:bg-[#009374]'
                   : 'bg-gradient-to-r from-[#e1306c] to-[#c13584]'
               }`}
             >
-              Start chat
+              {saving ? 'Saving…' : 'Save conversation'}
             </button>
           </div>
         </form>

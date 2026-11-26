@@ -1,221 +1,111 @@
-import React, { useState } from 'react'
-import { X, UploadCloud, CheckCircle2, AlertCircle, Download } from 'lucide-react'
+import { useState } from 'react'
+import { Download, UploadCloud, X } from 'lucide-react'
 import { useLeads } from '../../../context/LeadsContext'
 import { useToast } from '../../../components/ui/Toast'
-import type { Lead, LeadStage, CustomerType, LeadTemperature } from '../../../types/lead.types'
+import type { CsvLeadRow } from '../../../types/lead.types'
 
-export const ImportCsvModal: React.FC = () => {
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = []
+  let row: string[] = []
+  let field = ''
+  let quoted = false
+  const input = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n')
+  for (let index = 0; index < input.length; index++) {
+    const char = input[index]
+    if (char === '"') {
+      if (quoted && input[index + 1] === '"') { field += '"'; index++ }
+      else if (quoted || !field) quoted = !quoted
+      else field += char
+    } else if (!quoted && (char === ',' || char === '\n')) {
+      row.push(field.trim())
+      field = ''
+      if (char === '\n') {
+        rows.push(row)
+        row = []
+      }
+    } else field += char
+  }
+  if (quoted) throw new Error('An opening quote has no closing quote.')
+  if (row.length || field) rows.push([...row, field.trim()])
+  return rows
+}
+
+function readRows(text: string): CsvLeadRow[] {
+  const [header, ...rows] = parseCsv(text)
+  const keys = header?.map((field) => field.toLowerCase().replace(/[^a-z]/g, '')) || []
+  const fields: Record<string, string> = {
+    name: 'name', customername: 'name', fullname: 'name', phone: 'phone', phonenumber: 'phone', mobile: 'phone',
+    email: 'email', destination: 'destination', budget: 'budget', currency: 'currency', travelers: 'travelers',
+    travellers: 'travelers', customertype: 'customerType', status: 'status', temperature: 'temperature', lostreason: 'lostReason',
+  }
+  if (!keys.some((key) => fields[key] === 'name') || !keys.some((key) => fields[key] === 'phone')) {
+    throw new Error('Include Name and Phone columns.')
+  }
+  const records = rows.map((cells, index) => ({
+    ...Object.fromEntries(keys.flatMap((key, cell) => fields[key] ? [[fields[key], cells[cell] || '']] : [])),
+    rowNumber: index + 2,
+    ...(cells.length !== keys.length ? { parseError: 'This record has the wrong number of columns.' } : {}),
+  })).filter((_, index) => rows[index].some(Boolean))
+  if (!records.length || records.length > 500) throw new Error('Include 1–500 data rows per file.')
+  return records
+}
+
+export function ImportCsvModal() {
   const { isImportModalOpen, setIsImportModalOpen, importLeads } = useLeads()
   const { toast } = useToast()
-
-  const [parsedRows, setParsedRows] = useState<Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>[]>([])
-  const [errorCount, setErrorCount] = useState(0)
-
+  const [rows, setRows] = useState<CsvLeadRow[]>([])
+  const [errors, setErrors] = useState<{ row: number; message: string }[]>([])
+  const [error, setError] = useState('')
+  const [result, setResult] = useState<{ count: number; skipped: number }>()
+  const [saving, setSaving] = useState(false)
   if (!isImportModalOpen) return null
 
-  const csvHeader = "Name,Phone,Email,Destination,Budget,Travelers,CustomerType,Status,Temperature\n"
-
-  const handleDownloadTemplate = () => {
-    const blob = new Blob([csvHeader], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'treki_leads_template.csv'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  async function selectFile(file?: File) {
     if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const content = event.target?.result as string
-      parseCsvContent(content)
-    }
-    reader.readAsText(file)
+    setRows([])
+    setErrors([])
+    setError('')
+    setResult(undefined)
+    try {
+      if (file.size > 2_000_000) throw new Error('Choose a CSV file smaller than 2 MB.')
+      setRows(readRows(await file.text()))
+    } catch (error) { setError((error as Error).message) }
   }
 
-  const parseCsvContent = (text: string) => {
-    const lines = text.trim().split('\n')
-    if (lines.length < 2) {
-      setParsedRows([])
-      return
-    }
-
-    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase())
-    const rows: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>[] = []
-    let errors = 0
-
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim()
-      if (!line) continue
-
-      const values = line.split(',').map((v) => v.trim())
-      const rowObj: Record<string, string> = {}
-      headers.forEach((h, idx) => {
-        rowObj[h] = values[idx] || ''
-      })
-
-      const name = rowObj['name'] || rowObj['customer name'] || rowObj['fullname']
-      const phone = rowObj['phone'] || rowObj['phone number'] || rowObj['mobile']
-
-      if (!name || !phone) {
-        errors++
-        continue
-      }
-
-      rows.push({
-        name,
-        phone,
-        email: rowObj['email'] || undefined,
-        destination: rowObj['destination'] || 'Flexible',
-        budget: Number(rowObj['budget']) || 2500,
-        currency: 'INR',
-        travelers: Number(rowObj['travelers']) || 2,
-        customerType: (rowObj['customertype'] as CustomerType) || 'B2C',
-        status: (rowObj['status'] as LeadStage) || 'New',
-        temperature: (rowObj['temperature'] as LeadTemperature) || 'Warm',
-        source: 'Website',
-        assignedTo: 'Unassigned',
-        tags: ['imported_csv'],
-        notes: 'Bulk imported via CSV file',
-      })
-    }
-
-    setParsedRows(rows)
-    setErrorCount(errors)
+  async function submit() {
+    setSaving(true)
+    try {
+      const response = await importLeads(rows)
+      if (!response) return
+      setResult(response)
+      setErrors(response.errors)
+      if (response.count > 0) toast({ type: 'success', title: `${response.count} leads imported` })
+    } finally { setSaving(false) }
   }
 
-  const handleImportSubmit = async () => {
-    if (parsedRows.length === 0) return
-
-    const count = await importLeads(parsedRows)
-    if (count === undefined) return
-    toast({
-      type: 'success',
-      title: 'CSV Import Completed',
-      description: `Successfully added ${count} new leads to your pipeline.`,
-    })
-
-    setParsedRows([])
+  function close() {
+    setRows([])
+    setErrors([])
+    setError('')
+    setResult(undefined)
     setIsImportModalOpen(false)
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">Import CSV Leads</h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Upload multiple enquiries at once via CSV file.
-            </p>
-          </div>
-          <button
-            onClick={() => setIsImportModalOpen(false)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-5">
-          {/* File Upload Zone */}
-          <div className="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl p-6 text-center bg-slate-50/50 transition">
-            <UploadCloud className="w-10 h-10 text-indigo-500 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-slate-800">
-              Drag & drop your CSV file here, or{' '}
-              <label className="text-indigo-600 hover:underline cursor-pointer">
-                browse files
-                <input
-                  type="file"
-                  accept=".csv,text/csv"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
-            </p>
-            <p className="text-xs text-slate-400 mt-1">Accepts UTF-8 formatted CSV files</p>
-
-            <div className="mt-4 flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={handleDownloadTemplate}
-                className="text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1"
-              >
-                <Download className="w-3.5 h-3.5" /> Download CSV template
-              </button>
-            </div>
-          </div>
-
-          {/* Validation & Preview Summary */}
-          {parsedRows.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  <strong>{parsedRows.length}</strong> valid leads ready to import
-                </span>
-                {errorCount > 0 && (
-                  <span className="text-rose-500 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    {errorCount} rows skipped (missing name/phone)
-                  </span>
-                )}
-              </div>
-
-              {/* Preview Table */}
-              <div className="max-h-52 overflow-y-auto border border-slate-200 rounded-xl">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
-                    <tr>
-                      <th className="py-2 px-3">Name</th>
-                      <th className="py-2 px-3">Phone</th>
-                      <th className="py-2 px-3">Destination</th>
-                      <th className="py-2 px-3">Budget</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {parsedRows.slice(0, 5).map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
-                        <td className="py-2 px-3 font-medium text-slate-800">{row.name}</td>
-                        <td className="py-2 px-3 text-slate-600">{row.phone}</td>
-                        <td className="py-2 px-3 text-slate-600">{row.destination}</td>
-                        <td className="py-2 px-3 text-slate-600">
-                          {row.currency} {row.budget}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => setIsImportModalOpen(false)}
-            className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={parsedRows.length === 0}
-            onClick={handleImportSubmit}
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed transition"
-          >
-            Import {parsedRows.length > 0 ? `(${parsedRows.length})` : ''} Leads
-          </button>
-        </div>
+  const template = 'data:text/csv;charset=utf-8,' + encodeURIComponent('Name,Phone,Email,Destination,Budget,Currency,Travelers,CustomerType,Status,Temperature,LostReason\n')
+  return <div className="fixed inset-0 z-[65] grid place-items-center bg-slate-950/50 p-4">
+    <section role="dialog" aria-modal="true" aria-labelledby="import-leads-title" className="gm-card w-full max-w-xl max-h-[88dvh] overflow-y-auto space-y-4">
+      <header className="gm-row"><h2 id="import-leads-title">Import CSV leads</h2><button type="button" className="gm-icon-button" aria-label="Close import" disabled={saving} onClick={close}><X size={18} /></button></header>
+      <label className="grid gap-2 text-sm"><span className="flex items-center gap-2"><UploadCloud size={17} /> Choose a CSV file</span><input type="file" accept=".csv,text/csv" disabled={saving} onChange={(event) => void selectFile(event.target.files?.[0])} /></label>
+      {error && <p role="alert" className="gm-error">{error}</p>}
+      {rows.length > 0 && result === undefined && <p>{rows.length} rows ready for validation.</p>}
+      {result !== undefined && <p role="status">{result.count} imported · {result.skipped} already imported · {errors.length} rows need attention</p>}
+      {errors.length > 0 && <ul className="max-h-52 overflow-y-auto space-y-1 text-sm">
+        {errors.map(({ row, message }) => <li key={row}>Row {row} · {message}</li>)}
+      </ul>}
+      <div className="gm-row">
+        <a href={template} download="growme_leads_template.csv" className="gm-text-button"><Download size={16} /> Download template</a>
+        <button className="gm-button" type="button" disabled={!rows.length || saving || result !== undefined} onClick={() => void submit()}>{saving ? 'Importing…' : 'Import leads'}</button>
       </div>
-    </div>
-  )
+    </section>
+  </div>
 }

@@ -1,81 +1,33 @@
+import { useEffect } from 'react'
 import { useHostPage } from '../../context/HostPageContext'
-import React, { useEffect, useState } from 'react'
-import { LeadsSidebar } from '../leads/components/LeadsSidebar'
-import { HostHeader } from './components/HostHeader'
 import { WebsiteLinkCard } from './components/WebsiteLinkCard'
 import { BannerAboutCard } from './components/BannerAboutCard'
-import { HostPackagesCard } from './components/HostPackagesCard'
 import { HostContactCard } from './components/HostContactCard'
 import { HostReviewsCard } from './components/HostReviewsCard'
 import { PublicWebsitePreviewModal } from './components/PublicWebsitePreviewModal'
-import { Menu } from 'lucide-react'
 
-interface HostPageProps {
-  onNavigateMenu?: (menu: string) => void
-}
+export function HostPage() {
+  const { refreshHostPage, isLoading, loadError, setIsPublicPreviewOpen } = useHostPage()
 
-export const HostPage: React.FC<HostPageProps> = ({ onNavigateMenu }) => {
-  const { refreshHostPage } = useHostPage()
-  useEffect(() => { void refreshHostPage() }, [refreshHostPage])
+  useEffect(() => {
+    void refreshHostPage()
+    return () => setIsPublicPreviewOpen(false)
+  }, [refreshHostPage, setIsPublicPreviewOpen])
 
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-
-  return (
-    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
-      {/* Sidebar with active Host Page tab cutout */}
-      <LeadsSidebar
-        isOpen={isMobileSidebarOpen}
-        onClose={() => setIsMobileSidebarOpen(false)}
-        currentPath="Host Page"
-        onSelectMenu={onNavigateMenu}
-      />
-
-      {/* Main CRM Application Area */}
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-        {/* Mobile Top App Bar */}
-        <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
-          <button
-            onClick={() => setIsMobileSidebarOpen(true)}
-            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xs">
-              TT
-            </div>
-            <span className="font-bold text-sm text-slate-900">Host Page</span>
-          </div>
-          <div className="w-9" />
-        </div>
-
-        <main className="flex-1 p-3 sm:p-5 lg:p-8 max-w-5xl w-full mx-auto space-y-6 pb-12">
-          {/* Header Bar */}
-          <HostHeader />
-
-          {/* Your Website Link Card */}
-          <WebsiteLinkCard />
-
-          {/* Banner & About Card */}
-          <BannerAboutCard />
-
-          {/* Packages Card */}
-          <HostPackagesCard
-            onNavigatePackages={() => {
-              if (onNavigateMenu) onNavigateMenu('Packages')
-            }}
-          />
-
-          {/* Contact Card */}
-          <HostContactCard />
-
-          {/* Reviews Card */}
-          <HostReviewsCard />
-        </main>
-      </div>
-
-      {/* Public Mini-Website Live Preview Modal */}
-      <PublicWebsitePreviewModal />
+  return <section className="gm-list" aria-labelledby="host-page-heading">
+    <div>
+      <h2 className="gm-section-title" id="host-page-heading">Host page</h2>
+      <p className="gm-muted">Edit your banner, business information and reviews.</p>
     </div>
-  )
+    {isLoading ? <p role="status">Loading host page…</p> :
+      loadError ? <p role="alert" className="gm-error">{loadError}</p> :
+        <>
+          <WebsiteLinkCard />
+          <BannerAboutCard />
+          <HostContactCard />
+          <HostReviewsCard />
+          <PublicWebsitePreviewModal />
+        </>
+    }
+  </section>
 }

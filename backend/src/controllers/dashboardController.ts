@@ -1,191 +1,113 @@
 import { Response } from 'express';
+import { Types } from 'mongoose';
 import { AuthenticatedRequest } from '../types';
-import { Lead, ILead } from '../models/Lead';
-import { Booking, IBooking } from '../models/Booking';
-import { FollowUp, IFollowUp } from '../models/FollowUp';
+import { Lead, leadStages } from '../models/Lead';
+import { Booking } from '../models/Booking';
+import { FollowUp } from '../models/FollowUp';
 import { User } from '../models/User';
 import { TeamInvite } from '../models/TeamInvite';
+import { workspaceAccess } from '../platform/access';
 
-// Helper to get local date in YYYY-MM-DD
-const getTodayStr = (): string => {
-  const d = new Date();
-  return d.toISOString().split('T')[0];
-};
+const dayMs = 86_400_000;
+const dayKey = (date: Date) => date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' });
 
-export const getDashboardSummary = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<void> => {
+export const getDashboardSummary = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const organizationId = req.user?.organizationId;
-    if (!organizationId) {
-      res.status(401).json({ error: 'Tenant context missing' });
+    const id = req.user?.organizationId;
+    const access = id ? await workspaceAccess(id) : null;
+    if (!access) {
+      res.status(403).json({ error: 'This workspace is unavailable.' });
       return;
     }
 
-    const todayStr = getTodayStr();
+    const organizationId = new Types.ObjectId(access.organization.id);
+    const { enabled } = access;
     const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const thirtyDaysAhead = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const today = dayKey(now);
+    const month = today.slice(0, 7);
+    const lastDay = dayKey(new Date(now.getTime() + 30 * dayMs));
+    const weekStart = new Date(Date.parse(today) - 6 * dayMs - 330 * 60_000);
 
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    // Run parallel aggregation queries for optimal performance
-    const [
-      leads,
-      bookings,
-      followUps,
-      teamMembersCount,
-      pendingInvitesCount,
-    ]: [ILead[], IBooking[], IFollowUp[], number, number] = await Promise.all([
-      Lead.find({ organizationId }).sort({ createdAt: -1 }),
-      Booking.find({ organizationId }).sort({ departure: 1 }),
-      FollowUp.find({ organizationId }).sort({ dueDate: 1 }),
-      User.countDocuments({ organizationId, status: 'Active' }),
-      TeamInvite.countDocuments({ organizationId, status: 'Invited' }),
+    const [leadGroups, sources, recentLeads, bookingTotals, departures, followUpGroups, dueItems, activeMembers, pendingInvites] = await Promise.all([
+      enabled.includes('leads') ? Lead.aggregate<{ _id: string; count: number; newCount: number; averageDays: number | null }>([
+        { $match: { organizationId, archivedAt: null } },
+        { $group: {
+          _id: '$status', count: { $sum: 1 },
+          newCount: { $sum: { $cond: [{ $gte: ['$createdAt', weekStart] }, 1, 0] } },
+          averageDays: { $avg: { $cond: [
+            { $in: ['$status', ['Won', 'Lost']] }, null,
+            { $divide: [{ $subtract: [now, { $ifNull: ['$stageChangedAt', { $cond: [{ $eq: ['$status', 'New'] }, '$createdAt', null] }] }] }, dayMs] },
+          ] } },
+        } },
+      ]) : [],
+      enabled.includes('leads') ? Lead.aggregate<{ _id: string; total: number; won: number }>([
+        { $match: { organizationId, archivedAt: null } },
+        { $group: { _id: { $ifNull: ['$source', 'Manual'] }, total: { $sum: 1 }, won: { $sum: { $cond: [{ $eq: ['$status', 'Won'] }, 1, 0] } } } },
+        { $sort: { total: -1, _id: 1 } },
+      ]) : [],
+      enabled.includes('leads') ? Lead.find({ organizationId, archivedAt: null }).select('name destination status createdAt').sort({ createdAt: -1 }).limit(5).lean() : [],
+      enabled.includes('bookings') ? Booking.aggregate<{ _id: string; count: number; tripValue: number; collected: number; departing: number }>([
+        { $match: { organizationId } },
+        { $group: {
+          _id: { $ifNull: ['$currency', 'INR'] },
+          count: { $sum: 1 },
+          tripValue: { $sum: { $cond: [{ $ne: ['$status', 'Cancelled'] }, '$totalAmount', 0] } },
+          collected: { $sum: { $cond: [{ $ne: ['$status', 'Cancelled'] }, '$amountPaid', 0] } },
+          departing: { $sum: { $cond: [{ $and: [
+            { $ne: ['$status', 'Cancelled'] },
+            { $eq: [{ $substrBytes: [{ $ifNull: ['$departure', ''] }, 0, 7] }, month] },
+          ] }, 1, 0] } },
+        } },
+        { $sort: { _id: 1 } },
+      ]) : [],
+      enabled.includes('bookings') ? Booking.find({ organizationId, departure: { $gte: today, $lte: lastDay }, status: { $in: ['Confirmed', 'Ongoing'] } })
+        .select('customerName destination departure status').sort({ departure: 1, _id: 1 }).limit(5).lean() : [],
+      enabled.includes('leads') ? FollowUp.aggregate<{ _id: string; count: number }>([
+        { $match: { organizationId, status: { $ne: 'completed' } } },
+        { $group: { _id: { $switch: { branches: [
+          { case: { $lt: ['$dueDate', today] }, then: 'overdue' },
+          { case: { $eq: ['$dueDate', today] }, then: 'today' },
+        ], default: 'upcoming' } }, count: { $sum: 1 } } },
+      ]) : [],
+      enabled.includes('leads') ? FollowUp.find({ organizationId, status: { $ne: 'completed' }, dueDate: { $lte: today } })
+        .select('title leadName dueDate dueTime').sort({ dueDate: 1, dueTime: 1, _id: 1 }).limit(5).lean() : [],
+      enabled.includes('team') ? User.countDocuments({ organizationId, status: 'Active' }) : 0,
+      enabled.includes('team') ? TeamInvite.countDocuments({ organizationId, status: 'Invited' }) : 0,
     ]);
 
-    // 1. KPI Metric Stats Calculation
-    const totalLeads = leads.length;
-    const openLeads = leads.filter((l: ILead) => l.status !== 'Won' && l.status !== 'Lost').length;
-    const wonLeads = leads.filter((l: ILead) => l.status === 'Won').length;
-    const lostLeads = leads.filter((l: ILead) => l.status === 'Lost').length;
-
-    const newThisWeek = leads.filter((l: ILead) => {
-      const created = new Date(l.createdAt);
-      return created >= sevenDaysAgo;
-    }).length;
-
-    const totalBookings = bookings.length;
-
-    const departingThisMonth = bookings.filter((b: IBooking) => {
-      if (!b.departure) return false;
-      const depDate = new Date(b.departure);
-      return depDate.getMonth() === currentMonth && depDate.getFullYear() === currentYear;
-    }).length;
-
-    // Calculate Trip Value: sum of bookings totalAmount, or sum of won leads budget if no bookings
-    const bookingsTripValue = bookings.reduce((sum: number, b: IBooking) => sum + (b.totalAmount || 0), 0);
-    const leadsWonValue = leads
-      .filter((l: ILead) => l.status === 'Won')
-      .reduce((sum: number, l: ILead) => sum + (l.budget || 0), 0);
-    const totalTripValue = bookingsTripValue > 0 ? bookingsTripValue : leadsWonValue;
-
-    // Total collected cash
-    const totalCollected = bookings.reduce((sum: number, b: IBooking) => sum + (b.amountPaid || 0), 0);
-
-    const conversionRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
-
-    // 2. Pipeline Stage Breakdown
-    const STAGES = [
-      { stage: 'New', label: 'New Enquiry', color: '#6366f1', bg: 'bg-indigo-500' },
-      { stage: 'Contacted', label: 'Contacted', color: '#0ea5e9', bg: 'bg-sky-500' },
-      { stage: 'Qualified', label: 'Qualified', color: '#eab308', bg: 'bg-yellow-500' },
-      { stage: 'Proposal sent', label: 'Proposal Sent', color: '#a855f7', bg: 'bg-purple-500' },
-      { stage: 'Won', label: 'Won', color: '#10b981', bg: 'bg-emerald-500' },
-    ];
-
-    const pipeline = STAGES.map((s) => {
-      const stageLeads = leads.filter((l: ILead) => l.status === s.stage);
-      const count = stageLeads.length;
-      const value = stageLeads.reduce((acc: number, l: ILead) => acc + (l.budget || 0), 0);
-      const percentage = totalLeads > 0 ? Math.round((count / totalLeads) * 100) : 0;
-      return {
-        ...s,
-        count,
-        value,
-        percentage,
-      };
+    const totalLeads = leadGroups.reduce((total, group) => total + group.count, 0);
+    const pipeline = leadStages.map((stage) => {
+      const group = leadGroups.find((item) => item._id === stage);
+      return { stage, count: group?.count ?? 0, averageDays: group?.averageDays == null ? null : Math.max(0, group.averageDays) };
     });
+    const wonLeads = leadGroups.find((item) => item._id === 'Won')?.count ?? 0;
+    const lostLeads = leadGroups.find((item) => item._id === 'Lost')?.count ?? 0;
 
-    // 3. Recent 5 Leads
-    const recentLeads = leads.slice(0, 5).map((l: ILead) => ({
-      id: l._id.toString(),
-      name: l.name,
-      email: l.email,
-      phone: l.phone,
-      destination: l.destination || 'Unspecified',
-      travelers: l.travelers || 1,
-      budget: l.budget || 0,
-      status: l.status,
-      assignedTo: l.assignedTo,
-      createdAt: l.createdAt instanceof Date ? l.createdAt.toISOString() : l.createdAt,
-    }));
-
-    // 4. Follow-ups Due & Overdue
-    const overdueFollowUps = followUps.filter(
-      (f: IFollowUp) => f.status === 'overdue' || (f.dueDate < todayStr && f.status !== 'completed')
-    );
-    const todayFollowUps = followUps.filter(
-      (f: IFollowUp) => f.dueDate === todayStr && f.status !== 'completed'
-    );
-    const pendingFollowUps = followUps.filter(
-      (f: IFollowUp) => f.status !== 'completed'
-    );
-
-    const upcomingFollowUpsList = pendingFollowUps.slice(0, 5).map((f: IFollowUp) => ({
-      id: f._id.toString(),
-      title: f.title || f.leadName,
-      leadName: f.leadName,
-      phone: f.phone,
-      destination: f.destination,
-      dueDate: f.dueDate,
-      dueTime: f.dueTime,
-      type: f.type,
-      note: f.note,
-      status: f.dueDate < todayStr ? 'overdue' : f.status,
-    }));
-
-    // 5. Upcoming Departures (next 30 days)
-    const upcomingDepartures = bookings
-      .filter((b: IBooking) => {
-        if (!b.departure) return false;
-        const dep = new Date(b.departure);
-        return dep >= now && dep <= thirtyDaysAhead;
-      })
-      .slice(0, 5)
-      .map((b: IBooking) => ({
-        id: b._id.toString(),
-        customerName: b.customerName,
-        destination: b.destination,
-        departure: b.departure,
-        daysUntil: Math.ceil((new Date(b.departure).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
-        travellers: b.travellers,
-        status: b.status,
-        totalAmount: b.totalAmount,
-        amountPaid: b.amountPaid,
-      }));
-
-    res.status(200).json({
+    res.json({
       metrics: {
-        totalLeads,
-        openLeads,
-        wonLeads,
-        lostLeads,
-        newThisWeek,
-        totalBookings,
-        departingThisMonth,
-        totalTripValue,
-        totalCollected,
-        conversionRate,
+        totalLeads, openLeads: totalLeads - wonLeads - lostLeads, wonLeads,
+        newThisWeek: leadGroups.reduce((total, group) => total + group.newCount, 0),
+        totalBookings: bookingTotals.reduce((total, booking) => total + booking.count, 0),
+        departingThisMonth: bookingTotals.reduce((total, booking) => total + booking.departing, 0),
+        paymentsByCurrency: bookingTotals.map(({ _id, tripValue, collected }) => ({ currency: _id, tripValue, collected })),
       },
       pipeline,
-      recentLeads,
+      sources: sources.map(({ _id, total, won }) => ({ source: _id, total, won })),
+      recentLeads: recentLeads.map(({ _id, name, destination, status, createdAt }) => ({ id: _id.toString(), name, destination, status, createdAt })),
       followUps: {
-        dueTodayCount: todayFollowUps.length,
-        overdueCount: overdueFollowUps.length,
-        totalPendingCount: pendingFollowUps.length,
-        items: upcomingFollowUpsList,
+        dueTodayCount: followUpGroups.find((group) => group._id === 'today')?.count ?? 0,
+        overdueCount: followUpGroups.find((group) => group._id === 'overdue')?.count ?? 0,
+        items: dueItems.map(({ _id, title, leadName, dueDate, dueTime }) => ({
+          id: _id.toString(), title, leadName, dueDate, dueTime, status: dueDate < today ? 'overdue' : 'pending',
+        })),
       },
-      upcomingDepartures,
-      team: {
-        activeMembers: teamMembersCount,
-        pendingInvites: pendingInvitesCount,
-      },
+      upcomingDepartures: departures.map(({ _id, customerName, destination, departure, status }) => ({
+        id: _id.toString(), customerName, destination, departure, status,
+      })),
+      team: { activeMembers, pendingInvites },
     });
-  } catch (error: any) {
-    console.error('[Dashboard Summary Error]:', error);
-    res.status(500).json({ error: error.message || 'Error compiling dashboard summary' });
+  } catch (error) {
+    console.error('[Dashboard Summary Error]:', error instanceof Error ? error.name : 'Unknown error');
+    res.status(500).json({ error: 'Could not load the dashboard.' });
   }
 };

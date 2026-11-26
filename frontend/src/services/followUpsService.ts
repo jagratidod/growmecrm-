@@ -1,4 +1,4 @@
-import { request } from './api';
+import { getCachedRead, request, ROUTE_READ_TTL, ROUTE_READ_STALE_WINDOW } from './api';
 
 export interface FollowUpItem {
   id: string;
@@ -25,19 +25,22 @@ export interface FollowUpStats {
   completed: number;
 }
 
+type FollowUpList = { followUps: FollowUpItem[]; stats: FollowUpStats }
+
 export const followUpsService = {
+  getCachedFollowUps: () => getCachedRead<FollowUpList>('/follow-ups', ROUTE_READ_STALE_WINDOW),
   // 1. Get all follow-ups with filter and stats
   async getFollowUps(params?: {
     filter?: 'all' | 'today' | 'upcoming' | 'overdue' | 'completed';
     search?: string;
-  }): Promise<{ followUps: FollowUpItem[]; stats: FollowUpStats }> {
+  }, signal?: AbortSignal, fresh = false): Promise<FollowUpList> {
     const query = new URLSearchParams();
     if (params?.filter && params.filter !== 'all') query.append('filter', params.filter);
     if (params?.search) query.append('search', params.search);
 
     const qs = query.toString() ? `?${query.toString()}` : '';
-    return request<{ followUps: FollowUpItem[]; stats: FollowUpStats }>(`/follow-ups${qs}`, {
-      method: 'GET',
+    return request<FollowUpList>(`/follow-ups${qs}`, {
+      method: 'GET', signal, fresh, cacheMs: ROUTE_READ_TTL,
     });
   },
 

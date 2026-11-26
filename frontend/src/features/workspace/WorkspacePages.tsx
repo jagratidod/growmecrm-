@@ -1,20 +1,21 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { ArrowUpRight, Globe, LayoutGrid, Menu, Save, Upload } from 'lucide-react'
+import { ArrowUpRight, Globe, Link2, Menu, PanelTop, Save, Upload } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { useRouter } from '../../context/RouterContext'
 import { request } from '../../services/api'
 import { useWorkspace } from './WorkspaceAccess'
-import { moduleNames, save } from './workspaceApi'
+import { moduleNames, save, websitePaths } from './workspaceApi'
 import type { Entry, Section, Site, SiteEditor } from './workspaceApi'
-import './workspace.css'
 
-const homeCards = [
-  { title: 'Websites', detail: 'Edit content and publish updates to your connected domains.', path: '/websites', module: 'websites', icon: Globe },
-  { title: 'Leads', detail: 'Review website enquiries and manage your sales pipeline.', path: '/leads', module: 'leads', icon: LayoutGrid },
-  { title: 'Bookings', detail: 'Track departures, reservations and customer payments.', path: '/bookings', module: 'bookings', icon: LayoutGrid },
-  { title: 'Travel catalog', detail: 'Manage your packages, itineraries and inventory.', path: '/packages', module: 'catalog', icon: LayoutGrid },
+const LinkTreePage = lazy(() => import('../linkTree/LinkTreePage').then((page) => ({ default: page.LinkTreePage })))
+const HostPage = lazy(() => import('../hostPage/HostPage').then((page) => ({ default: page.HostPage })))
+
+const websiteSections = [
+  { title: 'Connected sites', path: websitePaths.sites, icon: Globe },
+  { title: 'LinkTree', path: websitePaths.linkTree, icon: Link2 },
+  { title: 'Host page', path: websitePaths.hostPage, icon: PanelTop },
 ]
 const emptySection: Section = { title: '', body: '', image: '' }
 const label = (name: string) => moduleNames[name] || name.replace(/-/g, ' ').replace(/^./, (letter) => letter.toUpperCase())
@@ -33,58 +34,61 @@ function Shell({ current, children }: { current: string; children: ReactNode }) 
   </div>
 }
 
-export function WorkspaceHome() {
-  const { access, error } = useWorkspace()
-  const { user } = useAuth()
-  const { navigate } = useRouter()
-  return <Shell current="Dashboard">
-    <section className="gm-hero">
-      <div><div className="gm-kicker">GrowMe Workspace</div><h1>{user?.organizationName || 'Your workspace'}</h1><p>Manage your websites and client enquiries from one place.</p></div>
-      {access?.plan && <span className="gm-tag">{access.plan.toLowerCase()} plan</span>}
-    </section>
-    {error && <p role="alert" className="gm-error">{error}</p>}
-    <div className="gm-grid">
-      {homeCards.filter((card) => access?.modules.includes(card.module)).map(({ title, detail, path, icon: Icon }) =>
-        <button className="gm-card gm-tile" key={path} onClick={() => navigate(path)}>
-          <div className="gm-tile-head"><span className="gm-card-icon"><Icon size={21} /></span><ArrowUpRight size={19} /></div>
-          <h2>{title}</h2><p>{detail}</p>
-        </button>
-      )}
-    </div>
-    {access && <section className="gm-card gm-row">
-      <div><h2>GrowMe subscription</h2><p>{access.billing.paidThrough ? `Paid through ${new Date(access.billing.paidThrough).toLocaleDateString('en-IN')}` : `${access.modules.length} modules enabled`}</p></div>
-      {access.billing.checkoutUrl && (user?.role === 'owner' || user?.role === 'admin') &&
-        <a className="gm-button" href={access.billing.checkoutUrl} target="_blank" rel="noreferrer">Open GrowMe checkout <ArrowUpRight size={16} /></a>}
-    </section>}
+export function WebsitesPage() {
+  const { navigate, path } = useRouter()
+  const activeSection = path === websitePaths.linkTree || path === websitePaths.hostPage ? path : websitePaths.sites
+  const siteId = activeSection === websitePaths.sites ? path.split('/')[2] : undefined
+
+  return <Shell current="Websites">
+    {siteId ? <WebsiteEditor key={siteId} siteId={siteId} /> : <>
+      <div className="gm-heading gm-websites-heading">
+        <h1>Websites</h1>
+        <p>Manage connected sites, your link in bio, and your hosted page.</p>
+      </div>
+      <nav className="gm-tabs gm-websites-nav" aria-label="Website tools">
+        {websiteSections.map(({ title, path: href, icon: Icon }) =>
+          <a key={href} href={href} aria-current={activeSection === href ? 'page' : undefined}
+            onClick={(event) => {
+              if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+              event.preventDefault()
+              if (href !== activeSection) navigate(href)
+            }}>
+            <Icon size={17} aria-hidden="true" />{title}
+          </a>
+        )}
+      </nav>
+      <Suspense fallback={<p role="status">Loading website tools…</p>}>
+        {activeSection === websitePaths.linkTree ? <LinkTreePage /> :
+          activeSection === websitePaths.hostPage ? <HostPage /> : <ConnectedSites />}
+      </Suspense>
+    </>}
   </Shell>
 }
 
-export function WebsitesPage() {
-  const { navigate, path } = useRouter()
-  const siteId = path.split('/')[2]
+function ConnectedSites() {
+  const { navigate } = useRouter()
   const [sites, setSites] = useState<Site[]>()
   const [error, setError] = useState('')
   useEffect(() => {
-    if (siteId) return
-    let active = true
-    request<{ sites: Site[] }>('/workspace/websites').then(
-      ({ sites }) => { if (active) setSites(sites) },
-      (error: Error) => { if (active) setError(error.message) },
+    const controller = new AbortController()
+    request<{ sites: Site[] }>('/workspace/websites', { signal: controller.signal }).then(
+      ({ sites }) => setSites(sites),
+      (error: Error) => { if (!controller.signal.aborted) setError(error.message) },
     )
-    return () => { active = false }
-  }, [siteId])
-  return <Shell current="Websites">
-    {siteId ? <WebsiteEditor key={siteId} siteId={siteId} /> : <>
-      <div className="gm-heading"><h1>Websites</h1><p>Manage content for your connected websites.</p></div>
-      {error && <p role="alert" className="gm-error">{error}</p>}
-      {!error && !sites && <p>Loading websites…</p>}
-      {sites?.length === 0 && <div className="gm-card"><h2>No websites connected</h2><p>Your websites will appear here after GrowMe connects them.</p></div>}
-      <div className="gm-grid">{sites?.map((site) => <button key={site._id} className="gm-card gm-tile" onClick={() => navigate(`/websites/${site._id}`)}>
-        <div className="gm-tile-head"><span className="gm-card-icon"><Globe size={21} /></span><ArrowUpRight size={19} /></div>
-        <h2>{site.name}</h2><p>{site.domain}</p>
-      </button>)}</div>
-    </>}
-  </Shell>
+    return () => controller.abort()
+  }, [])
+
+  if (error) return <p role="alert" className="gm-error">{error}</p>
+  if (!sites) return <p role="status">Loading websites…</p>
+  if (!sites.length) return <div className="gm-card gm-list">
+    <span className="gm-card-icon"><Globe size={21} aria-hidden="true" /></span>
+    <div><h2>No websites connected</h2><p>Your sites will appear here once GrowMe connects them.</p></div>
+  </div>
+
+  return <div className="gm-grid">{sites.map((site) => <button key={site._id} className="gm-card gm-tile" onClick={() => navigate(`${websitePaths.sites}/${site._id}`)}>
+    <div className="gm-tile-head"><span className="gm-card-icon"><Globe size={21} /></span><ArrowUpRight size={19} /></div>
+    <h2>{site.name}</h2><p>{site.domain}</p>
+  </button>)}</div>
 }
 
 function WebsiteEditor({ siteId }: { siteId: string }) {

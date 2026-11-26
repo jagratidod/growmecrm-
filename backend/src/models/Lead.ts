@@ -1,13 +1,7 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
-export type LeadStage =
-  | 'New'
-  | 'Contacted'
-  | 'Qualified'
-  | 'Proposal sent'
-  | 'Negotiation'
-  | 'Won'
-  | 'Lost';
+export const leadStages = ['New', 'Contacted', 'Qualified', 'Proposal sent', 'Negotiation', 'Won', 'Lost'] as const;
+export type LeadStage = typeof leadStages[number];
 
 export type LeadTemperature = 'Hot' | 'Warm' | 'Cold' | 'Won' | 'Lost';
 export type CustomerType = 'B2C' | 'B2B';
@@ -18,7 +12,8 @@ export type LeadSource =
   | 'Instagram'
   | 'Google'
   | 'WhatsApp'
-  | 'Referral';
+  | 'Referral'
+  | 'CSV';
 
 export type ActivityType =
   | 'created'
@@ -35,6 +30,8 @@ export interface ILeadActivity {
   description: string;
   timestamp: Date;
   author: string;
+  fromStage?: LeadStage;
+  toStage?: LeadStage;
 }
 
 export interface ILead extends Document {
@@ -53,6 +50,13 @@ export interface ILead extends Document {
   budget: number;
   currency: string;
   assignedTo: string;
+  assignedUserId?: Types.ObjectId;
+  stageChangedAt?: Date;
+  closedAt?: Date;
+  proposalSentAt?: Date;
+  lostReason?: string;
+  archivedAt?: Date;
+  intakeKey?: string;
   temperature: LeadTemperature;
   tags: string[];
   notes?: string;
@@ -70,6 +74,8 @@ const LeadActivitySchema = new Schema<ILeadActivity>({
   description: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },
   author: { type: String, default: 'System' },
+  fromStage: { type: String, enum: leadStages },
+  toStage: { type: String, enum: leadStages },
 });
 
 const LeadSchema = new Schema<ILead>(
@@ -83,15 +89,15 @@ const LeadSchema = new Schema<ILead>(
     websiteId: { type: Schema.Types.ObjectId, ref: 'GrowMeWebsite' },
     name: { type: String, required: [true, 'Lead name is required'], trim: true },
     email: { type: String, trim: true, lowercase: true },
-    phone: { type: String, required: [true, 'Phone number is required'], trim: true },
+    phone: { type: String, default: '', trim: true },
     source: {
       type: String,
-      enum: ['Manual', 'Website', 'Facebook', 'Instagram', 'Google', 'WhatsApp', 'Referral'],
+      enum: ['Manual', 'Website', 'Facebook', 'Instagram', 'Google', 'WhatsApp', 'Referral', 'CSV'],
       default: 'Manual',
     },
     status: {
       type: String,
-      enum: ['New', 'Contacted', 'Qualified', 'Proposal sent', 'Negotiation', 'Won', 'Lost'],
+      enum: leadStages,
       default: 'New',
       index: true,
     },
@@ -107,6 +113,13 @@ const LeadSchema = new Schema<ILead>(
     budget: { type: Number, default: 0, min: 0 },
     currency: { type: String, default: 'INR' },
     assignedTo: { type: String, default: 'Unassigned' },
+    assignedUserId: { type: Schema.Types.ObjectId, ref: 'User' },
+    stageChangedAt: { type: Date },
+    closedAt: { type: Date },
+    proposalSentAt: { type: Date },
+    lostReason: { type: String, maxlength: 500 },
+    archivedAt: { type: Date },
+    intakeKey: { type: String, select: false },
     temperature: {
       type: String,
       enum: ['Hot', 'Warm', 'Cold', 'Won', 'Lost'],
@@ -124,5 +137,9 @@ const LeadSchema = new Schema<ILead>(
 // Compound indexes for fast multi-tenant filtering
 LeadSchema.index({ organizationId: 1, status: 1 });
 LeadSchema.index({ organizationId: 1, createdAt: -1 });
+LeadSchema.index({ organizationId: 1, assignedUserId: 1 });
+LeadSchema.index({ organizationId: 1, intakeKey: 1 }, {
+  unique: true, partialFilterExpression: { intakeKey: { $type: 'string' } },
+});
 
 export const Lead = mongoose.model<ILead>('Lead', LeadSchema);

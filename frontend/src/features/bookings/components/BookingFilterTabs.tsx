@@ -30,7 +30,7 @@ export const BookingFilterTabs: React.FC = () => {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 select-none">
       {/* Pills Container */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+      <div className="flex items-center gap-2 flex-wrap">
         {tabs.map((tab) => {
           const isSelected = filters.status === tab.id
           const count = statusCounts[tab.id] || 0
@@ -39,6 +39,7 @@ export const BookingFilterTabs: React.FC = () => {
             <button
               key={tab.id}
               type="button"
+              aria-pressed={isSelected}
               onClick={() => updateFilter('status', tab.id)}
               className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 ${
                 isSelected

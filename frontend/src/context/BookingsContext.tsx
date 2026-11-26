@@ -17,6 +17,8 @@ interface BookingsContextType {
   updateFilter: <K extends keyof BookingFilters>(key: K, value: BookingFilters[K]) => void
   resetFilters: () => void
   addBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Booking | undefined>
+  retryLeadSync: (id: string) => Promise<Booking | undefined>
+  recordBookingPayment: (id: string, amount: number) => Promise<Booking | undefined>
   updateBooking: (id: string, updates: Partial<Booking>) => void
   deleteBooking: (id: string) => void
   updateBookingStatus: (id: string, status: BookingStatus) => void
@@ -50,7 +52,7 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!enabled) return
     let active = true
     bookingsService.getBookings().then(({ bookings }) => {
-      if (active) { setBookings(bookings); setLoading(false) }
+      if (active) { setBookings(bookings); setLoadError(''); setLoading(false) }
     }, (error: Error) => {
       if (active) { setLoadError(error.message); setLoading(false) }
     })
@@ -67,7 +69,7 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Calculate dynamic stats matching the screenshot
   const stats = useMemo<BookingStats>(() => {
-    const currentMonthStr = new Date().toISOString().slice(0, 7) // e.g. "2026-11"
+    const currentMonthStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' }).slice(0, 7)
 
     let departingThisMonthCount = 0
     let totalPipelineValue = 0
@@ -75,12 +77,8 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     bookings.forEach((b) => {
       // Check departure month
-      if (b.departure && b.departure.startsWith(currentMonthStr)) {
-        departingThisMonthCount++
-      }
-
-      // Add to pipeline value if not cancelled
       if (b.status !== 'Cancelled') {
+        if (b.departure?.startsWith(currentMonthStr)) departingThisMonthCount++
         totalPipelineValue += b.totalAmount || 0
         totalCollected += b.amountPaid || 0
       }
@@ -102,11 +100,15 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return false
       }
 
+      const departure = b.departure?.slice(0, 10)
+      if (filters.departureFrom && (!departure || departure < filters.departureFrom)) return false
+      if (filters.departureTo && (!departure || departure > filters.departureTo)) return false
+
       // Search keyword filter (customer, destination, phone, email)
       if (filters.search) {
-        const query = filters.search.toLowerCase()
+        const query = filters.search.trim().toLowerCase()
         const matchesName = b.customerName.toLowerCase().includes(query)
-        const matchesDest = b.destination.toLowerCase().includes(query)
+        const matchesDest = b.destination.toLowerCase().includes(query) || b.package?.toLowerCase().includes(query)
         const matchesEmail = b.email?.toLowerCase().includes(query)
         const matchesPhone = b.phone?.toLowerCase().includes(query)
         if (!matchesName && !matchesDest && !matchesEmail && !matchesPhone) {
@@ -122,13 +124,30 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try { return await mutation() }
     catch (error) { toast({ type: 'error', title: 'Booking update failed', description: (error as Error).message }) }
   }
+  const reportLeadSync = (warning?: string) => {
+    if (warning) toast({ type: 'error', title: 'Lead update pending', description: warning })
+  }
   const replaceBooking = (booking: Booking) => {
+    reportLeadSync(booking.leadSyncWarning)
     setBookings((previous) => previous.map((item) => item.id === booking.id ? booking : item))
     setSelectedBooking((previous) => previous?.id === booking.id ? booking : previous)
   }
   const addBooking: BookingsContextType['addBooking'] = (data) => mutate(async () => {
     const booking = await bookingsService.createBooking(data)
+    reportLeadSync(booking.leadSyncWarning)
     setBookings((previous) => [booking, ...previous])
+    return booking
+  })
+  const recordBookingPayment: BookingsContextType['recordBookingPayment'] = (id, amount) => mutate(async () => {
+    const { booking, leadSyncWarning } = await bookingsService.recordPayment(id, amount)
+    replaceBooking({ ...booking, leadSyncWarning })
+    toast({ type: 'success', title: 'Payment recorded' })
+    return booking
+  })
+  const retryLeadSync: BookingsContextType['retryLeadSync'] = (id) => mutate(async () => {
+    const booking = await bookingsService.retryLeadSync(id)
+    replaceBooking(booking)
+    if (!booking.leadConversionPending) toast({ type: 'success', title: 'Linked lead updated' })
     return booking
   })
   const updateBooking: BookingsContextType['updateBooking'] = (id, updates) => {
@@ -159,6 +178,8 @@ export const BookingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         resetFilters,
         addBooking,
         updateBooking,
+        recordBookingPayment,
+        retryLeadSync,
         deleteBooking,
         updateBookingStatus,
         selectedBooking,

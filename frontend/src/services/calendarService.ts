@@ -2,7 +2,7 @@ import { request } from './api';
 import type { CalendarEvent } from '../types/calendar.types';
 
 export const calendarService = {
-  // 1. Fetch all calendar events (manual + merged bookings)
+  // Fetch calendar entries, with booking milestones supplied by the bookings context.
   async getEvents(): Promise<{
     events: CalendarEvent[];
     manualCount: number;
@@ -12,7 +12,7 @@ export const calendarService = {
       events: CalendarEvent[];
       manualCount: number;
       bookingCount: number;
-    }>('/calendar/events', {
+    }>('/calendar/events?scope=manual', {
       method: 'GET',
     });
   },

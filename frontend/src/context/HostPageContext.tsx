@@ -14,6 +14,7 @@ interface HostPageContextType {
   setIsPublicPreviewOpen: (open: boolean) => void
   saveWebsite: () => Promise<void>
   isLoading: boolean
+  loadError: string
   refreshHostPage: () => Promise<void>
 }
 
@@ -33,22 +34,24 @@ const HostPageContext = createContext<HostPageContextType | undefined>(undefined
 
 export const HostPageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   const [hostData, setHostData] = useState<HostPageData>(DEFAULT_HOST_DATA)
   const [isPublicPreviewOpen, setIsPublicPreviewOpen] = useState(false)
 
   const refreshHostPage = useCallback(async () => {
     setIsLoading(true)
+    setLoadError('')
     try {
       const { hostPage } = await hostPageService.getHostPage()
       setHostData(hostPage)
     } catch (error) {
-      toast({ title: 'Could not load site', description: (error as Error).message, type: 'error' })
+      setLoadError((error as Error).message)
     } finally {
       setIsLoading(false)
     }
-  }, [toast])
+  }, [])
 
   const updateBannerImage = (url: string) => {
     setHostData((prev) => ({ ...prev, bannerImage: url }))
@@ -111,6 +114,7 @@ export const HostPageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsPublicPreviewOpen,
         saveWebsite,
         isLoading,
+        loadError,
         refreshHostPage,
       }}
     >

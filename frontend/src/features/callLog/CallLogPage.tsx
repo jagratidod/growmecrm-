@@ -12,7 +12,7 @@ interface CallLogPageProps {
 }
 
 export const CallLogPage: React.FC<CallLogPageProps> = ({ onNavigateMenu }) => {
-  const { callLogs, filteredCallLogs, isLogModalOpen, setIsLogModalOpen } = useCallLog()
+  const { callLogs, filteredCallLogs, isLogModalOpen, setIsLogModalOpen, loading, loadError, refreshCallLogs } = useCallLog()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   const isCompletelyEmpty = callLogs.length === 0
@@ -33,15 +33,13 @@ export const CallLogPage: React.FC<CallLogPageProps> = ({ onNavigateMenu }) => {
         {/* Mobile Top App Bar */}
         <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
           <button
+            aria-label="Open menu"
             onClick={() => setIsMobileSidebarOpen(true)}
             className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xs">
-              TT
-            </div>
             <span className="font-bold text-sm text-slate-900">Call Log</span>
           </div>
           <div className="w-9" />
@@ -52,7 +50,9 @@ export const CallLogPage: React.FC<CallLogPageProps> = ({ onNavigateMenu }) => {
           <CallLogHeader onOpenLogModal={() => setIsLogModalOpen(true)} />
 
           {/* Main Content Area */}
-          {isCompletelyEmpty ? (
+          {loadError ? <p className="gm-error" role="alert">{loadError} <button className="gm-text-button" onClick={refreshCallLogs}>Retry</button></p>
+            : loading ? <p role="status">Loading calls…</p>
+            : isCompletelyEmpty ? (
             <CallLogEmptyState onOpenLogModal={() => setIsLogModalOpen(true)} />
           ) : isFilterEmpty ? (
             <CallLogEmptyState onOpenLogModal={() => setIsLogModalOpen(true)} isFiltered />

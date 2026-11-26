@@ -5,6 +5,7 @@ import type { CalendarEvent } from '../types/calendar.types'
 import { useBookings } from './BookingsContext'
 import { useToast } from '../components/ui/Toast'
 import { calendarService } from '../services/calendarService'
+import { formatBookingAmount } from '../features/bookings/formatBookingAmount'
 
 interface CalendarContextType {
   events: CalendarEvent[]
@@ -21,17 +22,23 @@ interface CalendarContextType {
   selectedDate: string
   setSelectedDate: (date: string) => void
   refreshEvents: () => Promise<void>
+  loading: boolean
+  loadError: string
 }
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined)
 
 export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { path } = useRouter()
-  const enabled = (useWorkspace().access?.modules.includes('calendar')) && (['/calendar', '/events'].includes(path))
+  const { access } = useWorkspace()
+  const enabled = access?.modules.includes('calendar') && ['/calendar', '/events'].includes(path)
+  const canViewBookings = access?.modules.includes('bookings')
   const { bookings } = useBookings()
   const { toast } = useToast()
 
   const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   const [currentDate, setCurrentDate] = useState<Date>(() => {
     return new Date()
@@ -43,12 +50,16 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Fetch from backend API
   const refreshEvents = useCallback(async () => {
     if (!enabled) return
+    setLoading(true)
+    setLoadError('')
     try {
       setEvents((await calendarService.getEvents()).events.filter((event) => event.type === 'manual'))
     } catch (error) {
-      toast({ type: 'error', title: 'Could not load calendar events', description: (error as Error).message })
+      setLoadError((error as Error).message)
+    } finally {
+      setLoading(false)
     }
-  }, [enabled, toast])
+  }, [enabled])
 
   useEffect(() => {
     void refreshEvents()
@@ -58,13 +69,15 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const allEvents = useMemo(() => {
     const bookingEvents: CalendarEvent[] = []
 
+    if (!canViewBookings) return events
     bookings.forEach((b) => {
+      if (b.status === 'Cancelled') return
       if (b.departure) {
         bookingEvents.push({
           id: `b-dep-${b.id}`,
-          title: `🛫 Departure: ${b.customerName} (${b.destination})`,
+          title: `Departure · ${b.customerName} (${b.destination})`,
           date: b.departure.split('T')[0],
-          notes: `Booking for ${b.travellers} pax · Total: ₹${(b.totalAmount || 0).toLocaleString('en-IN')}`,
+          notes: `${b.travellers} travellers · ${formatBookingAmount(b.totalAmount, b.currency)}`,
           type: 'departure',
           color: '#0891b2',
           createdAt: b.createdAt,
@@ -73,9 +86,9 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (b.returnDate) {
         bookingEvents.push({
           id: `b-ret-${b.id}`,
-          title: `🛬 Return: ${b.customerName}`,
+          title: `Return · ${b.customerName}`,
           date: b.returnDate.split('T')[0],
-          notes: `Trip completed for ${b.destination}`,
+          notes: b.destination,
           type: 'return',
           color: '#059669',
           createdAt: b.createdAt,
@@ -84,7 +97,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     })
 
     return [...events, ...bookingEvents]
-  }, [events, bookings])
+  }, [events, bookings, canViewBookings])
 
   const goToPreviousMonth = () => {
     setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
@@ -135,6 +148,8 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         selectedDate,
         setSelectedDate,
         refreshEvents,
+        loading,
+        loadError,
       }}
     >
       {children}

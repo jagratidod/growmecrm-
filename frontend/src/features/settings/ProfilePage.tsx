@@ -1,379 +1,120 @@
-import React, { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import { Menu, UserRound } from 'lucide-react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
-import { useSettings } from '../../context/SettingsContext'
 import { useAuth } from '../../context/AuthContext'
+import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../components/ui/Toast'
-import { profileService } from '../../services/profileService'
-import { Menu, Check } from 'lucide-react'
+import { profileService, type ProfileDetailsResponse } from '../../services/profileService'
 
-interface ProfilePageProps {
-  onNavigateMenu?: (menu: string) => void
-}
-
-export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigateMenu }) => {
+export function ProfilePage() {
   const { user, updateUser } = useAuth()
-  const { profile, updateProfile, organization } = useSettings()
+  const { updateProfile } = useSettings()
   const { toast } = useToast()
-
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-
-  const activeOrg =
-    user?.organizationName
-      ? user.organizationName
-
-      : organization?.agencyName
-      ? organization.agencyName
-      : 'GrowMe CRM'
-
-  // Derive active display values with priority to logged-in user
-  const activeFullName = user?.name || profile.fullName || 'User'
-  const activeEmail = user?.email || profile.email || ''
-  const activeRole = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : (profile.role || 'Owner')
-  const activeMemberSince = user?.memberSince || profile.memberSince || 'Today'
-  const activeLastSignIn = user?.lastSignIn || profile.lastSignIn || 'Just now'
-
-  // Personal details state
-  const [fullName, setFullName] = useState(activeFullName)
-  const [email, setEmail] = useState(activeEmail)
-  const [savedPersonal, setSavedPersonal] = useState(false)
-
-  useEffect(() => {
-    if (user?.name) setFullName(user.name)
-    if (user?.email) setEmail(user.email)
-  }, [user])
-
-  useEffect(() => {
-    profileService
-      .getProfile()
-      .then((data) => {
-        if (data) {
-          if (data.fullName) setFullName(data.fullName)
-          if (data.email) setEmail(data.email)
-          if (data.organization && updateUser) {
-            updateUser({ organizationName: data.organization })
-          }
-        }
-      })
-      .catch(() => {})
-  }, [])
-
-  const initials = (activeFullName || 'User')
-    .trim()
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'US'
-
-  // Password state
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [details, setDetails] = useState<ProfileDetailsResponse>()
+  const [name, setName] = useState(user?.name || '')
+  const [email, setEmail] = useState(user?.email || '')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [savingDetails, setSavingDetails] = useState(false)
+  const [savingPassword, setSavingPassword] = useState(false)
+  const [profileError, setProfileError] = useState('')
   const [passwordError, setPasswordError] = useState('')
-  const [savedPassword, setSavedPassword] = useState(false)
-  const [isSavingPersonal, setIsSavingPersonal] = useState(false)
-  const [isSavingPassword, setIsSavingPassword] = useState(false)
 
-  const handleSavePersonal = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!fullName.trim()) {
-      toast({ type: 'error', title: 'Validation Error', description: 'Please enter your full name.' })
-      return
-    }
-    if (!email.trim()) {
-      toast({ type: 'error', title: 'Validation Error', description: 'Please enter your email address.' })
-      return
-    }
+  useEffect(() => {
+    let active = true
+    profileService.getProfile().then(
+      (profile) => { if (active) setDetails(profile) },
+      (error: Error) => { if (active) setProfileError(error.message) },
+    )
+    return () => { active = false }
+  }, [])
 
-    setIsSavingPersonal(true)
+  async function saveDetails(event: FormEvent) {
+    event.preventDefault()
+    const fullName = name.trim()
+    const updatedEmail = email.trim()
+    if (savingDetails || !fullName || !updatedEmail) return
+    setSavingDetails(true)
+    setProfileError('')
     try {
-      const response = await profileService.updateProfile({
-        fullName: fullName.trim(),
-        email: email.trim().toLowerCase(),
-      })
-
-      updateProfile({ fullName: response.fullName, email: response.email })
-      if (updateUser) {
-        updateUser({ name: response.fullName, email: response.email })
-      }
-
-      setSavedPersonal(true)
-      toast({
-        type: 'success',
-        title: 'Profile Updated',
-        description: response.message || 'Your personal details have been saved successfully.',
-      })
-      setTimeout(() => setSavedPersonal(false), 2500)
-    } catch (err: any) {
-      toast({
-        type: 'error',
-        title: 'Update Failed',
-        description: err.message || 'Could not update profile details.',
-      })
+      const saved = await profileService.updateProfile({ fullName, email: updatedEmail })
+      setName(saved.fullName)
+      setEmail(saved.email)
+      updateProfile({ fullName: saved.fullName, email: saved.email })
+      updateUser({ name: saved.fullName, email: saved.email })
+      if (details) setDetails({ ...details, fullName: saved.fullName, email: saved.email })
+      toast({ type: 'success', title: 'Profile saved' })
+    } catch (error) {
+      setProfileError((error as Error).message)
     } finally {
-      setIsSavingPersonal(false)
+      setSavingDetails(false)
     }
   }
 
-  const handleSavePassword = async (e: React.FormEvent) => {
-    e.preventDefault()
+  async function savePassword(event: FormEvent) {
+    event.preventDefault()
+    if (savingPassword) return
+    if (newPassword !== confirmation) {
+      setPasswordError('The new passwords do not match.')
+      return
+    }
     setPasswordError('')
-
-    if (!currentPassword) {
-      setPasswordError('Please enter your current password')
-      return
-    }
-    if (newPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters long')
-      return
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError('New passwords do not match')
-      return
-    }
-
-    setIsSavingPassword(true)
+    setSavingPassword(true)
     try {
-      const response = await profileService.changePassword({
-        currentPassword,
-        newPassword,
-      })
-
-      setSavedPassword(true)
-      toast({
-        type: 'success',
-        title: 'Password Changed',
-        description: response.message || 'Your password has been updated successfully.',
-      })
+      await profileService.changePassword({ currentPassword, newPassword })
       setCurrentPassword('')
       setNewPassword('')
-      setConfirmPassword('')
-      setTimeout(() => setSavedPassword(false), 2500)
-    } catch (err: any) {
-      const msg = err.message || 'Failed to change password.'
-      setPasswordError(msg)
-      toast({
-        type: 'error',
-        title: 'Password Change Failed',
-        description: msg,
-      })
+      setConfirmation('')
+      toast({ type: 'success', title: 'Password changed' })
+    } catch (error) {
+      setPasswordError((error as Error).message)
     } finally {
-      setIsSavingPassword(false)
+      setSavingPassword(false)
     }
   }
 
-  return (
-    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
-      {/* Sidebar with active My profile cutout */}
-      <LeadsSidebar
-        isOpen={isMobileSidebarOpen}
-        onClose={() => setIsMobileSidebarOpen(false)}
-        currentPath="My profile"
-        onSelectMenu={onNavigateMenu}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-        <main className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto">
-          {/* Mobile Top Bar */}
-          <div className="lg:hidden flex items-center justify-between mb-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
-            <button
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <h1 className="text-base font-bold text-slate-800">My Profile</h1>
-            <div className="w-8" />
-          </div>
-
-          {/* Grid Layout matching Screenshot 1 */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
-            {/* LEFT COLUMN: Identity Profile Card (4 cols) */}
-            <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between">
-              <div>
-                {/* Top Gradient Banner */}
-                <div className="h-28 bg-blue-soft relative">
-                  {/* Avatar centered on banner bottom border */}
-                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-brand text-white ring-4 ring-white flex items-center justify-center font-black text-lg tracking-wide shadow-md">
-                    {initials}
-                  </div>
-                </div>
-
-                {/* User Info */}
-                <div className="pt-11 pb-5 px-6 text-center">
-                  <h2 className="text-lg font-black text-slate-800 tracking-tight">
-                    {activeFullName}
-                  </h2>
-                  <p className="text-xs text-slate-400 font-medium mt-0.5">
-                    {activeEmail}
-                  </p>
-
-                  <div className="mt-3">
-                    <span className="inline-block text-[11px] font-bold px-3 py-1 rounded-full bg-purple-50 text-brand border border-purple-200">
-                      {activeRole}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Meta details list */}
-                <div className="px-6 py-4 border-t border-slate-100 space-y-3.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Organization</span>
-                    <span className="font-bold text-slate-800">{activeOrg}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Member since</span>
-                    <span className="font-bold text-slate-800">{activeMemberSince}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Last sign-in</span>
-                    <span className="font-bold text-slate-800">{activeLastSignIn}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN: Forms (8 cols) */}
-            <div className="lg:col-span-8 space-y-5 sm:space-y-6">
-              {/* Card 1: Personal Details */}
-              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-xs">
-                <div className="mb-5">
-                  <h3 className="text-base font-bold text-slate-800 tracking-tight">
-                    Personal details
-                  </h3>
-                  <p className="text-xs text-slate-400 font-normal mt-0.5">
-                    Update how your name appears across the workspace.
-                  </p>
-                </div>
-
-                <form onSubmit={handleSavePersonal} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Full name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
-                    />
-                  </div>
-
-                  <div className="pt-2 flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={isSavingPersonal}
-                      className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99] flex items-center gap-1.5 disabled:opacity-50"
-                    >
-                      {savedPersonal ? (
-                        <>
-                          <Check className="w-4 h-4 text-emerald-300" />
-                          <span>Saved!</span>
-                        </>
-                      ) : (
-                        <span>{isSavingPersonal ? 'Saving...' : 'Save changes'}</span>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              {/* Card 2: Password */}
-              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-100 shadow-xs">
-                <div className="mb-5">
-                  <h3 className="text-base font-bold text-slate-800 tracking-tight">
-                    Password
-                  </h3>
-                  <p className="text-xs text-slate-400 font-normal mt-0.5">
-                    Choose a strong password you don't use elsewhere.
-                  </p>
-                </div>
-
-                <form onSubmit={handleSavePassword} className="space-y-4">
-                  {passwordError && (
-                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
-                      {passwordError}
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Current password
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        New password
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Confirm new password
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full bg-canvas/50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:border-brand focus:ring-2 focus:ring-brand/15 transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={isSavingPassword}
-                      className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99] flex items-center gap-1.5 disabled:opacity-50"
-                    >
-                      {savedPassword ? (
-                        <>
-                          <Check className="w-4 h-4 text-emerald-300" />
-                          <span>Password Changed!</span>
-                        </>
-                      ) : (
-                        <span>{isSavingPassword ? 'Updating...' : 'Change password'}</span>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </main>
+  return <div className="gm-shell">
+    <LeadsSidebar isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+    <main className="gm-main gm-crm-content">
+      <header className="gm-heading gm-row">
+        <div className="flex items-center gap-2">
+          <button className="gm-mobile gm-icon-button" type="button" aria-label="Open menu" onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
+          <h1>My profile</h1>
+        </div>
+      </header>
+      <div className="gm-profile-layout">
+        <aside className="gm-card gm-profile-card">
+          <UserRound size={23} aria-hidden="true" />
+          <h2>{user?.name || details?.fullName || 'Account'}</h2>
+          <p>{user?.email || details?.email}</p>
+          <dl>
+            <div><dt>Workspace</dt><dd>{details?.organization || user?.organizationName || 'GrowMe'}</dd></div>
+            <div><dt>Role</dt><dd className="capitalize">{user?.role || details?.role}</dd></div>
+            {details?.memberSince && <div><dt>Member since</dt><dd>{details.memberSince}</dd></div>}
+            {details?.lastSignIn && <div><dt>Last sign-in</dt><dd>{details.lastSignIn}</dd></div>}
+          </dl>
+        </aside>
+        <div className="gm-profile-forms">
+          <form className="gm-card" onSubmit={saveDetails}>
+            <h2>Personal details</h2>
+            <label>Full name<input required autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} /></label>
+            <label>Sign-in email<input type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+            {profileError && <p className="gm-error" role="alert">{profileError}</p>}
+            <button className="gm-button" type="submit" disabled={savingDetails || !name.trim() || !email.trim() || (name.trim() === user?.name && email.trim() === user?.email)}>{savingDetails ? 'Saving…' : 'Save changes'}</button>
+          </form>
+          <form className="gm-card" onSubmit={savePassword}>
+            <h2>Password</h2>
+            <label>Current password<input type="password" required autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} /></label>
+            <label>New password<input type="password" required minLength={6} autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} /></label>
+            <label>Confirm new password<input type="password" required minLength={6} autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label>
+            {passwordError && <p className="gm-error" role="alert">{passwordError}</p>}
+            <button className="gm-button" type="submit" disabled={savingPassword}>{savingPassword ? 'Updating…' : 'Change password'}</button>
+          </form>
+        </div>
       </div>
-    </div>
-  )
+    </main>
+  </div>
 }

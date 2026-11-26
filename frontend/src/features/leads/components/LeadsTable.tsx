@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React from 'react'
 import {
   ArrowUpDown,
   Phone,
@@ -7,7 +7,7 @@ import {
   Calendar,
   Users,
   Eye,
-  Trash2,
+  Archive,
   ChevronLeft,
   ChevronRight,
   MessageCircle,
@@ -16,6 +16,8 @@ import {
   Share2,
   User,
 } from 'lucide-react'
+import { useRouter } from '../../../context/RouterContext'
+import { useAuth } from '../../../context/AuthContext'
 import { useLeads } from '../../../context/LeadsContext'
 import type { Lead, LeadStage, LeadTemperature, LeadSource } from '../../../types/lead.types'
 
@@ -72,6 +74,7 @@ const SourceBadge: React.FC<{ source: LeadSource | string }> = ({ source }) => {
       </span>
     )
   }
+  if (s === 'csv') return <span className="gm-tag">CSV</span>
   if (s.includes('web')) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
@@ -101,44 +104,14 @@ const SourceBadge: React.FC<{ source: LeadSource | string }> = ({ source }) => {
 }
 
 export const LeadsTable: React.FC = () => {
-  const { filteredLeads, setSelectedLead, deleteLead, changeLeadStage } = useLeads()
-
-  const [sortField, setSortField] = useState<keyof Lead>('createdAt')
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
-  const [currentPage, setCurrentPage] = useState(1)
+  const { leads, pagination, setSort, setPage, archiveLead, changeLeadStage } = useLeads()
+  const { navigate } = useRouter()
+  const { user } = useAuth()
+  const canArchive = ['owner', 'admin', 'manager'].includes(user?.role || '')
+  const { page: currentPage, totalPages, total } = pagination
   const pageSize = 10
-
-  const handleSort = (field: keyof Lead) => {
-    if (sortField === field) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortField(field)
-      setSortDirection('asc')
-    }
-  }
-
-  const sortedLeads = useMemo(() => {
-    return [...filteredLeads].sort((a, b) => {
-      const aVal = a[sortField] ?? ''
-      const bVal = b[sortField] ?? ''
-
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal
-      }
-
-      const strA = String(aVal).toLowerCase()
-      const strB = String(bVal).toLowerCase()
-      if (strA < strB) return sortDirection === 'asc' ? -1 : 1
-      if (strA > strB) return sortDirection === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [filteredLeads, sortField, sortDirection])
-
-  const totalPages = Math.ceil(sortedLeads.length / pageSize) || 1
-  const paginatedLeads = useMemo(() => {
-    const start = (currentPage - 1) * pageSize
-    return sortedLeads.slice(start, start + pageSize)
-  }, [sortedLeads, currentPage, pageSize])
+  const handleSort = setSort
+  const openLead = (lead: Lead) => navigate('/leads?' + new URLSearchParams({ lead: lead.id }))
 
   const stageBadgeColors: Record<LeadStage, string> = {
     New: 'bg-purple-50 text-brand border-purple-200',
@@ -154,8 +127,6 @@ export const LeadsTable: React.FC = () => {
     Hot: 'bg-rose-500 text-white',
     Warm: 'bg-amber-500 text-white',
     Cold: 'bg-sky-500 text-white',
-    Won: 'bg-emerald-600 text-white',
-    Lost: 'bg-slate-600 text-white',
   }
 
   return (
@@ -206,14 +177,15 @@ export const LeadsTable: React.FC = () => {
                   <ArrowUpDown className="w-3 h-3 text-slate-400" />
                 </div>
               </th>
+              <th className="py-3 px-4">Next action</th>
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {paginatedLeads.map((lead) => (
+            {leads.map((lead) => (
               <tr
                 key={lead.id}
-                onClick={() => setSelectedLead(lead)}
+                onClick={() => openLead(lead)}
                 className="hover:bg-indigo-50/30 transition-colors cursor-pointer group"
               >
                 {/* Customer name */}
@@ -300,7 +272,8 @@ export const LeadsTable: React.FC = () => {
                 <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
                   <select
                     value={lead.status}
-                    onChange={(e) => changeLeadStage(lead.id, e.target.value as LeadStage)}
+                    disabled={Boolean(lead.archivedAt)}
+                    onChange={(e) => void changeLeadStage(lead.id, e.target.value as LeadStage)}
                     className={`text-[11px] font-semibold border rounded-lg px-2 py-1 focus:outline-none cursor-pointer ${
                       stageBadgeColors[lead.status]
                     }`}
@@ -329,25 +302,29 @@ export const LeadsTable: React.FC = () => {
                   })}
                 </td>
 
+                <td className="py-3 px-4 min-w-30">
+                  {lead.nextAction ? <><strong className="block">{lead.nextAction.title}</strong>
+                    <time dateTime={lead.nextAction.dueDate}>{lead.nextAction.dueDate} {lead.nextAction.dueTime}</time></> : <span className="text-copy-muted">—</span>}
+                </td>
                 {/* Actions */}
                 <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       type="button"
-                      onClick={() => setSelectedLead(lead)}
+                      onClick={() => openLead(lead)}
                       title="View Lead Details"
                       className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button
+                    {canArchive && <button
                       type="button"
-                      onClick={() => deleteLead(lead.id)}
-                      title="Delete Lead"
+                      onClick={() => archiveLead(lead.id, !lead.archivedAt)}
+                      title={lead.archivedAt ? 'Restore lead' : 'Archive lead'}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      <Archive className="w-4 h-4" />
+                    </button>}
                   </div>
                 </td>
               </tr>
@@ -357,17 +334,18 @@ export const LeadsTable: React.FC = () => {
       </div>
 
       {/* Pagination Footer */}
-      <div className="p-3 sm:p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+      <div className="p-3 sm:p-4 border-t border-slate-100 flex flex-wrap gap-2 items-center justify-between text-xs text-slate-500">
         <div>
           Showing {(currentPage - 1) * pageSize + 1} to{' '}
-          {Math.min(currentPage * pageSize, sortedLeads.length)} of {sortedLeads.length} leads
+          {Math.min(currentPage * pageSize, total)} of {total} leads
         </div>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
+            aria-label="Previous leads page"
             disabled={currentPage <= 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onClick={() => setPage(currentPage - 1)}
             className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -377,8 +355,9 @@ export const LeadsTable: React.FC = () => {
           </span>
           <button
             type="button"
+            aria-label="Next leads page"
             disabled={currentPage >= totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => setPage(currentPage + 1)}
             className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             <ChevronRight className="w-4 h-4" />

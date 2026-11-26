@@ -61,7 +61,7 @@ export const PackagesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { access } = useWorkspace()
   const { toast } = useToast()
   const { path } = useRouter()
-  const enabled = (access?.modules.includes('catalog')) && (['/packages', '/leads', '/bookings', '/itineraries', '/host-page'].includes(path))
+  const enabled = (access?.modules.includes('catalog')) && (['/packages', '/leads', '/bookings', '/itineraries'].includes(path))
   const [packages, setPackages] = useState<TravelPackage[]>([])
 
   const [activePackage, setActivePackage] = useState<TravelPackage | null>(null)

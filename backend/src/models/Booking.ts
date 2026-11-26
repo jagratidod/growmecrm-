@@ -4,6 +4,8 @@ export type BookingStatus = 'Pending' | 'Confirmed' | 'Ongoing' | 'Completed' | 
 
 export interface IBooking extends Document {
   organizationId: Types.ObjectId;
+  leadId?: Types.ObjectId;
+  leadConversionPending?: boolean;
   customerName: string;
   email?: string;
   phone?: string;
@@ -30,6 +32,8 @@ const BookingSchema = new Schema<IBooking>(
       required: true,
       index: true,
     },
+    leadId: { type: Schema.Types.ObjectId, ref: 'Lead' },
+    leadConversionPending: { type: Boolean },
     customerName: {
       type: String,
       required: [true, 'Customer name is required'],
@@ -105,6 +109,8 @@ const BookingSchema = new Schema<IBooking>(
 BookingSchema.index({ organizationId: 1, status: 1 });
 BookingSchema.index({ organizationId: 1, departure: 1 });
 BookingSchema.index({ organizationId: 1, createdAt: -1 });
+
+BookingSchema.index({ organizationId: 1, leadId: 1, createdAt: -1 });
 
 export const BookingModel = mongoose.model<IBooking>('Booking', BookingSchema);
 export const Booking = BookingModel;

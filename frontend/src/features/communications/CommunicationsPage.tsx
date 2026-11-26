@@ -12,7 +12,6 @@ import {
   Menu,
   X,
   Users,
-  Eye,
 } from 'lucide-react'
 
 interface CommunicationsPageProps {
@@ -27,21 +26,20 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
   const [isNewModalOpen, setIsNewModalOpen] = useState(false)
 
   const [campaigns, setCampaigns] = useState<CampaignItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [requestNumber, setRequestNumber] = useState(0)
 
-  // Load from API on mount
   useEffect(() => {
-    const fetchCampaigns = async () => {
-      try {
-        const data = await campaignsService.getCampaigns()
-        if (Array.isArray(data)) {
-          setCampaigns(data)
-        }
-      } catch (err) {
-        console.warn('Could not load campaigns from server, using local cache:', err)
-      }
-    }
-    fetchCampaigns()
-  }, [])
+    let active = true
+    setLoading(true)
+    setLoadError('')
+    campaignsService.getCampaigns().then(
+      (data) => { if (active) setCampaigns(data) },
+      (error: Error) => { if (active) setLoadError(error.message) },
+    ).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [requestNumber])
 
   // New campaign modal form
   const [title, setTitle] = useState('')
@@ -90,6 +88,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
               <button
+                aria-label="Open menu"
                 onClick={() => setIsMobileSidebarOpen(true)}
                 className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
               >
@@ -100,7 +99,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                   Communications
                 </h1>
                 <p className="text-xs text-slate-400 font-medium">
-                  Omnichannel broadcasts, message templates, and traveller outreach campaigns.
+                  Campaign drafts and history
                 </p>
               </div>
             </div>
@@ -110,41 +109,8 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand text-white font-semibold text-xs shadow-md hover:bg-brand-hover transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>New broadcast</span>
+              <span>New campaign draft</span>
             </button>
-          </div>
-
-          {/* Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-slate-500">Total Sent</span>
-                <div className="w-7 h-7 rounded-lg bg-purple-50 text-brand flex items-center justify-center">
-                  <Send className="w-4 h-4" />
-                </div>
-              </div>
-              <p className="text-2xl font-black text-slate-800">107</p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-emerald-600">Avg. Open Rate</span>
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <Eye className="w-4 h-4" />
-                </div>
-              </div>
-              <p className="text-2xl font-black text-emerald-600">89.4%</p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-blue-600">Active Channels</span>
-                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <MessageCircle className="w-4 h-4" />
-                </div>
-              </div>
-              <p className="text-2xl font-black text-blue-600">WhatsApp & Email</p>
-            </div>
           </div>
 
           {/* Search & Filter Bar */}
@@ -152,8 +118,9 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
             <div className="relative w-full sm:w-72">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
-                type="text"
-                placeholder="Search campaigns..."
+                type="search"
+                aria-label="Search campaigns"
+                placeholder="Search campaigns"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-brand transition"
@@ -165,6 +132,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                 <button
                   key={tab}
                   onClick={() => setChannelFilter(tab)}
+                  aria-pressed={channelFilter === tab}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize whitespace-nowrap transition cursor-pointer ${
                     channelFilter === tab
                       ? 'bg-brand text-white shadow-xs'
@@ -178,7 +146,10 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
           </div>
 
           {/* Campaigns List */}
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
+          {loadError ? <div className="gm-error" role="alert">{loadError} <button className="gm-text-button" onClick={() => setRequestNumber((value) => value + 1)}>Retry</button></div>
+            : loading ? <p role="status">Loading campaigns…</p>
+            : !filtered.length ? <div className="gm-crm-empty"><Send className="mx-auto mb-3 text-brand" size={24} /><h2>{campaigns.length ? 'No matching campaigns' : 'No campaigns yet'}</h2></div>
+            : <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="divide-y divide-slate-100">
               {filtered.map((item) => (
                 <div key={item.id} className="p-4 sm:p-5 hover:bg-slate-50/50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -229,7 +200,7 @@ export const CommunicationsPage: React.FC<CommunicationsPageProps> = ({ onNaviga
                 </div>
               ))}
             </div>
-          </div>
+          </div>}
         </main>
       </div>
 

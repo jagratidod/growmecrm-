@@ -1,6 +1,6 @@
 import { usePackages } from '../../../context/PackagesContext'
 import { useTeam } from '../../../context/TeamContext'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { X, Calendar as CalendarIcon } from 'lucide-react'
 import { useLeads } from '../../../context/LeadsContext'
 import { useToast } from '../../../components/ui/Toast'
@@ -9,6 +9,7 @@ import type { LeadStage, CustomerType, LeadSource, LeadTemperature } from '../..
 export const NewLeadModal: React.FC = () => {
   const { members } = useTeam()
   const { packages } = usePackages()
+  const requestId = useRef<string | null>(null)
   const { isNewLeadModalOpen, setIsNewLeadModalOpen, addLead } = useLeads()
   const { toast } = useToast()
 
@@ -21,14 +22,15 @@ export const NewLeadModal: React.FC = () => {
   const [interestedPackage, setInterestedPackage] = useState('None')
   const [destination, setDestination] = useState('')
   const [travelDate, setTravelDate] = useState('')
-  const [travelers, setTravelers] = useState(2)
-  const [budget, setBudget] = useState(2500)
+  const [travelers, setTravelers] = useState(1)
+  const [budget, setBudget] = useState(0)
   const [currency, setCurrency] = useState('INR')
   const [assignedTo, setAssignedTo] = useState('Unassigned')
-  const [temperature, setTemperature] = useState<LeadTemperature>('Hot')
+  const [temperature, setTemperature] = useState<LeadTemperature>('Warm')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [notes, setNotes] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({})
 
   if (!isNewLeadModalOpen) return null
@@ -55,6 +57,7 @@ export const NewLeadModal: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSaving) return
     const newErrors: { name?: string; phone?: string } = {}
     if (!name.trim()) newErrors.name = 'Name is required'
     if (!phone.trim()) newErrors.phone = 'Phone number is required'
@@ -64,6 +67,8 @@ export const NewLeadModal: React.FC = () => {
       return
     }
 
+    setIsSaving(true)
+    requestId.current ??= crypto.randomUUID()
     const created = await addLead({
       name: name.trim(),
       email: email.trim() || undefined,
@@ -74,15 +79,18 @@ export const NewLeadModal: React.FC = () => {
       interestedPackage: interestedPackage === 'None' ? undefined : interestedPackage,
       destination: destination.trim() || 'Flexible Destination',
       travelDate: travelDate || undefined,
-      travelers: Number(travelers) || 2,
+      travelers: Number(travelers) || 1,
       budget: Number(budget) || 0,
       currency,
-      assignedTo,
+      assignedTo: assignedTo === 'Unassigned' ? 'Unassigned' : '',
+      assignedUserId: assignedTo === 'Unassigned' ? undefined : assignedTo,
       temperature,
       tags,
       notes: notes.trim() || undefined,
-    })
+    }, requestId.current)
+    setIsSaving(false)
     if (!created) return
+    requestId.current = null
 
     toast({
       type: 'success',
@@ -96,8 +104,8 @@ export const NewLeadModal: React.FC = () => {
     setPhone('')
     setDestination('')
     setTravelDate('')
-    setTravelers(2)
-    setBudget(2500)
+    setTravelers(1)
+    setBudget(0)
     setTags([])
     setNotes('')
     setIsNewLeadModalOpen(false)
@@ -123,7 +131,7 @@ export const NewLeadModal: React.FC = () => {
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+        <form id="new-lead-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* Full Name */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -213,8 +221,7 @@ export const NewLeadModal: React.FC = () => {
                 <option value="Qualified">Qualified</option>
                 <option value="Proposal sent">Proposal sent</option>
                 <option value="Negotiation">Negotiation</option>
-                <option value="Won">Won</option>
-                <option value="Lost">Lost</option>
+
               </select>
             </div>
           </div>
@@ -332,7 +339,7 @@ export const NewLeadModal: React.FC = () => {
                 className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               >
                 <option value="Unassigned">Unassigned</option>
-                {members.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
+                {members.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
               </select>
             </div>
             <div>
@@ -407,8 +414,9 @@ export const NewLeadModal: React.FC = () => {
             Cancel
           </button>
           <button
-            type="button"
-            onClick={handleSubmit}
+            type="submit"
+            form="new-lead-form"
+            disabled={isSaving}
             className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-sm shadow-brand/25 transition active:scale-[0.99]"
           >
             Create lead

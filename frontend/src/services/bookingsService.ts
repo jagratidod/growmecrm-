@@ -1,4 +1,4 @@
-import { request } from './api';
+import { request, ROUTE_READ_TTL } from './api';
 import type { Booking, BookingFilters, BookingStats, BookingStatus } from '../types/booking.types';
 
 export interface BookingsApiResponse {
@@ -13,7 +13,7 @@ export const bookingsService = {
     if (filters?.search) params.append('search', filters.search);
     if (filters?.status && filters.status !== 'All') params.append('status', filters.status);
     const qs = params.toString() ? `?${params.toString()}` : '';
-    return request<BookingsApiResponse>(`/bookings${qs}`, { method: 'GET' });
+    return request<BookingsApiResponse>(`/bookings${qs}`, { method: 'GET', cacheMs: ROUTE_READ_TTL });
   },
 
   // 2. Get single booking by ID
@@ -38,8 +38,8 @@ export const bookingsService = {
   },
 
   // 5. Record payment installment
-  async recordPayment(id: string, amount: number): Promise<{ message: string; booking: Booking; balanceDue: number }> {
-    return request<{ message: string; booking: Booking; balanceDue: number }>(`/bookings/${id}/payment`, {
+  async recordPayment(id: string, amount: number): Promise<{ message: string; booking: Booking; balanceDue: number; leadSyncWarning?: string }> {
+    return request<{ message: string; booking: Booking; balanceDue: number; leadSyncWarning?: string }>(`/bookings/${id}/payment`, {
       method: 'PATCH',
       body: JSON.stringify({ amount }),
     });
@@ -51,6 +51,10 @@ export const bookingsService = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     });
+  },
+
+  async retryLeadSync(id: string): Promise<Booking> {
+    return request<Booking>(`/bookings/${id}/sync-lead`, { method: 'POST' });
   },
 
   // 7. Delete booking

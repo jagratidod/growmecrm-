@@ -1,4 +1,5 @@
 import { Router, Response, RequestHandler } from 'express';
+import { intakeKey, saveIncomingLead } from '../services/leadIntake';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { isValidObjectId } from 'mongoose';
 import jwt from 'jsonwebtoken';
@@ -318,11 +319,26 @@ publicWebsites.post('/:siteId/enquiries', safe(async (req, res) => {
   const name = field('name', 150);
   const phone = field('phone', 40);
   if (!name || !phone) return res.status(400).json({ error: 'Name and phone are required.' });
-  const lead = await Lead.create({
-    organizationId: site.organizationId, websiteId: site._id, source: 'Website', name, phone,
-    email: field('email', 150) || undefined, destination: field('destination', 180) || 'Website enquiry',
+  const submissionId = req.get('Idempotency-Key') || field('submissionId', 129);
+  if (submissionId && submissionId.length > 128) return res.status(400).json({ error: 'Submission ID is too long.' });
+  const details = {
+    name, phone, email: field('email', 150).toLowerCase() || undefined,
+    destination: field('destination', 180) || 'Website enquiry',
     interestedPackage: field('package', 180), notes: field('message', 3000),
-    activities: [{ type: 'created', description: `Enquiry received from ${site.domain}.`, author: site.name }],
-  });
-  res.status(201).json({ id: lead.id });
+  };
+  const duplicateWindow = 120_000;
+  const now = Date.now();
+  const fingerprint = JSON.stringify(details);
+  const previousWindow = !submissionId && await Lead.findOne({
+    organizationId: site.organizationId, createdAt: { $gte: new Date(now - duplicateWindow) },
+    intakeKey: intakeKey(`website-retry:${site.id}:${Math.floor(now / duplicateWindow) - 1}`, fingerprint),
+  }).select('_id').lean();
+  if (previousWindow) return res.status(200).json({ id: String(previousWindow._id) });
+  const idempotencyKey = submissionId ? intakeKey(`website:${site.id}`, submissionId)
+    : intakeKey(`website-retry:${site.id}:${Math.floor(now / duplicateWindow)}`, fingerprint);
+  const { lead, created } = await saveIncomingLead({
+    organizationId: site.organizationId, websiteId: site._id, source: 'Website', ...details,
+    activities: [{ type: 'created', description: `Enquiry received from ${site.domain}.`, author: site.name, timestamp: new Date() }],
+  }, idempotencyKey);
+  res.status(created ? 201 : 200).json({ id: lead.id });
 }));

@@ -1,3 +1,4 @@
+import { useAuth } from '../../../context/AuthContext'
 import React from 'react'
 import { ShieldCheck, UserCheck, Briefcase, Trash2 } from 'lucide-react'
 import { useTeam } from '../../../context/TeamContext'
@@ -5,6 +6,8 @@ import type { TeamRole } from '../../../types/team.types'
 
 export const TeamMembersTable: React.FC = () => {
   const { members, deleteMember, updateMemberRole } = useTeam()
+  const { user } = useAuth()
+  const canManage = user?.role === 'owner' || user?.role === 'admin'
 
   const roleBadgeConfig: Record<TeamRole, { bg: string; text: string; icon: React.ComponentType<{ className?: string }> }> = {
     Admin: {
@@ -66,12 +69,12 @@ export const TeamMembersTable: React.FC = () => {
 
                   {/* Role Column */}
                   <td className="py-4 px-5">
-                    {member.isCurrentUser ? (
+                    {!canManage || member.isCurrentUser || member.isOwner ? (
                       <span
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${roleCfg.bg} ${roleCfg.text}`}
                       >
                         <RoleIcon className="w-3.5 h-3.5" />
-                        <span>{member.role}</span>
+                        <span>{member.isOwner ? 'Owner' : member.role}</span>
                       </span>
                     ) : (
                       <select
@@ -105,7 +108,7 @@ export const TeamMembersTable: React.FC = () => {
                       <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">
                         You
                       </span>
-                    ) : (
+                    ) : canManage && !member.isOwner ? (
                       <button
                         type="button"
                         onClick={() => {
@@ -118,7 +121,7 @@ export const TeamMembersTable: React.FC = () => {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    )}
+                    ) : null}
                   </td>
                 </tr>
               )

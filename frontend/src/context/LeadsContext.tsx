@@ -1,35 +1,39 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import type { Dispatch, ReactNode, SetStateAction } from 'react'
 import { useRouter } from './RouterContext'
 import { useAuth } from './AuthContext'
 import { useToast } from '../components/ui/Toast'
 import { useWorkspace } from '../features/workspace/WorkspaceAccess'
-import { leadsService } from '../services/leadsService'
-import type {
-  Lead,
-  LeadFilters,
-  LeadStats,
-  LeadStage,
-  LeadActivity,
-} from '../types/lead.types'
+import { leadsService, type LeadsApiResponse } from '../services/leadsService'
+import type { CsvLeadRow, Lead, LeadActivity, LeadFilters, LeadStage } from '../types/lead.types'
 
-interface LeadsContextType {
+type NewLead = Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>
+type NewActivity = Omit<LeadActivity, 'id' | 'leadId' | 'timestamp'>
+type Sort = { field: keyof Lead; direction: 'asc' | 'desc' }
+
+interface LeadState {
   leads: Lead[]
+  stats: LeadsApiResponse['stats']
+  pagination: LeadsApiResponse['pagination']
   loading: boolean
   loadError: string
-  filteredLeads: Lead[]
-  stats: LeadStats
+  refresh: () => void
   filters: LeadFilters
-  setFilters: React.Dispatch<React.SetStateAction<LeadFilters>>
   updateFilter: <K extends keyof LeadFilters>(key: K, value: LeadFilters[K]) => void
   resetFilters: () => void
-  addLead: (leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>) => Promise<Lead | undefined>
+  sort: Sort
+  setSort: (field: keyof Lead) => void
+  setPage: (page: number) => void
+  addLead: (data: NewLead, requestId?: string) => Promise<Lead | undefined>
   updateLead: (id: string, updates: Partial<Lead>) => void
-  changeLeadStage: (id: string, newStage: LeadStage) => void
-  deleteLead: (id: string) => void
-  importLeads: (newLeads: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'activities'>[]) => Promise<number | undefined>
-  addLeadActivity: (leadId: string, activity: Omit<LeadActivity, 'id' | 'leadId' | 'timestamp'>) => Promise<Lead | undefined>
+  changeLeadStage: (id: string, stage: LeadStage, lostReason?: string) => Promise<Lead | undefined>
+  archiveLead: (id: string, archived: boolean) => void
+  importLeads: (rows: CsvLeadRow[]) => Promise<Awaited<ReturnType<typeof leadsService.importLeads>> | undefined>
+  addLeadActivity: (id: string, data: NewActivity) => Promise<Lead | undefined>
   selectedLead: Lead | null
-  setSelectedLead: (lead: Lead | null) => void
+  setSelectedLead: Dispatch<SetStateAction<Lead | null>>
+  lostLeadId: string | null
+  setLostLeadId: Dispatch<SetStateAction<string | null>>
   isNewLeadModalOpen: boolean
   setIsNewLeadModalOpen: (open: boolean) => void
   isImportModalOpen: boolean
@@ -38,211 +42,103 @@ interface LeadsContextType {
   setIsFiltersDrawerOpen: (open: boolean) => void
 }
 
-const INITIAL_FILTERS: LeadFilters = {
-  search: '',
-  stage: 'All',
-  temperature: 'All',
-  destination: '',
-  assignedTo: '',
-  customerType: 'All',
-  source: 'All',
-}
+const defaults: LeadFilters = { search: '', stage: 'All', temperature: 'All', destination: '', assignedTo: '', customerType: 'All', source: 'All', view: 'all' }
+const empty: LeadsApiResponse = { leads: [], stats: { overall: 0, today: 0, converted: 0, open: 0, stages: {} }, pagination: { page: 1, total: 0, totalPages: 1 } }
+const Context = createContext<LeadState | undefined>(undefined)
 
-const LeadsContext = createContext<LeadsContextType | undefined>(undefined)
-
-export const LeadsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, user } = useAuth()
+export function LeadsProvider({ children }: { children: ReactNode }) {
+  const { token } = useAuth()
   const { path } = useRouter()
   const { access } = useWorkspace()
   const { toast } = useToast()
-  const enabled = (Boolean(token && access?.modules.includes('leads'))) && (['/leads', '/follow-ups', '/call-log'].includes(path))
-  const [leads, setLeads] = useState<Lead[]>([])
+  const enabled = path === '/leads' && Boolean(token && access?.modules.includes('leads'))
+  const [result, setResult] = useState(empty)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
-
-  const [filters, setFilters] = useState<LeadFilters>(INITIAL_FILTERS)
+  const [filters, setFilters] = useState(defaults)
+  const [page, setPage] = useState(1)
+  const [sort, updateSort] = useState<Sort>({ field: 'createdAt', direction: 'desc' })
+  const [revision, setRevision] = useState(0)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
+  const [lostLeadId, setLostLeadId] = useState<string | null>(null)
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isFiltersDrawerOpen, setIsFiltersDrawerOpen] = useState(false)
+  const refresh = useCallback(() => setRevision((number) => number + 1), [])
 
   useEffect(() => {
     if (!enabled) return
-    let active = true
-    const load = () => {
-      leadsService.getLeads().then(({ leads }) => {
-        if (active) { setLeads(leads); setLoadError(''); setLoading(false) }
-      }, (error: Error) => {
-        if (active) { setLoadError(error.message); setLoading(false) }
-      })
-    }
-    load()
-    window.addEventListener('focus', load)
-    return () => { active = false; window.removeEventListener('focus', load) }
-  }, [enabled, token])
+    const controller = new AbortController()
+    setLoading(true)
+    const timer = window.setTimeout(() => {
+      leadsService.getLeads({ ...filters, page, sort: sort.field, direction: sort.direction }, controller.signal)
+        .then(
+          (data) => { if (!controller.signal.aborted) { setResult(data); setLoadError('') } },
+          (error: Error) => { if (!controller.signal.aborted) setLoadError(error.message) },
+        ).finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    }, filters.search ? 180 : 0)
+    return () => { window.clearTimeout(timer); controller.abort() }
+  }, [enabled, filters, page, sort, revision])
 
-  // Sync selectedLead when list updates
   useEffect(() => {
-    if (selectedLead) {
-      const refreshed = leads.find((l) => l.id === selectedLead.id)
-      if (refreshed) {
-        setSelectedLead(refreshed)
-      }
+    if (!enabled) return
+    window.addEventListener('focus', refresh)
+    return () => window.removeEventListener('focus', refresh)
+  }, [enabled, refresh])
+
+  const updateFilter = useCallback(<K extends keyof LeadFilters>(key: K, value: LeadFilters[K]) => {
+    setPage(1)
+    setFilters((previous) => ({ ...previous, [key]: value }))
+  }, [])
+  const resetFilters = useCallback(() => { setPage(1); setFilters(defaults) }, [])
+
+  const setSort = (field: keyof Lead) => {
+    setPage(1)
+    updateSort((prior) => ({ field, direction: prior.field === field && prior.direction === 'asc' ? 'desc' : 'asc' }))
+  }
+
+  async function mutate<T>(operation: () => Promise<T>) {
+    try {
+      const value = await operation()
+      refresh()
+      return value
+    } catch (error) {
+      toast({ type: 'error', title: 'Lead update failed', description: (error as Error).message })
     }
-  }, [leads])
-
-  const updateFilter = <K extends keyof LeadFilters>(key: K, value: LeadFilters[K]) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
   }
-
-  const resetFilters = () => setFilters(INITIAL_FILTERS)
-
-  const stats = useMemo<LeadStats>(() => {
-    const todayStr = new Date().toISOString().slice(0, 10)
-    let todayCount = 0
-    let convertedCount = 0
-
-    leads.forEach((l) => {
-      if (l.createdAt.startsWith(todayStr)) {
-        todayCount++
-      }
-      if (l.status === 'Won' || l.temperature === 'Won') {
-        convertedCount++
-      }
-    })
-
-    return {
-      overall: leads.length,
-      today: todayCount,
-      converted: convertedCount,
-    }
-  }, [leads])
-
-  const filteredLeads = useMemo(() => {
-    return leads.filter((lead) => {
-      // Search term
-      if (filters.search.trim()) {
-        const query = filters.search.toLowerCase()
-        const matchName = lead.name.toLowerCase().includes(query)
-        const matchEmail = (lead.email || '').toLowerCase().includes(query)
-        const matchPhone = lead.phone.toLowerCase().includes(query)
-        const matchDest = lead.destination.toLowerCase().includes(query)
-        const matchPackage = (lead.interestedPackage || '').toLowerCase().includes(query)
-        if (!matchName && !matchEmail && !matchPhone && !matchDest && !matchPackage) {
-          return false
-        }
-      }
-
-      // Stage filter
-      if (filters.stage && filters.stage !== 'All') {
-        if (lead.status !== filters.stage) return false
-      }
-
-      // Temperature filter
-      if (filters.temperature && filters.temperature !== 'All') {
-        if (lead.temperature !== filters.temperature) return false
-      }
-
-      // Customer type
-      if (filters.customerType && filters.customerType !== 'All') {
-        if (lead.customerType !== filters.customerType) return false
-      }
-
-      // Source filter (WhatsApp, Instagram, Facebook, Website, etc.)
-      if (filters.source && filters.source !== 'All') {
-        if (lead.source !== filters.source) return false
-      }
-
-      // Assigned to
-      if (filters.assignedTo && filters.assignedTo !== 'All') {
-        if (lead.assignedTo !== filters.assignedTo) return false
-      }
-
-      // Destination filter
-      if (filters.destination && filters.destination.trim()) {
-        if (!lead.destination.toLowerCase().includes(filters.destination.toLowerCase())) {
-          return false
-        }
-      }
-
-      return true
-    })
-  }, [leads, filters])
-
-  async function mutate<T>(mutation: () => Promise<T>): Promise<T | undefined> {
-    try { return await mutation() }
-    catch (error) { toast({ type: 'error', title: 'Lead update failed', description: (error as Error).message }) }
-  }
-
-  const replaceLead = (lead: Lead) => setLeads((previous) => previous.map((item) => item.id === lead.id ? lead : item))
-
-  const addLead: LeadsContextType['addLead'] = (data) => mutate(async () => {
-    const lead = await leadsService.createLead(data)
-    setLeads((previous) => [lead, ...previous])
-    return lead
-  })
-  const updateLead: LeadsContextType['updateLead'] = (id, updates) => {
-    void mutate(async () => replaceLead(await leadsService.updateLead(id, updates)))
-  }
-  const changeLeadStage: LeadsContextType['changeLeadStage'] = (id, stage) => {
-    void mutate(async () => replaceLead(await leadsService.changeStage(id, stage)))
-  }
-  const deleteLead: LeadsContextType['deleteLead'] = (id) => {
-    void mutate(async () => {
-      await leadsService.deleteLead(id)
-      setLeads((previous) => previous.filter((lead) => lead.id !== id))
-      setSelectedLead((previous) => previous?.id === id ? null : previous)
+  const updateDrawer = (lead: Lead) => setSelectedLead((current) => current?.id === lead.id ? { ...current, ...lead, archivedAt: lead.archivedAt, lostReason: lead.lostReason, closedAt: lead.closedAt } : current)
+  const changeLeadStage: LeadState['changeLeadStage'] = async (id, stage, reason) => {
+    if (stage === 'Lost' && !reason) { setLostLeadId(id); return }
+    return mutate(async () => {
+      const lead = await leadsService.changeStage(id, stage, reason)
+      updateDrawer(lead)
+      return lead
     })
   }
-  const importLeads: LeadsContextType['importLeads'] = (rows) => mutate(async () => {
-    const { count } = await leadsService.importLeads(rows)
-    const { leads } = await leadsService.getLeads()
-    setLeads(leads)
-    return count
-  })
-  const addLeadActivity: LeadsContextType['addLeadActivity'] = (id, activity) => mutate(async () => {
-    const lead = await leadsService.addActivity(id, { ...activity, author: user?.name || 'Agent' })
-    replaceLead(lead)
-    return lead
-  })
 
-  return (
-    <LeadsContext.Provider
-      value={{
-        leads,
-        loading,
-        loadError,
-        filteredLeads,
-        stats,
-        filters,
-        setFilters,
-        updateFilter,
-        resetFilters,
-        addLead,
-        updateLead,
-        changeLeadStage,
-        deleteLead,
-        importLeads,
-        addLeadActivity,
-        selectedLead,
-        setSelectedLead,
-        isNewLeadModalOpen,
-        setIsNewLeadModalOpen,
-        isImportModalOpen,
-        setIsImportModalOpen,
-        isFiltersDrawerOpen,
-        setIsFiltersDrawerOpen,
-      }}
-    >
-      {children}
-    </LeadsContext.Provider>
-  )
+  return <Context.Provider value={{
+    ...result, loading, loadError, refresh, filters, updateFilter, resetFilters, sort, setSort, setPage,
+    addLead: (data, requestId) => mutate(() => leadsService.createLead(data, requestId)),
+    updateLead: (id, updates) => { void mutate(async () => updateDrawer(await leadsService.updateLead(id, updates))) },
+    changeLeadStage,
+    archiveLead: (id, archived) => { void mutate(async () => {
+      const lead = await leadsService.archiveLead(id, archived)
+      updateDrawer({ ...lead, archivedAt: lead.archivedAt })
+      toast({ type: 'success', title: archived ? 'Lead archived' : 'Lead restored' })
+    }) },
+    importLeads: (rows) => mutate(() => leadsService.importLeads(rows)),
+    addLeadActivity: (id, data) => mutate(async () => {
+      const lead = await leadsService.addActivity(id, data)
+      updateDrawer(lead)
+      return lead
+    }),
+    selectedLead, setSelectedLead, lostLeadId, setLostLeadId, isNewLeadModalOpen, setIsNewLeadModalOpen,
+    isImportModalOpen, setIsImportModalOpen, isFiltersDrawerOpen, setIsFiltersDrawerOpen,
+  }}>{children}</Context.Provider>
 }
 
 export function useLeads() {
-  const context = useContext(LeadsContext)
-  if (!context) {
-    throw new Error('useLeads must be used within a LeadsProvider')
-  }
-  return context
+  const state = useContext(Context)
+  if (!state) throw new Error('useLeads must be used within a LeadsProvider')
+  return state
 }

@@ -2,6 +2,9 @@ export type BookingStatus = 'Pending' | 'Confirmed' | 'Ongoing' | 'Completed' | 
 
 export interface Booking {
   id: string
+  leadId?: string
+  leadConversionPending?: boolean
+  leadSyncWarning?: string
   customerName: string
   email?: string
   phone?: string
@@ -21,6 +24,8 @@ export interface Booking {
 }
 
 export interface BookingFilters {
+  departureFrom?: string
+  departureTo?: string
   search: string
   status: BookingStatus | 'All'
 }

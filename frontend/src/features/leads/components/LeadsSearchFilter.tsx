@@ -26,10 +26,11 @@ export const LeadsSearchFilter: React.FC = () => {
     <div className="relative mb-4">
       {/* Search Bar + Filters Toggle Button */}
       <div className="flex items-center gap-3">
-        <div className="relative flex-1">
+        <div className="relative min-w-0 flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
-            type="text"
+            type="search"
+            aria-label="Search leads"
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
             placeholder="Search name, email, phone, destination..."
@@ -37,6 +38,8 @@ export const LeadsSearchFilter: React.FC = () => {
           />
           {filters.search && (
             <button
+              type="button"
+              aria-label="Clear lead search"
               onClick={() => updateFilter('search', '')}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
@@ -47,6 +50,8 @@ export const LeadsSearchFilter: React.FC = () => {
 
         <button
           type="button"
+          aria-expanded={isFiltersDrawerOpen}
+          aria-controls="lead-advanced-filters"
           onClick={() => setIsFiltersDrawerOpen(!isFiltersDrawerOpen)}
           className={`inline-flex items-center gap-2 px-4 py-2.5 sm:py-3 rounded-2xl border text-xs sm:text-sm font-semibold transition shadow-xs shrink-0 select-none ${
             hasActiveFilters || isFiltersDrawerOpen
@@ -64,7 +69,7 @@ export const LeadsSearchFilter: React.FC = () => {
 
       {/* Advanced Filter Panel Popup / Drawer */}
       {isFiltersDrawerOpen && (
-        <div className="mt-3 p-5 bg-white border border-slate-200 rounded-2xl shadow-lg space-y-4 animate-in fade-in slide-in-from-top-2">
+        <div id="lead-advanced-filters" className="mt-3 p-5 bg-white border border-slate-200 rounded-2xl shadow-lg space-y-4 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h4 className="text-sm font-bold text-slate-800">Advanced Filters</h4>
             <div className="flex items-center gap-3">
@@ -119,8 +124,6 @@ export const LeadsSearchFilter: React.FC = () => {
                 <option value="Hot">Hot</option>
                 <option value="Warm">Warm</option>
                 <option value="Cold">Cold</option>
-                <option value="Won">Won</option>
-                <option value="Lost">Lost</option>
               </select>
             </div>
 
@@ -152,7 +155,7 @@ export const LeadsSearchFilter: React.FC = () => {
               >
                 <option value="All">All Members</option>
                 <option value="Unassigned">Unassigned</option>
-                {members.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
+                {members.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
               </select>
             </div>
 

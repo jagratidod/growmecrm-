@@ -23,10 +23,12 @@ export const getCalendarEvents = async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    const { month, year } = req.query;
-
     // Fetch manual agency events
     const manualEvents = await CalendarEvent.find({ organizationId: orgId }).sort({ date: 1 });
+    if (req.query.scope === 'manual') {
+      res.json({ events: manualEvents.map(formatEvent), manualCount: manualEvents.length, bookingCount: 0 });
+      return;
+    }
 
     // Fetch active bookings for this organization to generate auto-milestones
     const bookings = await Booking.find({ organizationId: orgId }).sort({ departure: 1 });

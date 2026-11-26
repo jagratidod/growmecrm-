@@ -114,7 +114,7 @@ export const registerAgency = async (req: Request, res: Response): Promise<void>
 };
 
 // 2. SIGN IN / LOGIN (Existing Users)
-export const login = async (req: Request, res: Response): Promise<void> => {
+const loginFor = (superAdmin: boolean) => async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, email, password } = req.body;
     const identifier = (email || username || '').toLowerCase().trim();
@@ -124,9 +124,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await User.findOne({ username: identifier }) ??
-      await User.findOne({ email: identifier }) ??
-      await User.findOne({ name: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+    const role = superAdmin ? 'SUPER_ADMIN' : { $ne: 'SUPER_ADMIN' };
+    const user = await User.findOne({ role, username: identifier }) ??
+      await User.findOne({ role, email: identifier }) ??
+      await User.findOne({ role, name: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
 
     if (!user) {
       res.status(401).json({ error: 'Invalid username/email or password.' });
@@ -201,6 +202,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ error: error.message || 'Internal server error during login.' });
   }
 };
+
+export const login = loginFor(false);
+export const loginSuperAdmin = loginFor(true);
 
 // 3. GET CURRENT LOGGED IN USER & TENANT (Me)
 export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<void> => {

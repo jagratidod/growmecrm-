@@ -1,13 +1,21 @@
+import { isValidObjectId } from 'mongoose';
+import { User } from '../models/User';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { FollowUp, IFollowUp } from '../models/FollowUp';
 import { Lead } from '../models/Lead';
 
 // Helper to get local date in YYYY-MM-DD
-const getTodayStr = (): string => {
-  const d = new Date();
-  return d.toISOString().split('T')[0];
+const getTodayStr = (): string => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' });
+
+const validDate = (value: unknown): value is string => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 };
+
+const findAssignee = (organizationId: string | undefined, id: string) =>
+  isValidObjectId(id) ? User.findOne({ _id: id, organizationId, status: 'Active' }).select('name').lean() : null;
 
 // Helper to format Mongoose document to frontend-compatible FollowUpItem
 const formatFollowUp = (doc: IFollowUp) => {
@@ -17,6 +25,7 @@ const formatFollowUp = (doc: IFollowUp) => {
     id: doc._id.toString(),
     _id: undefined,
     leadId: doc.leadId ? doc.leadId.toString() : '',
+    status: doc.status === 'completed' ? 'completed' : doc.dueDate < getTodayStr() ? 'overdue' : 'pending',
     createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : doc.createdAt,
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : doc.updatedAt,
   };
@@ -51,7 +60,8 @@ export const getFollowUps = async (req: AuthenticatedRequest, res: Response): Pr
     if (filter === 'completed') {
       query.status = 'completed';
     } else if (filter === 'overdue') {
-      query.status = 'overdue';
+      query.dueDate = { $lt: todayStr };
+      query.status = { $ne: 'completed' };
     } else if (filter === 'today') {
       query.dueDate = todayStr;
       query.status = { $ne: 'completed' };
@@ -67,7 +77,7 @@ export const getFollowUps = async (req: AuthenticatedRequest, res: Response): Pr
     const stats = {
       total: allTenantItems.length,
       today: allTenantItems.filter((i) => i.dueDate === todayStr && i.status !== 'completed').length,
-      overdue: allTenantItems.filter((i) => i.status === 'overdue' || (i.dueDate < todayStr && i.status !== 'completed')).length,
+      overdue: allTenantItems.filter((i) => i.dueDate < todayStr && i.status !== 'completed').length,
       completed: allTenantItems.filter((i) => i.status === 'completed').length,
     };
 
@@ -120,18 +130,31 @@ export const createFollowUp = async (req: AuthenticatedRequest, res: Response): 
       dueTime,
       type,
       assignedTo,
-      assignedToName,
       note,
     } = req.body;
 
-    const taskTitle = title?.trim() || leadName?.trim() || 'Follow-up Task';
-    const finalLeadName = leadName?.trim() || taskTitle;
-    const finalPhone = phone?.trim() || '';
-
-    if (!dueDate?.trim()) {
+    const taskTitle = title?.trim() || leadName?.trim();
+    if (!taskTitle) {
+      res.status(400).json({ error: 'Enter a task title.' });
+      return;
+    }
+    if (!validDate(dueDate)) {
       res.status(400).json({ error: 'Due date is required' });
       return;
     }
+
+    const lead = leadId && isValidObjectId(leadId) ? await Lead.findOne({ _id: leadId, organizationId, archivedAt: null }).select('name phone destination').lean() : null;
+    if (leadId && !lead) {
+      res.status(404).json({ error: 'Lead not found in this workspace.' });
+      return;
+    }
+    const assignee = assignedTo ? await findAssignee(organizationId, assignedTo) : null;
+    if (assignedTo && !assignee) {
+      res.status(400).json({ error: 'Select an active teammate in this workspace.' });
+      return;
+    }
+    const taskType = ['call', 'whatsapp', 'email', 'meeting', 'follow-up'].includes(type) ? type : 'follow-up';
+    const taskTime = dueTime?.trim() || '10:00';
 
     const todayStr = getTodayStr();
     const isOverdue = dueDate < todayStr;
@@ -142,14 +165,14 @@ export const createFollowUp = async (req: AuthenticatedRequest, res: Response): 
       createdBy: userId,
       leadId: leadId ? leadId : undefined,
       title: taskTitle,
-      leadName: finalLeadName,
-      phone: finalPhone,
-      destination: destination?.trim() || '',
+      leadName: lead?.name || leadName?.trim() || taskTitle,
+      phone: lead?.phone || phone?.trim() || '',
+      destination: lead?.destination || destination?.trim() || '',
       dueDate: dueDate.trim(),
-      dueTime: dueTime?.trim() || '10:00',
-      type: ['call', 'whatsapp', 'email', 'meeting', 'follow-up'].includes(type) ? type : 'follow-up',
+      dueTime: taskTime,
+      type: taskType,
       assignedTo: assignedTo || undefined,
-      assignedToName: assignedToName?.trim() || 'Unassigned',
+      assignedToName: assignee?.name || 'Unassigned',
       note: note?.trim() || '',
       status: isOverdue ? 'overdue' : 'pending',
     });
@@ -162,8 +185,8 @@ export const createFollowUp = async (req: AuthenticatedRequest, res: Response): 
           {
             $push: {
               activities: {
-                type: type === 'call' ? 'call' : type === 'whatsapp' ? 'whatsapp' : 'note_added',
-                description: `Follow-up scheduled (${type.toUpperCase()}) for ${dueDate} at ${dueTime || '11:00 AM'}: ${note || 'No notes'}`,
+                type: 'note_added',
+                description: `Follow-up scheduled for ${dueDate} at ${taskTime}: ${taskTitle}`,
                 timestamp: new Date(),
                 author: req.user?.name || 'Agent',
               },
@@ -206,7 +229,6 @@ export const updateFollowUp = async (req: AuthenticatedRequest, res: Response): 
       dueTime,
       type,
       assignedTo,
-      assignedToName,
       note,
       status,
     } = req.body;
@@ -215,13 +237,27 @@ export const updateFollowUp = async (req: AuthenticatedRequest, res: Response): 
     if (leadName !== undefined) followUp.leadName = leadName.trim();
     if (phone !== undefined) followUp.phone = phone.trim();
     if (destination !== undefined) followUp.destination = destination.trim();
-    if (dueDate !== undefined) followUp.dueDate = dueDate.trim();
+    if (dueDate !== undefined) {
+      if (!validDate(dueDate)) {
+        res.status(400).json({ error: 'Enter a valid due date.' });
+        return;
+      }
+      followUp.dueDate = dueDate;
+      if (followUp.status !== 'completed') followUp.status = dueDate < getTodayStr() ? 'overdue' : 'pending';
+    }
     if (dueTime !== undefined) followUp.dueTime = dueTime.trim();
     if (type !== undefined && ['call', 'whatsapp', 'email', 'meeting', 'follow-up'].includes(type)) {
       followUp.type = type;
     }
-    if (assignedTo !== undefined) followUp.assignedTo = assignedTo;
-    if (assignedToName !== undefined) followUp.assignedToName = assignedToName.trim();
+    if (assignedTo !== undefined) {
+      const assignee = assignedTo ? await findAssignee(organizationId, assignedTo) : null;
+      if (assignedTo && !assignee) {
+        res.status(400).json({ error: 'Select an active teammate in this workspace.' });
+        return;
+      }
+      followUp.assignedTo = assignee?._id.toString();
+      followUp.assignedToName = assignee?.name || 'Unassigned';
+    }
     if (note !== undefined) followUp.note = note.trim();
     if (status !== undefined && ['pending', 'completed', 'overdue'].includes(status)) {
       followUp.status = status;

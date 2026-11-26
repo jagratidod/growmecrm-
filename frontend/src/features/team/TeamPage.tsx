@@ -1,3 +1,4 @@
+import { useAuth } from '../../context/AuthContext'
 import React, { useState } from 'react'
 import { LeadsSidebar } from '../leads/components/LeadsSidebar'
 import { TeamHeader } from './components/TeamHeader'
@@ -11,6 +12,8 @@ interface TeamPageProps {
 }
 
 export const TeamPage: React.FC<TeamPageProps> = ({ onNavigateMenu }) => {
+  const { user } = useAuth()
+  const canManage = user?.role === 'owner' || user?.role === 'admin'
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   return (
@@ -36,12 +39,12 @@ export const TeamPage: React.FC<TeamPageProps> = ({ onNavigateMenu }) => {
           <TeamMembersTable />
 
           {/* Pending Invitations Section */}
-          <PendingInvitesList />
+          {canManage && <PendingInvitesList />}
         </main>
       </div>
 
       {/* 2-Step Invite Teammate Modal */}
-      <InviteTeammateModal />
+      {canManage && <InviteTeammateModal />}
     </div>
   )
 }

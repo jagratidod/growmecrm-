@@ -1,322 +1,149 @@
-import React, { useState, useEffect } from 'react'
-import { LeadsSidebar } from '../leads/components/LeadsSidebar'
-import { useSettings } from '../../context/SettingsContext'
-import { useToast } from '../../components/ui/Toast'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import { Copy, ExternalLink, Link2, Trash2 } from 'lucide-react'
 import { linkTreeService } from '../../services/linkTreeService'
-import type { BioLinkItem } from '../../services/linkTreeService'
-import {
-  Copy,
-  ExternalLink,
-  Trash2,
-  Menu,
-  Check,
-  Save,
-} from 'lucide-react'
+import type { LinkTreeData } from '../../services/linkTreeService'
 
-interface LinkTreePageProps {
-  onNavigateMenu?: (menu: string) => void
-}
-
-export const LinkTreePage: React.FC<LinkTreePageProps> = ({ onNavigateMenu }) => {
-  const { organization: org } = useSettings()
-  const { toast } = useToast()
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [copied, setCopied] = useState(false)
-
-  const [bioUrl, setBioUrl] = useState('')
-
-  // Bio settings
-  const [bioTitle, setBioTitle] = useState(org.agencyName)
+export function LinkTreePage() {
+  const [profile, setProfile] = useState<LinkTreeData>()
+  const [bioTitle, setBioTitle] = useState('')
   const [bioTagline, setBioTagline] = useState('')
-  const [isSavingProfile, setIsSavingProfile] = useState(false)
-
-  const [links, setLinks] = useState<BioLinkItem[]>([])
-
-  // Load from server on mount
-  useEffect(() => {
-    const fetchLinkTree = async () => {
-      try {
-        const data = await linkTreeService.getLinkTree()
-        setBioTitle(data.bioTitle)
-        setBioTagline(data.bioTagline)
-        setLinks(data.links)
-        setBioUrl(data.publicUrl || '')
-      } catch (error) {
-        toast({ type: 'error', title: 'Could not load links', description: (error as Error).message })
-      }
-    }
-    fetchLinkTree()
-  }, [])
-
   const [newTitle, setNewTitle] = useState('')
   const [newUrl, setNewUrl] = useState('')
+  const [pending, setPending] = useState(false)
+  const [loadError, setLoadError] = useState('')
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(bioUrl)
-    setCopied(true)
-    toast({
-      type: 'success',
-      title: 'Link Copied',
-      description: 'Bio URL copied to clipboard.',
+  useEffect(() => {
+    const controller = new AbortController()
+    linkTreeService.getLinkTree(controller.signal).then((data) => {
+      if (controller.signal.aborted) return
+      setProfile(data)
+      setBioTitle(data.bioTitle)
+      setBioTagline(data.bioTagline)
+    }, (error: Error) => {
+      if (!controller.signal.aborted) setLoadError(error.message)
     })
-    setTimeout(() => setCopied(false), 2000)
-  }
+    return () => controller.abort()
+  }, [])
 
-  const handleSaveProfile = async () => {
+  const perform = async (action: () => Promise<void>, message: string) => {
+    setPending(true)
+    setError('')
+    setNotice('')
     try {
-      setIsSavingProfile(true)
-      await linkTreeService.updateLinkTree({ bioTitle, bioTagline })
-      toast({
-        type: 'success',
-        title: 'Profile Saved',
-        description: 'Bio title and tagline updated successfully.',
-      })
-    } catch (err) {
-      console.error('Failed to save bio profile:', err)
+      await action()
+      setNotice(message)
+    } catch (error) {
+      setError((error as Error).message)
     } finally {
-      setIsSavingProfile(false)
+      setPending(false)
     }
   }
 
-  const handleAddLink = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const title = newTitle.trim()
-    const rawUrl = newUrl.trim()
-    if (!title || !rawUrl) return
-    try {
-      const url = new URL(/^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`)
-      const { linkTree } = await linkTreeService.addLink({ title, url: url.href, icon: 'web' })
-      setLinks(linkTree.links)
+  const updateLinks = (links: LinkTreeData['links']) =>
+    setProfile((previous) => previous && { ...previous, links })
+
+  const saveProfile = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    void perform(async () => {
+      const data = await linkTreeService.updateLinkTree({ bioTitle, bioTagline })
+      setBioTitle(data.bioTitle)
+      setBioTagline(data.bioTagline)
+    }, 'Profile saved.')
+  }
+
+  const addLink = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    void perform(async () => {
+      const rawUrl = newUrl.trim()
+      const href = /^[a-z][a-z\d+.-]*:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`
+      const url = new URL(href)
+      if (!['https:', 'http:'].includes(url.protocol) || url.password || url.username) {
+        throw new Error('Enter a valid web address.')
+      }
+      const { linkTree } = await linkTreeService.addLink({ title: newTitle.trim(), url: url.href })
+      updateLinks(linkTree.links)
       setNewTitle('')
       setNewUrl('')
-      toast({ type: 'success', title: 'Link added' })
-    } catch (error) {
-      toast({ type: 'error', title: 'Could not add link', description: (error as Error).message })
-    }
+    }, 'Link added.')
   }
 
-  const handleDeleteLink = async (id: string) => {
-    try {
-      const updated = await linkTreeService.deleteLink(id)
-      setLinks(updated.links)
-      toast({ type: 'success', title: 'Link removed' })
-    } catch (error) {
-      toast({ type: 'error', title: 'Could not delete link', description: (error as Error).message })
-    }
-  }
+  if (loadError) return <section className="gm-card" aria-labelledby="linktree-heading">
+    <h2 id="linktree-heading">LinkTree</h2>
+    <p role="alert" className="gm-error">{loadError}</p>
+  </section>
+  if (!profile) return <p role="status">Loading LinkTree…</p>
 
-  const handleToggleLink = async (id: string) => {
-    try {
-      const updated = await linkTreeService.toggleLink(id)
-      setLinks(updated.links)
-    } catch (error) {
-      toast({ type: 'error', title: 'Could not update link', description: (error as Error).message })
-    }
-  }
+  const publicUrl = profile.publicUrl
+  const visibleLinks = profile.links.filter(({ active }) => active)
 
-  return (
-    <div className="min-h-screen bg-canvas flex text-slate-800 font-sans">
-      <LeadsSidebar
-        isOpen={isMobileSidebarOpen}
-        onClose={() => setIsMobileSidebarOpen(false)}
-        currentPath="LinkTree"
-        onSelectMenu={onNavigateMenu}
-      />
-
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-        <main className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setIsMobileSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
-                  LinkTree Bio
-                </h1>
-                <p className="text-xs text-slate-400 font-medium">
-                  Your agency's all-in-one link for Instagram bio, WhatsApp status, and social cards.
-                </p>
-              </div>
-            </div>
-
-            {bioUrl && <div className="flex items-center gap-2">
-              <button
-                onClick={handleCopy}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-xs shadow-xs hover:bg-slate-50 transition cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied!' : 'Copy link'}</span>
-              </button>
-              <a
-                href={bioUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand text-white font-semibold text-xs shadow-md hover:bg-brand-hover transition cursor-pointer"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Open link</span>
-              </a>
-            </div>}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column: LinkTree Builder */}
-            <div className="lg:col-span-7 space-y-5">
-              {/* Profile Card */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs">
-                <h2 className="text-sm font-bold text-slate-800 mb-4">Bio Profile</h2>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">
-                      Display Title
-                    </label>
-                    <input
-                      type="text"
-                      value={bioTitle}
-                      onChange={(e) => setBioTitle(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">
-                      Bio Tagline
-                    </label>
-                    <input
-                      type="text"
-                      value={bioTagline}
-                      onChange={(e) => setBioTagline(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
-                    />
-                  </div>
-                  <div className="pt-2 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleSaveProfile}
-                      disabled={isSavingProfile}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand text-white font-semibold text-xs hover:bg-brand-hover transition disabled:opacity-50"
-                    >
-                      <Save className="w-3.5 h-3.5" />
-                      <span>{isSavingProfile ? 'Saving...' : 'Save Profile'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Add New Link Card */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs">
-                <h2 className="text-sm font-bold text-slate-800 mb-3">Add Custom Link</h2>
-                <form onSubmit={handleAddLink} className="space-y-3">
-                  <div>
-                    <input
-                      type="text"
-
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-
-                      value={newUrl}
-                      onChange={(e) => setNewUrl(e.target.value)}
-                      className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-brand"
-                    />
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-brand text-white rounded-xl text-xs font-semibold hover:bg-brand-hover transition cursor-pointer"
-                    >
-                      Add Link
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              {/* Current Links List */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs space-y-3">
-                <h2 className="text-sm font-bold text-slate-800 mb-2">Active Links</h2>
-                {links.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100"
-                  >
-                    <div className="min-w-0 pr-3">
-                      <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
-                      <p className="text-[11px] text-slate-400 truncate">{item.url}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => handleToggleLink(item.id)}
-                        className={`w-8 h-4 rounded-full transition-colors relative cursor-pointer ${
-                          item.active ? 'bg-brand' : 'bg-slate-300'
-                        }`}
-                      >
-                        <div
-                          className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${
-                            item.active ? 'left-4.5' : 'left-0.5'
-                          }`}
-                        />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteLink(item.id)}
-                        className="p-1 rounded-lg text-slate-400 hover:text-red-500 transition cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Column: Phone Mockup Preview */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center">
-              <div className="w-[320px] bg-slate-900 rounded-[44px] p-4 shadow-2xl border-4 border-slate-800">
-                {/* Phone Speaker Notch */}
-                <div className="w-24 h-4 bg-slate-800 rounded-full mx-auto mb-4" />
-
-                {/* Phone Screen */}
-                <div className="bg-gradient-to-b from-[#2b1f47] to-[#1a122c] rounded-[34px] p-5 text-white min-h-[500px] flex flex-col items-center">
-                  {/* Agency Avatar */}
-                  <div className="w-16 h-16 rounded-full bg-white text-brand flex items-center justify-center font-black text-xl shadow-lg mb-3">
-                    {bioTitle.slice(0, 2).toUpperCase()}
-                  </div>
-
-                  <h3 className="font-bold text-sm text-center mb-1">{bioTitle}</h3>
-                  <p className="text-[11px] text-purple-200/80 text-center mb-5 px-3 leading-tight">
-                    {bioTagline}
-                  </p>
-
-                  {/* Links on Mockup */}
-                  <div className="w-full space-y-2.5">
-                    {links
-                      .filter((l) => l.active)
-                      .map((l) => (
-                        <div
-                          key={l.id}
-                          className="w-full py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 text-center text-[11px] font-semibold text-white shadow-xs transition cursor-pointer"
-                        >
-                          {l.title}
-                        </div>
-                      ))}
-                  </div>
-
-                  {/* Verified Badge */}
-                  <div className="mt-auto pt-6 text-center text-[10px] text-purple-300/50">
-                    Powered by GrowMe CRM
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
+  return <section className="gm-list" aria-labelledby="linktree-heading">
+    <div className="gm-row">
+      <div>
+        <h2 className="gm-section-title" id="linktree-heading">LinkTree</h2>
+        <p className="gm-muted">Create one link in bio for your social profiles.</p>
       </div>
+      {publicUrl && <div className="gm-linktree-actions">
+        <button type="button" className="gm-button secondary" disabled={pending}
+          onClick={() => void perform(() => navigator.clipboard.writeText(publicUrl), 'Link copied.')}>
+          <Copy size={16} /> Copy link
+        </button>
+        <a className="gm-button" href={publicUrl} target="_blank" rel="noreferrer">
+          <ExternalLink size={16} /> Open page
+        </a>
+      </div>}
     </div>
-  )
+    {error && <p role="alert" className="gm-error">{error}</p>}
+    {notice && <p role="status" className="gm-notice">{notice}</p>}
+    <div className="gm-linktree-grid">
+      <div className="gm-list">
+        <form className="gm-card gm-form" onSubmit={saveProfile}>
+          <h3>Profile</h3>
+          <fieldset disabled={pending}>
+            <label>Display title<input value={bioTitle} onChange={(event) => setBioTitle(event.target.value)} required /></label>
+            <label>Tagline<input value={bioTagline} onChange={(event) => setBioTagline(event.target.value)} /></label>
+            <button className="gm-button" type="submit">Save profile</button>
+          </fieldset>
+        </form>
+        <div className="gm-card gm-list">
+          <h3>Links</h3>
+          <form className="gm-form" onSubmit={addLink}>
+            <fieldset className="gm-linktree-fields" disabled={pending}>
+              <label>Link title<input value={newTitle} onChange={(event) => setNewTitle(event.target.value)} required /></label>
+              <label>URL<input value={newUrl} onChange={(event) => setNewUrl(event.target.value)} inputMode="url" required /></label>
+              <button className="gm-button" type="submit">Add link</button>
+            </fieldset>
+          </form>
+          {profile.links.length ? <ul className="gm-list gm-linktree-links">
+            {profile.links.map((item) => <li key={item.id}>
+              <div><strong>{item.title}</strong><span className="gm-muted">{item.url}</span></div>
+              <div className="gm-linktree-actions">
+                <button type="button" className="gm-button secondary" disabled={pending}
+                  aria-label={`${item.active ? 'Hide' : 'Show'} ${item.title}`}
+                  onClick={() => void perform(async () => updateLinks((await linkTreeService.toggleLink(item.id)).links), item.active ? 'Link hidden.' : 'Link visible.')}>
+                  {item.active ? 'Hide' : 'Show'}
+                </button>
+                <button type="button" className="gm-icon-button" disabled={pending} aria-label={`Remove ${item.title}`}
+                  onClick={() => void perform(async () => updateLinks((await linkTreeService.deleteLink(item.id)).links), 'Link removed.')}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </li>)}
+          </ul> : <p className="gm-muted">No links added yet.</p>}
+        </div>
+      </div>
+      <aside className="gm-card gm-list gm-linktree-preview" aria-label="LinkTree preview">
+        <h3>Preview</h3>
+        <div className="gm-linktree-public">
+          <span className="gm-card-icon"><Link2 size={21} aria-hidden="true" /></span>
+          {bioTitle && <strong>{bioTitle}</strong>}
+          {bioTagline && <p>{bioTagline}</p>}
+          {visibleLinks.length ? <ul>{visibleLinks.map((link) => <li key={link.id}>{link.title}</li>)}</ul> :
+            <p className="gm-muted">Visible links will appear here.</p>}
+        </div>
+      </aside>
+    </div>
+  </section>
 }

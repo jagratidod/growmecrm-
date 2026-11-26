@@ -5,7 +5,6 @@ import { SuperAdminLayout } from '../superAdmin/SuperAdminLayout'
 import { useRouter } from '../../context/RouterContext'
 import { apiBase, getClient, getClients, moduleNames, save } from './workspaceApi'
 import type { Client, ClientDetail } from './workspaceApi'
-import './workspace.css'
 
 type Tab = 'Access' | 'Websites' | 'Connections' | 'Billing'
 const tabs: Tab[] = ['Access', 'Websites', 'Connections', 'Billing']

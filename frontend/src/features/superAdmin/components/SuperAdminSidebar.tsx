@@ -3,7 +3,6 @@ import {
 } from 'lucide-react'
 import { useRouter } from '../../../context/RouterContext'
 import { useAuth } from '../../../context/AuthContext'
-import '../../workspace/workspace.css'
 
 interface SuperAdminSidebarProps {
   isOpen?: boolean
@@ -48,7 +47,7 @@ export function SuperAdminSidebar({ isOpen = false, onClose, currentPath = 'Dash
         </nav>
         <div className="gm-sidebar-footer">
           <div><strong>{user?.name || 'Super Admin'}</strong><small>Super Admin</small></div>
-          <button aria-label="Sign out" onClick={async () => { await logout(); navigate('/login') }}><LogOut size={18} /></button>
+          <button aria-label="Sign out" onClick={async () => { await logout(); navigate('/super-admin/login', { replace: true }) }}><LogOut size={18} /></button>
         </div>
       </aside>
     </>

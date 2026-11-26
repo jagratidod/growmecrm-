@@ -20,8 +20,8 @@ export interface LinkTreeData {
 }
 
 export const linkTreeService = {
-  async getLinkTree(): Promise<LinkTreeData> {
-    return request<LinkTreeData>('/linktree');
+  async getLinkTree(signal?: AbortSignal): Promise<LinkTreeData> {
+    return request<LinkTreeData>('/linktree', { signal });
   },
 
   async updateLinkTree(data: {

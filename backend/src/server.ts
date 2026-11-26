@@ -78,7 +78,7 @@ app.use('/api/bookings', ...gate('bookings'), bookingRoutes);
 app.use('/api/hotels', ...gate('catalog'), hotelRoutes);
 app.use('/api/follow-ups', ...gate('leads'), followUpRoutes);
 app.use('/api/sightseeing', ...gate('catalog'), sightseeingRoutes);
-app.use('/api/dashboard', authenticate, requireModule('leads', 'bookings', 'team'), dashboardRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/host-page', hostPageRoutes);
 app.use('/api/bot-flows', ...gate('communications'), botFlowRoutes);
 app.use('/api/bills', ...gate('finance'), billRoutes);

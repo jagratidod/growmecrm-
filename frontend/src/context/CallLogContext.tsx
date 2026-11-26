@@ -16,6 +16,8 @@ interface CallLogContextType {
   logCall: (data: Omit<CallLogEntry, 'id' | 'createdAt'>) => Promise<CallLogEntry>
   deleteCallLog: (id: string) => Promise<void>
   refreshCallLogs: () => Promise<void>
+  loading: boolean
+  loadError: string
 }
 
 const CallLogContext = createContext<CallLogContextType | undefined>(undefined)
@@ -25,6 +27,8 @@ export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const enabled = (useWorkspace().access?.modules.includes('communications')) && ('/call-log' === path)
   const { toast } = useToast()
   const [callLogs, setCallLogs] = useState<CallLogEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   const [filters, setFilters] = useState<CallLogFilters>({
     user: 'All users',
@@ -36,12 +40,16 @@ export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Fetch call logs from backend
   const refreshCallLogs = useCallback(async () => {
     if (!enabled) return
+    setLoading(true)
+    setLoadError('')
     try {
       setCallLogs((await callLogsService.getCallLogs()).callLogs)
     } catch (error) {
-      toast({ type: 'error', title: 'Could not load call logs', description: (error as Error).message })
+      setLoadError((error as Error).message)
+    } finally {
+      setLoading(false)
     }
-  }, [enabled, toast])
+  }, [enabled])
 
   useEffect(() => {
     void refreshCallLogs()
@@ -100,6 +108,8 @@ export const CallLogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         logCall,
         deleteCallLog,
         refreshCallLogs,
+        loading,
+        loadError,
       }}
     >
       {children}

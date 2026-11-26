@@ -114,4 +114,6 @@ FollowUpSchema.index({ organizationId: 1, status: 1 });
 FollowUpSchema.index({ organizationId: 1, dueDate: 1 });
 FollowUpSchema.index({ organizationId: 1, createdAt: -1 });
 
+FollowUpSchema.index({ organizationId: 1, leadId: 1, dueDate: 1, dueTime: 1 });
+
 export const FollowUp = mongoose.model<IFollowUp>('FollowUp', FollowUpSchema);

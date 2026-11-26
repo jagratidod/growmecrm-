@@ -1,13 +1,7 @@
-export type LeadStage =
-  | 'New'
-  | 'Contacted'
-  | 'Qualified'
-  | 'Proposal sent'
-  | 'Negotiation'
-  | 'Won'
-  | 'Lost'
+export const leadStages = ['New', 'Contacted', 'Qualified', 'Proposal sent', 'Negotiation', 'Won', 'Lost'] as const
+export type LeadStage = typeof leadStages[number]
 
-export type LeadTemperature = 'Hot' | 'Warm' | 'Cold' | 'Won' | 'Lost'
+export type LeadTemperature = 'Hot' | 'Warm' | 'Cold'
 
 export type CustomerType = 'B2C' | 'B2B'
 
@@ -19,6 +13,7 @@ export type LeadSource =
   | 'Google'
   | 'WhatsApp'
   | 'Referral'
+  | 'CSV'
 
 export interface LeadActivity {
   id: string
@@ -27,6 +22,8 @@ export interface LeadActivity {
   description: string
   timestamp: string
   author: string
+  fromStage?: LeadStage
+  toStage?: LeadStage
 }
 
 export interface Lead {
@@ -44,6 +41,14 @@ export interface Lead {
   budget: number
   currency: string
   assignedTo: string
+  assignedUserId?: string
+  stageChangedAt?: string
+  closedAt?: string
+  proposalSentAt?: string
+  lostReason?: string
+  archivedAt?: string
+  nextAction?: { dueDate: string; dueTime: string; title: string }
+  linkedBookings?: { id: string; status: string; destination: string; departure: string; currency: string; totalAmount: number; amountPaid: number }[]
   temperature: LeadTemperature
   tags: string[]
   notes?: string
@@ -52,7 +57,10 @@ export interface Lead {
   activities: LeadActivity[]
 }
 
+export type LeadView = 'all' | 'mine' | 'unassigned' | 'due' | 'no-next-action' | 'archived'
+
 export interface LeadFilters {
+  view?: LeadView
   search: string
   stage?: LeadStage | 'All'
   temperature?: LeadTemperature | 'All'
@@ -68,4 +76,8 @@ export interface LeadStats {
   overall: number
   today: number
   converted: number
+  open: number
+  stages: Partial<Record<LeadStage, number>>
 }
+
+export type CsvLeadRow = Record<string, string | number | undefined>

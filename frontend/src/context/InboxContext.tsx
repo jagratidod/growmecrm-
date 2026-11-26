@@ -1,6 +1,6 @@
 import { useRouter } from './RouterContext'
 import { useWorkspace } from '../features/workspace/WorkspaceAccess'
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { ChannelType, ChatFilterType, ChatConversation } from '../types/inbox.types'
 import { useToast } from '../components/ui/Toast'
 import { inboxService } from '../services/inboxService'
@@ -26,6 +26,9 @@ interface InboxContextType {
   setIsNewChatModalOpen: (open: boolean) => void
   refreshConversations: () => Promise<void>
   loading: boolean
+  loadError: string
+  openingChat: boolean
+  threadError: string
 }
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined)
@@ -39,46 +42,63 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [conversations, setConversations] = useState<ChatConversation[]>([])
 
-  const [activeChannel, setActiveChannel] = useState<ChannelType>('whatsapp')
+  const [activeChannel, setChannel] = useState<ChannelType>('whatsapp')
   const [selectedChat, setSelectedChat] = useState<ChatConversation | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<ChatFilterType>('All')
   const [selectedStage, setSelectedStage] = useState('All stages')
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-
-  // Fetch from backend
-  const refreshConversations = useCallback(async () => {
-    try {
-      setLoading(true)
-      const data = await inboxService.getConversations({
-        channel: 'all',
-      })
-      if (Array.isArray(data)) {
-        setConversations(data)
-        if (!selectedChat && data.length > 0) {
-          const match = data.find((c) => c.channel === activeChannel) || data[0]
-          setSelectedChat(match)
-        }
-      }
-    } catch (err) {
-      console.warn('Could not load inbox:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [activeChannel, selectedChat])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [requestNumber, setRequestNumber] = useState(0)
+  const lastRefresh = useRef(0)
+  const [thread, setThread] = useState<{ id: string; error?: string }>()
+  const selectedId = selectedChat?.id
 
   useEffect(() => {
-    if (enabled) void refreshConversations()
-  }, [enabled])
+    if (!enabled) return
+    const controller = new AbortController()
+    setLoading(true)
+    setLoadError('')
+    const fresh = requestNumber !== lastRefresh.current
+    lastRefresh.current = requestNumber
+    inboxService.getConversations(undefined, controller.signal, fresh).then(
+      (data) => { if (!controller.signal.aborted) setConversations(data) },
+      (error: Error) => { if (!controller.signal.aborted) setLoadError(error.message) },
+    ).finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    return () => controller.abort()
+  }, [enabled, requestNumber])
 
-  // Reset selected chat if channel changes and chat isn't in that channel
   useEffect(() => {
-    if (selectedChat && selectedChat.channel !== activeChannel) {
-      const firstInChannel = conversations.find((c) => c.channel === activeChannel) || null
-      setSelectedChat(firstInChannel)
-    }
-  }, [activeChannel, conversations, selectedChat])
+    if (!enabled || !selectedId) return
+    const controller = new AbortController()
+    inboxService.getConversationById(selectedId, controller.signal).then(
+      (data) => {
+        if (controller.signal.aborted) return
+        setSelectedChat((current) => current?.id === selectedId ? data : current)
+        setConversations((previous) => previous.map((item) => item.id === selectedId ? { ...data, messages: [] } : item))
+        setThread({ id: selectedId })
+      },
+      (error: Error) => {
+        if (!controller.signal.aborted) setThread({ id: selectedId, error: error.message })
+      },
+    )
+    return () => controller.abort()
+  }, [enabled, selectedId, requestNumber])
+
+  const setActiveChannel = (channel: ChannelType) => {
+    if (channel === activeChannel) return
+    setChannel(channel)
+    setSelectedChat(null)
+    setThread(undefined)
+  }
+
+  const selectChat = (chat: ChatConversation | null) => {
+    if (chat?.id === selectedId) return
+    setThread(undefined)
+    setSelectedChat(chat)
+  }
+  const refreshConversations = useCallback(async () => { setRequestNumber((value) => value + 1) }, [])
 
   // Filter conversations
   const filteredConversations = useMemo(() => {
@@ -112,7 +132,7 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [conversations, activeChannel, searchQuery, filterType, selectedStage, user?.name])
 
   const updateConversation = (conversation: ChatConversation) => {
-    setConversations((previous) => previous.map((item) => item.id === conversation.id ? conversation : item))
+    setConversations((previous) => previous.map((item) => item.id === conversation.id ? { ...conversation, messages: [] } : item))
     setSelectedChat((current) => current?.id === conversation.id ? conversation : current)
   }
 
@@ -138,8 +158,8 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const startNewChat: InboxContextType['startNewChat'] = async (data) => {
     try {
       const created = await inboxService.createConversation({ ...data, channel: activeChannel })
-      setConversations((previous) => [created, ...previous])
-      setSelectedChat(created)
+      setConversations((previous) => [{ ...created, messages: [] }, ...previous.filter((item) => item.id !== created.id)])
+      selectChat(created)
       setIsNewChatModalOpen(false)
       toast({ title: 'Conversation created', type: 'success' })
     } catch (error) {
@@ -156,7 +176,7 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         conversations,
         filteredConversations,
         selectedChat,
-        setSelectedChat,
+        setSelectedChat: selectChat,
         searchQuery,
         setSearchQuery,
         filterType,
@@ -170,6 +190,9 @@ export const InboxProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsNewChatModalOpen,
         refreshConversations,
         loading,
+        loadError,
+        openingChat: Boolean(selectedId && thread?.id !== selectedId),
+        threadError: thread?.id === selectedId ? thread?.error || '' : '',
       }}
     >
       {children}

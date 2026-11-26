@@ -1,4 +1,4 @@
-import { request } from './api';
+import { request, ROUTE_READ_TTL } from './api';
 import type { TeamMember, PendingInvite, TeamStats, TeamRole } from '../types/team.types';
 
 export interface TeamApiResponse {
@@ -10,7 +10,7 @@ export interface TeamApiResponse {
 export const teamService = {
   // 1. Get all members, pending invites, and stats
   async getTeam(): Promise<TeamApiResponse> {
-    return request<TeamApiResponse>('/team', { method: 'GET' });
+    return request<TeamApiResponse>('/team', { method: 'GET', cacheMs: ROUTE_READ_TTL });
   },
 
   // 2. Invite a teammate (Admin/Owner)

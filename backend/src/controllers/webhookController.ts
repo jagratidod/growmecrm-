@@ -2,6 +2,8 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { Request, Response } from 'express';
 import { Lead } from '../models/Lead';
 import { Organization } from '../models/Organization';
+import { workspaceAccess } from '../platform/access';
+import { intakeKey, saveIncomingLead } from '../services/leadIntake';
 
 // Helper to format Mongoose Lead doc for response
 const formatLead = (doc: any) => {
@@ -36,6 +38,11 @@ export const ingestLead = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    const access = await workspaceAccess(org.id);
+    if (!access?.enabled.includes('leads')) {
+      res.status(403).json({ error: 'Lead capture is unavailable.' }); return;
+    }
+
     const {
       name,
       phone,
@@ -53,8 +60,15 @@ export const ingestLead = async (req: Request, res: Response): Promise<void> => 
       notes,
     } = req.body;
 
-    const leadName = (name && String(name).trim()) || 'Online Enquiry';
-    const leadPhone = (phone && String(phone).trim()) || 'Not provided';
+    const leadName = typeof name === 'string' ? name.trim() : '';
+    const leadPhone = typeof phone === 'string' ? phone.trim() : '';
+    if (!leadName || leadPhone.replace(/\D/g, '').length < 7) {
+      res.status(400).json({ error: 'Name and a valid phone are required.' }); return;
+    }
+    const suppliedEventId = req.get('Idempotency-Key') || (typeof req.body.eventId === 'string' ? req.body.eventId.trim() : '');
+    if (suppliedEventId.length > 128) {
+      res.status(400).json({ error: 'Event ID is too long.' }); return;
+    }
     const leadDestination = (destination && String(destination).trim()) || 'General Enquiry';
 
     // Normalize Source
@@ -75,7 +89,7 @@ export const ingestLead = async (req: Request, res: Response): Promise<void> => 
       ? tags.split(',').map((t) => t.trim())
       : [];
 
-    const newLead = await Lead.create({
+    const { lead: newLead, created } = await saveIncomingLead({
       organizationId: org._id,
       name: leadName,
       email: email ? String(email).trim().toLowerCase() : undefined,
@@ -90,7 +104,7 @@ export const ingestLead = async (req: Request, res: Response): Promise<void> => 
       budget: Number(budget) || 0,
       currency: currency || 'INR',
       assignedTo: 'Unassigned',
-      temperature: temperature || 'Warm',
+      temperature: ['Hot', 'Cold'].includes(temperature) ? temperature : 'Warm',
       tags: [...rawTags, leadSource.toLowerCase()],
       notes: notes || `Lead automatically captured via ${leadSource} Webhook.`,
       activities: [
@@ -101,9 +115,9 @@ export const ingestLead = async (req: Request, res: Response): Promise<void> => 
           author: `${leadSource} Bot`,
         },
       ],
-    });
+    }, suppliedEventId ? intakeKey(`webhook:${leadSource}`, suppliedEventId) : undefined);
 
-    res.status(201).json({
+    res.status(created ? 201 : 200).json({
       success: true,
       message: `Lead successfully received and recorded from ${leadSource}`,
       lead: formatLead(newLead),
@@ -148,63 +162,59 @@ async function providerOrganization(req: Request) {
   return Organization.findOne({ webhookApiKey: webhookKey, status: 'ACTIVE' });
 }
 
+function metaPageToken(organizationId: string, pageId: string) {
+  const tokens = JSON.parse(process.env.META_LEAD_PAGE_TOKENS || '{}') as Record<string, Record<string, string>>;
+  return tokens[organizationId]?.[pageId];
+}
+
 export const handleMetaWebhook = async (req: Request, res: Response): Promise<void> => {
   try {
+    const org = await providerOrganization(req);
+    if (!org) { res.status(401).json({ error: 'Invalid provider event.' }); return; }
+    const access = await workspaceAccess(org.id);
+    if (!access?.enabled.includes('leads')) { res.status(403).json({ error: 'Lead capture is unavailable.' }); return; }
+
     const body = req.body;
+    if (!['page', 'instagram'].includes(body.object)) { res.send('EVENT_RECEIVED'); return; }
+    for (const entry of body.entry || []) {
+      for (const change of entry.changes || []) {
+        if (change.field !== 'leadgen') continue;
+        const data = change.value;
+        const eventId = String(data?.leadgen_id ?? '');
+        const pageId = String(data?.page_id ?? entry.id ?? '');
+        if (!/^\d+$/.test(eventId) || !/^\d+$/.test(pageId)) continue;
+        const key = intakeKey('meta', eventId);
+        if (await Lead.exists({ organizationId: org._id, intakeKey: key })) continue;
 
-
-    // Acknowledge Meta immediately to avoid retries
-    res.status(200).send('EVENT_RECEIVED');
-
-    if (body.object === 'page' || body.object === 'instagram') {
-      const org = await providerOrganization(req);
-      if (!org) return;
-
-      for (const entry of body.entry || []) {
-        for (const change of entry.changes || []) {
-          if (change.field === 'leadgen') {
-            const leadgenId = change.value?.leadgen_id;
-            const formId = change.value?.form_id;
-            const pageId = change.value?.page_id;
-            const isInstagram = body.object === 'instagram' || Boolean(change.value?.ad_id && String(change.value?.ad_id).includes('ig'));
-
-            // Ingest only events that include the contact details required by the CRM.
-            const name = change.value?.full_name || change.value?.name;
-            const phone = change.value?.phone_number || change.value?.phone;
-            const destination = change.value?.destination;
-            if (typeof name !== 'string' || !name.trim() || typeof phone !== 'string' || !phone.trim() ||
-                typeof destination !== 'string' || !destination.trim()) continue;
-            await Lead.create({
-              organizationId: org._id,
-              name: name.trim(),
-              phone: phone.trim(),
-              email: change.value?.email || undefined,
-              source: isInstagram ? 'Instagram' : 'Facebook',
-              status: 'New',
-              customerType: 'B2C',
-              destination: destination.trim(),
-              travelers: 1,
-              budget: 0,
-              currency: 'INR',
-              assignedTo: 'Unassigned',
-              temperature: 'Warm',
-              tags: [isInstagram ? 'instagram' : 'facebook', 'ad-lead'],
-              notes: `Meta Leadgen ID: ${leadgenId}. Form ID: ${formId}, Page ID: ${pageId}`,
-              activities: [
-                {
-                  type: 'created',
-                  description: `Captured from ${isInstagram ? 'Instagram' : 'Facebook'} Instant Form (ID: ${leadgenId})`,
-                  timestamp: new Date(),
-                  author: 'Meta Ads',
-                },
-              ],
-            });
-          }
+        const version = process.env.META_GRAPH_VERSION;
+        const token = metaPageToken(org.id, pageId);
+        if (!version || !/^v\d+\.\d+$/.test(version) || !token) {
+          res.status(503).json({ error: 'Lead retrieval is not configured for this page.' }); return;
         }
+        const url = new URL(`https://graph.facebook.com/${version}/${eventId}`);
+        url.searchParams.set('fields', 'field_data,platform,ad_id,form_id');
+        const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(6_000) });
+        if (!response.ok) { res.status(502).json({ error: 'Could not retrieve lead details.' }); return; }
+        const details = await response.json() as { field_data?: { name: string; values?: string[] }[]; platform?: string };
+        const fields = new Map((details.field_data || []).map(({ name, values }) => [name, values?.[0]?.trim() || '']));
+        const name = fields.get('full_name') || [fields.get('first_name'), fields.get('last_name')].filter(Boolean).join(' ') || 'Meta enquiry';
+        const phone = fields.get('phone_number') || fields.get('phone') || '';
+        const email = fields.get('email') || '';
+        if (!phone && !email) {
+          res.status(422).json({ error: 'Configure a phone or email field in the lead form.' }); return;
+        }
+        const source = body.object === 'instagram' || ['ig', 'instagram'].includes(details.platform || '') ? 'Instagram' : 'Facebook';
+        await saveIncomingLead({
+          organizationId: org._id, name, phone, email,
+          source, status: 'New', destination: fields.get('destination') || 'Meta enquiry',
+          activities: [{ type: 'created', description: `Captured from ${source} Lead Ads.`, author: 'Meta Ads', timestamp: new Date() }],
+        }, key);
       }
     }
-  } catch (error: any) {
-    console.error('[Meta Webhook Error]:', error);
+    res.send('EVENT_RECEIVED');
+  } catch (error) {
+    console.error('[Meta lead retrieval]', error instanceof Error ? error.name : 'Unknown error');
+    res.status(502).json({ error: 'Could not process provider event.' });
   }
 };
 

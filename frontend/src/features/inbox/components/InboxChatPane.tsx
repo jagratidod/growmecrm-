@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import {
-  Send,
-  Paperclip,
-  CheckCheck,
+  Plus,
   User,
   ArrowLeft,
   Phone,
@@ -12,6 +10,7 @@ import { useInbox } from '../../../context/InboxContext'
 export const InboxChatPane: React.FC = () => {
   const { selectedChat, setSelectedChat, sendMessage } = useInbox()
   const [inputText, setInputText] = useState('')
+  const [saving, setSaving] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -21,13 +20,16 @@ export const InboxChatPane: React.FC = () => {
   if (!selectedChat) return null
 
   const handleSend = async () => {
-    if (!inputText.trim()) return
+    if (!inputText.trim() || saving) return
+    setSaving(true)
     const message = inputText
     try {
       await sendMessage(selectedChat.id, message)
       setInputText((current) => current === message ? '' : current)
     } catch {
       // Keep the text available for retry.
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -38,19 +40,15 @@ export const InboxChatPane: React.FC = () => {
     }
   }
 
-  const channelColor =
-    selectedChat.channel === 'whatsapp'
-      ? 'bg-[#00a884] hover:bg-[#009374]'
-      : 'bg-gradient-to-r from-[#e1306c] to-[#c13584]'
-
   return (
-    <div className="flex-1 flex flex-col h-full bg-white relative">
+    <div className="flex-1 min-w-0 min-h-0 flex flex-col h-full bg-white relative">
       {/* Top Chat Header */}
       <div className="p-3 sm:p-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSelectedChat(null)}
-            className="lg:hidden p-1.5 text-slate-500 hover:text-slate-800 rounded-lg"
+            className="gm-inbox-back p-1.5 text-slate-500 hover:text-slate-800 rounded-lg"
+            aria-label="Back to conversations"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -108,7 +106,7 @@ export const InboxChatPane: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 bg-[#fafbfe]">
         {selectedChat.messages.length === 0 ? (
           <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">
-            No messages in this chat yet. Send a message to start!
+            No messages logged yet.
           </div>
         ) : (
           selectedChat.messages.map((msg) => {
@@ -125,13 +123,10 @@ export const InboxChatPane: React.FC = () => {
                       : 'bg-white border border-slate-200/90 text-slate-800 rounded-bl-xs'
                   }`}
                 >
-                  <p>{msg.content}</p>
+                  <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                 </div>
                 <div className="flex items-center gap-1 mt-1 px-1">
                   <span className="text-[10px] text-slate-400">{msg.timestamp}</span>
-                  {isAgent && (
-                    <CheckCheck className="w-3.5 h-3.5 text-purple-400 stroke-[2.5]" />
-                  )}
                 </div>
               </div>
             )
@@ -142,22 +137,11 @@ export const InboxChatPane: React.FC = () => {
 
       {/* Input Message Composer */}
       <div className="p-3 sm:p-4 bg-white border-t border-slate-100 flex items-end gap-2 shrink-0">
-        <button
-          type="button"
-          className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors shrink-0 mb-0.5"
-          title="Attach file / brochure"
-        >
-          <Paperclip className="w-4 h-4" />
-        </button>
-
         <div className="flex-1 relative">
           <textarea
             rows={2}
-            placeholder={
-              selectedChat.channel === 'whatsapp'
-                ? 'Type a WhatsApp message...'
-                : 'Type an Instagram message...'
-            }
+            aria-label="Message to log"
+            placeholder="Log a message"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -168,10 +152,11 @@ export const InboxChatPane: React.FC = () => {
         <button
           type="button"
           onClick={handleSend}
-          disabled={!inputText.trim()}
-          className={`p-2.5 rounded-xl text-white font-semibold transition-all shrink-0 mb-0.5 shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${channelColor}`}
+          disabled={!inputText.trim() || saving}
+          aria-label="Log message"
+          className="gm-button shrink-0 mb-0.5"
         >
-          <Send className="w-4 h-4" />
+          <Plus className="w-4 h-4" />
         </button>
       </div>
     </div>

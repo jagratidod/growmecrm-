@@ -2,7 +2,7 @@ import { useAuth } from '../../../context/AuthContext'
 import React, { useState } from 'react'
 import { X, Search, PhoneCall, User } from 'lucide-react'
 import { useCallLog } from '../../../context/CallLogContext'
-import { useLeads } from '../../../context/LeadsContext'
+import { useLeadOptions } from '../../leads/useLeadOptions'
 import { useToast } from '../../../components/ui/Toast'
 import type { PredefinedOutcome } from '../../../types/callLog.types'
 
@@ -22,11 +22,10 @@ const PREDEFINED_OUTCOMES: PredefinedOutcome[] = [
 export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth()
   const { logCall } = useCallLog()
-  const { leads } = useLeads()
   const { toast } = useToast()
 
   const [leadQuery, setLeadQuery] = useState('')
-  const [selectedLead, setSelectedLead] = useState<{ name: string; phone: string } | null>(null)
+  const [selectedLead, setSelectedLead] = useState<{ id: string; name: string; phone: string } | null>(null)
   const [isLeadDropdownOpen, setIsLeadDropdownOpen] = useState(false)
 
   const [selectedOutcome, setSelectedOutcome] = useState<string>('Connected')
@@ -34,17 +33,11 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
   const [notes, setNotes] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const { options: matchingLeads, error: leadOptionsError } = useLeadOptions(isOpen && isLeadDropdownOpen, leadQuery)
   if (!isOpen) return null
 
-  // Matching leads suggestions
-  const matchingLeads = leads.filter(
-    (l) =>
-      l.name.toLowerCase().includes(leadQuery.toLowerCase()) ||
-      (l.phone && l.phone.includes(leadQuery))
-  )
-
-  const handleSelectLead = (lead: { name: string; phone?: string }) => {
-    setSelectedLead({ name: lead.name, phone: lead.phone || '' })
+  const handleSelectLead = (lead: { id: string; name: string; phone?: string }) => {
+    setSelectedLead({ id: lead.id, name: lead.name, phone: lead.phone || '' })
     setLeadQuery(`${lead.name} (${lead.phone || 'No phone'})`)
     setIsLeadDropdownOpen(false)
   }
@@ -69,6 +62,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
     setIsSubmitting(true)
     try {
       await logCall({
+        leadId: selectedLead?.id,
         leadName: finalLeadName,
         leadPhone: finalLeadPhone,
         userName: user?.name || '',
@@ -139,6 +133,7 @@ export const LogCallModal: React.FC<LogCallModalProps> = ({ isOpen, onClose }) =
               />
             </div>
 
+            {leadOptionsError && <p role="alert" className="gm-error">{leadOptionsError}</p>}
             {/* Quick Suggestions Dropdown */}
             {isLeadDropdownOpen && matchingLeads.length > 0 && (
               <div className="absolute left-0 top-full mt-1.5 w-full bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-20 max-h-48 overflow-y-auto">

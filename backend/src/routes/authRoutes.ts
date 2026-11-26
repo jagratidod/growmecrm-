@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   registerAgency,
   login,
+  loginSuperAdmin,
   getMe,
   getProfile,
   updateProfile,
@@ -17,6 +18,7 @@ const router = Router();
 // Public auth endpoints
 router.post('/register', registerAgency);
 router.post('/login', login);
+router.post('/super-admin/login', loginSuperAdmin);
 router.post('/accept-invite', acceptInvite);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);

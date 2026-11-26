@@ -40,8 +40,8 @@ export const authService = {
     return saveSession(await post<SessionPayload>('register', data, 'Registration failed'), data.rememberMe ?? true)
   },
 
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    return saveSession(await post<SessionPayload>('login', credentials, 'Sign-in failed'), credentials.rememberMe)
+  async login(credentials: LoginCredentials, superAdmin = false): Promise<AuthResponse> {
+    return saveSession(await post<SessionPayload>(superAdmin ? 'super-admin/login' : 'login', credentials, 'Sign-in failed'), credentials.rememberMe)
   },
 
   async logout(): Promise<void> {

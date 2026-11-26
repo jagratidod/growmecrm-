@@ -1,3 +1,4 @@
+import { formatBookingAmount } from '../formatBookingAmount'
 import React from 'react'
 import {
   Calendar,
@@ -42,9 +43,7 @@ export const BookingsTable: React.FC = () => {
     },
   }
 
-  const formatCurrency = (val: number) => {
-    return '₹' + Number(val || 0).toLocaleString('en-IN')
-  }
+
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-'
@@ -148,7 +147,7 @@ export const BookingsTable: React.FC = () => {
                   <td className="py-3 px-4 min-w-[160px]">
                     <div className="flex items-baseline justify-between text-xs">
                       <span className="font-extrabold text-slate-800">
-                        {formatCurrency(booking.totalAmount)}
+                        {formatBookingAmount(booking.totalAmount, booking.currency)}
                       </span>
                       <span className="text-[10px] font-bold text-slate-400">
                         {percentPaid}% paid
@@ -168,10 +167,10 @@ export const BookingsTable: React.FC = () => {
                       />
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
-                      <span>Paid: {formatCurrency(booking.amountPaid)}</span>
+                      <span>Paid: {formatBookingAmount(booking.amountPaid, booking.currency)}</span>
                       {balanceRemaining > 0 && (
                         <span className="text-amber-600 font-medium">
-                          Due: {formatCurrency(balanceRemaining)}
+                          Due: {formatBookingAmount(balanceRemaining, booking.currency)}
                         </span>
                       )}
                     </div>

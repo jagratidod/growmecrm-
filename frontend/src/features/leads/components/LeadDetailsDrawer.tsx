@@ -1,3 +1,7 @@
+import { useAuth } from '../../../context/AuthContext'
+import { formatBookingAmount } from '../../bookings/formatBookingAmount'
+import { useRouter } from '../../../context/RouterContext'
+import { useWorkspace } from '../../workspace/WorkspaceAccess'
 import { useTeam } from '../../../context/TeamContext'
 import React, { useState } from 'react'
 import {
@@ -10,7 +14,7 @@ import {
   DollarSign,
   Package,
   Clock,
-  Trash2,
+  Archive,
   MessageCircle,
   Plus,
 } from 'lucide-react'
@@ -20,12 +24,20 @@ import type { LeadStage } from '../../../types/lead.types'
 
 export const LeadDetailsDrawer: React.FC = () => {
   const { members } = useTeam()
-  const { selectedLead, setSelectedLead, changeLeadStage, updateLead, deleteLead, addLeadActivity } = useLeads()
+  const { user } = useAuth()
+  const canArchive = ['owner', 'admin', 'manager'].includes(user?.role || '')
+  const { navigate } = useRouter()
+  const { access } = useWorkspace()
+  const { selectedLead, setSelectedLead, changeLeadStage, updateLead, archiveLead, addLeadActivity } = useLeads()
   const { toast } = useToast()
 
   const [newNote, setNewNote] = useState('')
 
   if (!selectedLead) return null
+
+  const legacyAssignees = selectedLead.assignedUserId ? [] : members.filter(({ name }) => name === selectedLead.assignedTo)
+  const assignedId = selectedLead.assignedUserId || (legacyAssignees.length === 1 ? legacyAssignees[0].id : '')
+  const dateLabel = (value: string) => new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,7 +45,7 @@ export const LeadDetailsDrawer: React.FC = () => {
 
     const logged = await addLeadActivity(selectedLead.id, {
       type: 'note_added',
-      description: `Note added: "${newNote.trim()}"`,
+      description: newNote.trim(),
       author: '',
     })
 
@@ -50,7 +62,7 @@ export const LeadDetailsDrawer: React.FC = () => {
   const handleLogCall = async () => {
     const logged = await addLeadActivity(selectedLead.id, {
       type: 'call',
-      description: `Outbound phone call initiated to ${selectedLead.phone}.`,
+      description: `Call logged for ${selectedLead.name}.`,
       author: '',
     })
     if (!logged) return
@@ -68,7 +80,7 @@ export const LeadDetailsDrawer: React.FC = () => {
       author: '',
     })
     const sanitizedPhone = selectedLead.phone.replace(/[^0-9]/g, '')
-    window.open(`https://wa.me/${sanitizedPhone}`, '_blank')
+    if (sanitizedPhone) window.open(`https://wa.me/${sanitizedPhone}`, '_blank', 'noopener,noreferrer')
   }
 
   const handleLogEmail = () => {
@@ -89,7 +101,7 @@ export const LeadDetailsDrawer: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
+    <div role="dialog" aria-modal="true" aria-label="Lead details" className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
       <div className="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300">
         {/* Drawer Header */}
         <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/60">
@@ -118,12 +130,11 @@ export const LeadDetailsDrawer: React.FC = () => {
               </span>
             </div>
             <h3 className="text-xl font-bold text-slate-900 mt-2">{selectedLead.name}</h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Enquiry ID: <span className="font-mono text-slate-600">{selectedLead.id}</span>
-            </p>
+
           </div>
 
           <button
+            aria-label="Close lead details"
             onClick={() => setSelectedLead(null)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
           >
@@ -133,6 +144,12 @@ export const LeadDetailsDrawer: React.FC = () => {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {!selectedLead.archivedAt && <div className="flex flex-wrap gap-2">
+            <button type="button" className="gm-button"
+              onClick={() => { setSelectedLead(null); navigate(`/follow-ups?lead=${encodeURIComponent(selectedLead.id)}`) }}>Schedule follow-up</button>
+            {access?.modules.includes('bookings') && <button type="button" className="gm-button secondary"
+              onClick={() => { setSelectedLead(null); navigate(`/bookings?lead=${encodeURIComponent(selectedLead.id)}`) }}>Create booking</button>}
+          </div>}
           {/* Quick Communication Actions Bar */}
           <div className="grid grid-cols-4 gap-2">
             <button
@@ -140,7 +157,7 @@ export const LeadDetailsDrawer: React.FC = () => {
               className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 hover:border-brand hover:bg-purple-50/50 text-slate-700 hover:text-brand transition shadow-xs group"
             >
               <Phone className="w-4 h-4 text-slate-500 group-hover:text-brand mb-1" />
-              <span className="text-xs font-medium">Call</span>
+              <span className="text-xs font-medium">Log call</span>
             </button>
 
             <button
@@ -159,22 +176,13 @@ export const LeadDetailsDrawer: React.FC = () => {
               <span className="text-xs font-medium">Email</span>
             </button>
 
-            <button
-              onClick={() => {
-                if (window.confirm(`Delete lead "${selectedLead.name}"?`)) {
-                  deleteLead(selectedLead.id)
-                  toast({
-                    type: 'info',
-                    title: 'Lead Deleted',
-                    description: `${selectedLead.name} has been removed.`,
-                  })
-                }
-              }}
-              className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50/50 text-slate-700 hover:text-rose-600 transition shadow-xs group"
+            {canArchive && <button
+              onClick={() => archiveLead(selectedLead.id, !selectedLead.archivedAt)}
+              className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 hover:border-brand text-slate-700 transition"
             >
-              <Trash2 className="w-4 h-4 text-slate-500 group-hover:text-rose-600 mb-1" />
-              <span className="text-xs font-medium">Delete</span>
-            </button>
+              <Archive className="w-4 h-4 mb-1" />
+              <span className="text-xs font-medium">{selectedLead.archivedAt ? 'Restore' : 'Archive'}</span>
+            </button>}
           </div>
 
           {/* Pipeline Stage & Assigned To Controls */}
@@ -185,6 +193,7 @@ export const LeadDetailsDrawer: React.FC = () => {
               </label>
               <select
                 value={selectedLead.status}
+                disabled={Boolean(selectedLead.archivedAt)}
                 onChange={(e) => changeLeadStage(selectedLead.id, e.target.value as LeadStage)}
                 className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
               >
@@ -203,16 +212,29 @@ export const LeadDetailsDrawer: React.FC = () => {
                 Assigned Team Member
               </label>
               <select
-                value={selectedLead.assignedTo}
-                onChange={(e) => updateLead(selectedLead.id, { assignedTo: e.target.value })}
-                className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-indigo-500"
+                value={assignedId}
+                onChange={(event) => updateLead(selectedLead.id, { assignedUserId: event.target.value || undefined, assignedTo: event.target.value ? undefined : 'Unassigned' })}
+                className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none"
               >
-                <option value="Unassigned">Unassigned</option>
-                {members.map(({ id, name }) => <option key={id} value={name}>{name}</option>)}
+                <option value="">{!assignedId && selectedLead.assignedTo !== 'Unassigned' ? selectedLead.assignedTo + ' (legacy)' : 'Unassigned'}</option>
+                {assignedId && !members.some(({ id }) => id === assignedId) && <option value={assignedId}>{selectedLead.assignedTo}</option>}
+                {members.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
               </select>
             </div>
           </div>
 
+          {(selectedLead.stageChangedAt || selectedLead.proposalSentAt || selectedLead.lostReason) && <div className="space-y-1 text-sm">
+            {selectedLead.stageChangedAt && <p>In this stage since {dateLabel(selectedLead.stageChangedAt)}</p>}
+            {selectedLead.proposalSentAt && <p>Proposal marked sent on {dateLabel(selectedLead.proposalSentAt)}</p>}
+            {selectedLead.lostReason && <p>Lost reason · {selectedLead.lostReason}</p>}
+          </div>}
+          {Boolean(selectedLead.linkedBookings?.length) && <section className="gm-card space-y-3">
+            <h3 className="font-bold">Linked bookings</h3>
+            {selectedLead.linkedBookings?.map((booking) => <div key={booking.id} className="gm-row">
+              <button type="button" className="gm-text-button" onClick={() => { setSelectedLead(null); navigate('/bookings?' + new URLSearchParams({ booking: booking.id })) }}>{booking.destination}</button>
+              <span className="text-sm">{booking.status} · {formatBookingAmount(booking.amountPaid, booking.currency)} paid of {formatBookingAmount(booking.totalAmount, booking.currency)}</span>
+            </div>)}
+          </section>}
           {/* Lead Information Cards */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -338,16 +360,17 @@ export const LeadDetailsDrawer: React.FC = () => {
 
             {/* Timeline Events List */}
             <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-              {selectedLead.activities?.map((act) => (
+              {[...(selectedLead.activities || [])].sort((first, second) => Date.parse(second.timestamp) - Date.parse(first.timestamp)).map((act) => (
                 <div key={act.id} className="relative group">
                   <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-brand ring-4 ring-white"></div>
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-slate-800 capitalize">
-                        {act.type.replace('_', ' ')}
+                        {(act.type || 'activity').replaceAll('_', ' ')}
                       </span>
                       <span className="text-[10px] text-slate-400">
-                        {new Date(act.timestamp).toLocaleTimeString([], {
+                        {new Date(act.timestamp).toLocaleString('en-IN', {
+                          day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata',
                           hour: '2-digit',
                           minute: '2-digit',
                         })}

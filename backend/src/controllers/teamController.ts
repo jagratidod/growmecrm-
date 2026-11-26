@@ -45,6 +45,7 @@ export const getTeam = async (req: AuthenticatedRequest, res: Response): Promise
         lastActive: formatLastActive(u.lastActive),
         avatarUrl: u.avatarUrl,
         isCurrentUser: u._id.toString() === currentUserId,
+        isOwner: u.role === 'OWNER',
       };
     });
 

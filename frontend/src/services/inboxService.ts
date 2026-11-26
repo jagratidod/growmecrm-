@@ -1,4 +1,4 @@
-import { request } from './api';
+import { request, ROUTE_READ_TTL } from './api';
 import type { ChatConversation, ChannelType, ChatFilterType } from '../types/inbox.types';
 
 export interface GetConversationsParams {
@@ -9,8 +9,8 @@ export interface GetConversationsParams {
 }
 
 export const inboxService = {
-  async getConversations(params?: GetConversationsParams): Promise<ChatConversation[]> {
-    const query = new URLSearchParams();
+  async getConversations(params?: GetConversationsParams, signal?: AbortSignal, fresh = false): Promise<ChatConversation[]> {
+    const query = new URLSearchParams({ summary: '1' });
     if (params?.channel && params.channel !== 'all') query.append('channel', params.channel);
     if (params?.search) query.append('search', params.search);
     if (params?.filter) query.append('filter', params.filter);
@@ -18,11 +18,11 @@ export const inboxService = {
 
     const queryString = query.toString();
     const url = `/inbox${queryString ? `?${queryString}` : ''}`;
-    return request<ChatConversation[]>(url);
+    return request<ChatConversation[]>(url, { signal, fresh, cacheMs: ROUTE_READ_TTL });
   },
 
-  async getConversationById(id: string): Promise<ChatConversation> {
-    return request<ChatConversation>(`/inbox/${id}`);
+  async getConversationById(id: string, signal?: AbortSignal): Promise<ChatConversation> {
+    return request<ChatConversation>(`/inbox/${id}`, { signal });
   },
 
   async createConversation(data: {

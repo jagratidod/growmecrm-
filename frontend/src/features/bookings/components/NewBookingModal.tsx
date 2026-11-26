@@ -1,12 +1,17 @@
+import { useRouter } from '../../../context/RouterContext'
+import { useToast } from '../../../components/ui/Toast'
+import { leadsService } from '../../../services/leadsService'
 import { usePackages } from '../../../context/PackagesContext'
 import { useTeam } from '../../../context/TeamContext'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useBookings } from '../../../context/BookingsContext'
 import type { BookingStatus } from '../../../types/booking.types'
 
 export const NewBookingModal: React.FC = () => {
   const { members } = useTeam()
+  const { search, navigate } = useRouter()
+  const { toast } = useToast()
   const { packages } = usePackages()
   const { isNewBookingModalOpen, setIsNewBookingModalOpen, addBooking } = useBookings()
 
@@ -27,15 +32,58 @@ export const NewBookingModal: React.FC = () => {
 
   const [errors, setErrors] = useState<{ customerName?: string; destination?: string }>({})
 
+  const [sourceLeadId, setSourceLeadId] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    const leadId = new URLSearchParams(search).get('lead')
+    if (!leadId) return
+    const controller = new AbortController()
+    leadsService.getLeadById(leadId, controller.signal).then((lead) => {
+      if (controller.signal.aborted) return
+      setSourceLeadId(lead.id)
+      setCustomerName(lead.name)
+      setEmail(lead.email || '')
+      setPhone(lead.phone || '')
+      setDestination(lead.destination)
+      setTravellers(lead.travelers || 1)
+      setCurrency(lead.currency || 'INR')
+      setIsNewBookingModalOpen(true)
+      navigate('/bookings', { replace: true })
+    }, (error: Error) => {
+      if (!controller.signal.aborted) {
+        toast({ type: 'error', title: 'Could not open lead', description: error.message })
+        navigate('/bookings', { replace: true })
+      }
+    })
+    return () => controller.abort()
+  }, [search, navigate, setIsNewBookingModalOpen, toast])
+
   if (!isNewBookingModalOpen) return null
 
   const handleClose = () => {
     setIsNewBookingModalOpen(false)
     setErrors({})
+    setSourceLeadId('')
+    setCustomerName('')
+    setEmail('')
+    setPhone('')
+    setDestination('')
+    setStatus('Pending')
+    setDeparture('')
+    setReturnDate('')
+    setTravellers(2)
+    setTotalAmount(0)
+    setAmountPaid(0)
+    setCurrency('INR')
+    setPackageName('No package')
+    setAssignedTo('Unassigned')
+    setNotes('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSaving) return
 
     const newErrors: { customerName?: string; destination?: string } = {}
     if (!customerName.trim()) {
@@ -50,13 +98,19 @@ export const NewBookingModal: React.FC = () => {
       return
     }
 
+    if (!departure || (returnDate && returnDate < departure) || amountPaid > totalAmount) {
+      toast({ type: 'error', title: 'Check the dates and payment amount', description: 'Enter a departure date, a valid return date, and a payment within the booking total.' })
+      return
+    }
+    setIsSaving(true)
     const created = await addBooking({
+      leadId: sourceLeadId || undefined,
       customerName: customerName.trim(),
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
       destination: destination.trim(),
       status,
-      departure: departure || new Date().toISOString().slice(0, 10),
+      departure,
       returnDate: returnDate || undefined,
       travellers: Number(travellers) || 1,
       totalAmount: Number(totalAmount) || 0,
@@ -66,6 +120,7 @@ export const NewBookingModal: React.FC = () => {
       assignedTo: assignedTo !== 'Unassigned' ? assignedTo : undefined,
       notes: notes.trim() || undefined,
     })
+    setIsSaving(false)
     if (!created) return
 
     handleClose()
@@ -304,7 +359,7 @@ export const NewBookingModal: React.FC = () => {
               Cancel
             </button>
             <button
-              type="submit"
+              type="submit" disabled={isSaving}
               className="px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs sm:text-sm font-semibold shadow-sm shadow-brand/30 transition active:scale-[0.99]"
             >
               Create booking

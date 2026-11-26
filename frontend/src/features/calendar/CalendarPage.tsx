@@ -5,12 +5,14 @@ import { CalendarMonthNav } from './components/CalendarMonthNav'
 import { CalendarGrid } from './components/CalendarGrid'
 import { AddEventModal } from './components/AddEventModal'
 import { Menu } from 'lucide-react'
+import { useCalendar } from '../../context/CalendarContext'
 
 interface CalendarPageProps {
   onNavigateMenu?: (menu: string) => void
 }
 
 export const CalendarPage: React.FC<CalendarPageProps> = ({ onNavigateMenu }) => {
+  const { loadError, loading, refreshEvents } = useCalendar()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   return (
@@ -28,15 +30,13 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onNavigateMenu }) =>
         {/* Mobile Top App Bar */}
         <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
           <button
+            aria-label="Open menu"
             onClick={() => setIsMobileSidebarOpen(true)}
             className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-xs">
-              TT
-            </div>
             <span className="font-bold text-sm text-slate-900">Calendar</span>
           </div>
           <div className="w-9" />
@@ -50,7 +50,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ onNavigateMenu }) =>
           <CalendarMonthNav />
 
           {/* 7-column Calendar Grid matching screenshot 2 */}
-          <CalendarGrid />
+          {loadError ? <p className="gm-error" role="alert">{loadError} <button className="gm-text-button" onClick={refreshEvents}>Retry</button></p> : loading ? <p role="status">Loading calendar…</p> : <CalendarGrid />}
         </main>
       </div>
 

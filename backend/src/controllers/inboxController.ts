@@ -17,7 +17,7 @@ const formatConversation = (conv: any) => ({
   stage: conv.stage,
   isFavourite: conv.isFavourite,
   assignedTo: conv.assignedTo,
-  messages: conv.messages,
+  messages: conv.messages ?? [],
   createdAt: conv.createdAt,
   updatedAt: conv.updatedAt,
 });
@@ -65,7 +65,9 @@ export const getConversations = async (req: AuthenticatedRequest, res: Response)
       ];
     }
 
-    const conversations: any[] = await Conversation.find(query).sort({ updatedAt: -1 });
+    const conversations = await Conversation.find(query)
+      .select(req.query.summary === '1' ? '-messages' : '')
+      .sort({ updatedAt: -1 }).lean();
 
     res.status(200).json(conversations.map(formatConversation));
   } catch (error: any) {

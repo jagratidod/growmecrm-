@@ -169,7 +169,7 @@ export const InvoiceDetailPage: React.FC<InvoiceDetailPageProps> = ({ onNavigate
                 </div>
                 <p className="text-xs text-slate-500 font-normal leading-relaxed">
                   Printed on every Tax Invoice — header, payment box, and footer. Registered
-                  office address, phone, and email come from Host Page settings; everything below
+                  office address, phone, and email come from Websites → Host page; everything below
                   is invoice-specific. Leave anything blank and it simply won't appear on the
                   invoice.
                 </p>

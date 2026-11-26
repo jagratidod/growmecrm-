@@ -8,6 +8,7 @@ export interface TeamMember {
   status: 'Active' | 'Inactive'
   lastActive: string
   isCurrentUser?: boolean
+  isOwner?: boolean
   avatarUrl?: string
 }
 

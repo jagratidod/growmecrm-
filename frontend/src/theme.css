@@ -61,3 +61,30 @@
     outline-offset: 3px;
   }
 }
+
+.gm-route-progress {
+  position: fixed;
+  z-index: 90;
+  inset: 0 0 auto;
+  height: 2px;
+  pointer-events: none;
+  background: var(--gm-accent-line);
+  overflow: hidden;
+  opacity: 0;
+  animation: gm-route-show 0s linear 120ms forwards;
+}
+
+.gm-route-progress::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 42%;
+  background: var(--gm-accent);
+  animation: gm-route-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes gm-route-show { to { opacity: 1; } }
+@keyframes gm-route-slide { from { transform: translateX(-100%); } to { transform: translateX(245%); } }
+@media (prefers-reduced-motion: reduce) {
+  .gm-route-progress::after { animation: none; width: 100%; }
+}
