@@ -9,6 +9,7 @@ import { registerAgency } from '../controllers/authController';
 import { Organization } from '../models/Organization';
 import { SubscriptionPlan } from '../models/SubscriptionPlan';
 import { AuditLog } from '../models/AuditLog';
+import { PlatformAnnouncement } from '../models/PlatformAnnouncement';
 import { Lead } from '../models/Lead';
 import { User } from '../models/User';
 import { AuthenticatedRequest } from '../types';
@@ -35,7 +36,19 @@ function sectionModule(section: string): Module | undefined {
 
 export const platformAdmin = Router();
 platformAdmin.use(authenticate, requireSuperAdmin);
-platformAdmin.post('/clients', registerAgency);
+platformAdmin.post('/clients', (req, res, next) => {
+  // Super-admin onboarding ignores the public sign-up freeze and is always audited.
+  res.on('finish', () => {
+    if (res.statusCode !== 201) return;
+    void AuditLog.create({
+      actorEmail: (req as AuthenticatedRequest).user!.email, actorRole: (req as AuthenticatedRequest).user!.role,
+      ipAddress: req.ip || '', action: 'CREATE_CLIENT', targetOrgName: String(req.body?.agencyName || ''),
+      targetUserEmail: String(req.body?.email || '').toLowerCase(), details: 'Created a client workspace.',
+    }).catch(() => undefined);
+  });
+  (req as AuthenticatedRequest & { bypassSignupFreeze?: boolean }).bypassSignupFreeze = true;
+  return registerAgency(req, res).catch(next);
+});
 
 platformAdmin.get('/clients/:id', safe(async (req, res) => {
   const id = String(req.params.id);
@@ -51,7 +64,9 @@ platformAdmin.get('/clients/:id', safe(async (req, res) => {
 }));
 
 async function audit(req: AuthenticatedRequest, organizationId: string, action: string, details: string) {
-  await AuditLog.create({ actorEmail: req.user!.email, actorRole: req.user!.role, targetOrgId: organizationId, action, details });
+  const target = isValidObjectId(organizationId) ? await Organization.findById(organizationId).select('name').lean() : null;
+  await AuditLog.create({ actorEmail: req.user!.email, actorRole: req.user!.role, ipAddress: req.ip || '',
+    targetOrgId: organizationId, targetOrgName: target?.name ?? '', action, details });
 }
 
 platformAdmin.put('/clients/:id/plan', safe(async (req, res) => {
@@ -172,6 +187,17 @@ workspaceRouter.get('/access', safe(async (req: AuthenticatedRequest, res) => {
   if (!access) return res.status(403).json({ error: 'Workspace unavailable.' });
   res.json({ modules: access.enabled, plan: access.organization.plan,
     billing: { checkoutUrl: ['OWNER', 'ADMIN'].includes(req.user!.role) ? access.workspace?.billing?.checkoutUrl : undefined, paidThrough: access.workspace?.billing?.paidThrough } });
+}));
+
+// Active, unexpired broadcasts for this user's role.
+workspaceRouter.get('/announcements', safe(async (req: AuthenticatedRequest, res) => {
+  const isOwner = ['OWNER', 'ADMIN'].includes(req.user!.role);
+  const announcements = await PlatformAnnouncement.find({
+    active: true,
+    targetAudience: { $in: ['ALL', isOwner ? 'OWNERS' : 'AGENTS'] },
+    $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }, { expiresAt: { $gt: new Date() } }],
+  }).sort({ createdAt: -1 }).limit(5).select('title message type createdAt').lean();
+  res.json({ announcements });
 }));
 
 workspaceRouter.use('/websites', requireModule('websites'));

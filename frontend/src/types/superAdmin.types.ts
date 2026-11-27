@@ -1,3 +1,10 @@
+export interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface TenantOwner {
   name: string;
   email: string;
@@ -66,7 +73,7 @@ export interface PlatformSettings {
   maintenanceMessage: string;
   allowNewRegistrations: boolean;
   razorpayKeyId?: string;
-  razorpayKeySecret?: string;
+  secretsSet?: Record<string, boolean>;
   stripePublishableKey?: string;
   smtpHost?: string;
   smtpPort?: number;

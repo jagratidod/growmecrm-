@@ -27,20 +27,35 @@ export const PlatformSettingsPage: React.FC = () => {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const { toast } = useToast();
 
-  useEffect(() => {
+  const loadSettings = () => {
+    setLoadError('');
     superAdminService
       .getSettings()
-      .then((data) => setSettings(data))
-      .catch(console.error);
-  }, []);
+      .then((data) => { setSettings(data); setLoaded(true); })
+      .catch((err: Error) => setLoadError(err.message || 'Could not load platform settings.'));
+  };
+
+  useEffect(loadSettings, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Never save the placeholder defaults over real settings.
+    if (!loaded) return;
     setIsSaving(true);
     try {
-      await superAdminService.updateSettings(settings);
+      // Only editable fields are sent; secrets are write-only and are not part of this form.
+      const {
+        platformName, supportEmail, contactPhone, defaultCurrency, defaultTrialDays,
+        maintenanceMode, maintenanceMessage, allowNewRegistrations,
+      } = settings;
+      await superAdminService.updateSettings({
+        platformName, supportEmail, contactPhone, defaultCurrency, defaultTrialDays,
+        maintenanceMode, maintenanceMessage, allowNewRegistrations,
+      });
       toast({
         type: 'success',
         title: 'Settings Saved',
@@ -63,6 +78,12 @@ export const PlatformSettingsPage: React.FC = () => {
       title="Platform Master Settings"
       subtitle="Global configuration for branding, maintenance locks, payment processors, and system communications."
     >
+      {loadError && (
+        <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold px-4 py-3 flex items-center justify-between gap-3">
+          <span>Settings could not be loaded, so saving is disabled: {loadError}</span>
+          <button type="button" onClick={loadSettings} className="underline">Retry</button>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section 1: Maintenance Mode & Access Control */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-xs space-y-6">
@@ -198,7 +219,7 @@ export const PlatformSettingsPage: React.FC = () => {
         <div className="flex items-center justify-end">
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || !loaded}
             className="flex items-center gap-2 px-7 py-3 rounded-2xl bg-brand hover:bg-brand-hover text-white font-extrabold text-sm shadow-md transition disabled:opacity-50"
           >
             <Save className="w-4 h-4" />

@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useEffect } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
+import { AnnouncementBanner } from './components/ui/AnnouncementBanner'
 import { LeadsProvider } from './context/LeadsContext'
 import { BookingsProvider } from './context/BookingsContext'
 import { TeamProvider } from './context/TeamContext'
@@ -182,6 +183,7 @@ export default function App() {
                                 <CallLogProvider>
                                   <SettingsProvider>
                                     <RouteProgress />
+                                    <AnnouncementBanner />
                                     <Suspense fallback={<div className="min-h-screen bg-canvas" role="status" aria-label="Loading page" />}>
                                       <AppContent />
                                     </Suspense>

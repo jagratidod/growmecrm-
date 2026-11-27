@@ -57,10 +57,20 @@ export function ProfilePage() {
   async function savePassword(event: FormEvent) {
     event.preventDefault()
     if (savingPassword) return
+
+    if (!currentPassword) {
+      setPasswordError('Please enter your current password')
+      return
+    }
+    if (newPassword.length < 12) {
+      setPasswordError('New password must be at least 12 characters long')
+      return
+    }
     if (newPassword !== confirmation) {
       setPasswordError('The new passwords do not match.')
       return
     }
+
     setPasswordError('')
     setSavingPassword(true)
     try {

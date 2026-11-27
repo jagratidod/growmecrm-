@@ -12,13 +12,21 @@ export const AuditLogsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState('');
+
   const loadLogs = async () => {
     setIsLoading(true);
+    setError('');
     try {
-      const data = await superAdminService.getAuditLogs();
-      setLogs(data);
+      const data = await superAdminService.getAuditLogs(page);
+      setLogs(data.logs);
+      setTotalPages(Math.max(1, data.pagination.totalPages));
+      setTotal(data.pagination.total);
     } catch (e) {
-      console.error(e);
+      setError((e as Error).message || 'Could not load audit logs.');
     } finally {
       setIsLoading(false);
     }
@@ -26,7 +34,8 @@ export const AuditLogsPage: React.FC = () => {
 
   useEffect(() => {
     loadLogs();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const filteredLogs = logs.filter((log) => {
     const q = search.toLowerCase();
@@ -66,6 +75,10 @@ export const AuditLogsPage: React.FC = () => {
           <span>Refresh</span>
         </button>
       </div>
+
+      {error && (
+        <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold px-4 py-3">{error}</div>
+      )}
 
       {/* Logs Table */}
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
@@ -133,6 +146,15 @@ export const AuditLogsPage: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-100 text-xs">
+          <span className="text-slate-400 font-medium">{total} records · Page {page} of {totalPages} (search filters this page)</span>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={page <= 1 || isLoading} onClick={() => setPage(page - 1)}
+              className="px-3.5 py-2 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40">Previous</button>
+            <button type="button" disabled={page >= totalPages || isLoading} onClick={() => setPage(page + 1)}
+              className="px-3.5 py-2 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40">Next</button>
+          </div>
         </div>
       </div>
     </SuperAdminLayout>

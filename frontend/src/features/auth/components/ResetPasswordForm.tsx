@@ -86,8 +86,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
 
     if (!newPassword) {
       errs.newPassword = 'New password is required'
-    } else if (newPassword.length < 6) {
-      errs.newPassword = 'Password must be at least 6 characters'
+    } else if (newPassword.length < 12) {
+      errs.newPassword = 'Password must be at least 12 characters'
     }
 
     if (!confirmPassword) {
@@ -357,7 +357,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
               name="newPassword"
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
-              placeholder="New Password (min 6 chars)"
+              placeholder="New Password (min 12 chars)"
               value={newPassword}
               onChange={(e) => {
                 setNewPassword(e.target.value)

@@ -7,6 +7,7 @@ import type {
   Announcement,
   AuditLogItem,
   WebhookServiceHealth,
+  Pagination,
 } from '../types/superAdmin.types';
 import type { AuthResponse } from '../types/auth.types';
 
@@ -17,9 +18,12 @@ const write = <T,>(path: string, method: string, data?: unknown) =>
 export const superAdminService = {
   getDashboardStats: () => request<SuperAdminDashboardData>(base + '/dashboard/stats'),
 
-  async getTenants(): Promise<Tenant[]> {
-    const { tenants } = await request<{ tenants: Tenant[] }>(base + '/tenants');
-    return tenants;
+  getTenants: (params: { search?: string; status?: string; plan?: string; page?: number; limit?: number } = {}) => {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== '' && value !== 'ALL') query.set(key, String(value));
+    }
+    return request<{ tenants: Tenant[]; pagination: Pagination }>(base + '/tenants?' + query);
   },
 
   async updateTenantStatus(id: string, updates: Partial<Pick<Tenant, 'status' | 'plan' | 'maxSeats' | 'maxLeads'>>) {
@@ -60,10 +64,8 @@ export const superAdminService = {
     await write(`/announcements/${id}`, 'DELETE');
   },
 
-  async getAuditLogs(): Promise<AuditLogItem[]> {
-    const { logs } = await request<{ logs: AuditLogItem[] }>(base + '/audit-logs');
-    return logs;
-  },
+  getAuditLogs: (page = 1) =>
+    request<{ logs: AuditLogItem[]; pagination: Pagination }>(base + '/audit-logs?page=' + page + '&limit=25'),
 
   async getWebhookHealth(): Promise<WebhookServiceHealth[]> {
     const { services } = await request<{ services: WebhookServiceHealth[] }>(base + '/webhooks/health');

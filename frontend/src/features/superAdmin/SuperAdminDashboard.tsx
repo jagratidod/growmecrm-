@@ -21,13 +21,17 @@ export const SuperAdminDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { navigate } = useRouter();
 
+  const [error, setError] = useState('');
+
   const loadData = async () => {
     setIsLoading(true);
+    setError('');
     try {
       const stats = await superAdminService.getDashboardStats();
       setData(stats);
     } catch (e) {
       console.error(e);
+      setError((e as Error).message || 'Could not load platform metrics.');
     } finally {
       setIsLoading(false);
     }
@@ -37,21 +41,22 @@ export const SuperAdminDashboard: React.FC = () => {
     loadData();
   }, []);
 
+  // Zeroes (never invented sample numbers) while loading or after a failed request.
   const metrics = data?.metrics || {
-    totalAgencies: 5,
-    activeAgencies: 4,
-    suspendedAgencies: 1,
-    totalAdmins: 12,
-    totalLeads: 4233,
-    mrr: 23490,
-    arr: 281880,
+    totalAgencies: 0,
+    activeAgencies: 0,
+    suspendedAgencies: 0,
+    totalAdmins: 0,
+    totalLeads: 0,
+    mrr: 0,
+    arr: 0,
     currency: 'INR',
   };
 
   const planDist = data?.planDistribution || {
-    STARTER: 2,
-    PRO: 2,
-    ENTERPRISE: 1,
+    STARTER: 0,
+    PRO: 0,
+    ENTERPRISE: 0,
   };
 
   return (
@@ -60,6 +65,13 @@ export const SuperAdminDashboard: React.FC = () => {
       title="Platform Dashboard"
       subtitle="Real-time multi-tenant health, global subscriptions, and platform metrics."
     >
+      {error && (
+        <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold px-4 py-3 flex items-center justify-between gap-3">
+          <span>Metrics unavailable: {error}</span>
+          <button type="button" onClick={loadData} className="underline">Retry</button>
+        </div>
+      )}
+
       {/* Top Welcome Banner with Refined Purple Palette */}
       <div className="rounded-3xl bg-[image:var(--gm-overview-gradient)] text-ink p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm border border-line">
         <div className="space-y-1.5">

@@ -112,7 +112,11 @@ export const createTeamInvite = async (req: AuthenticatedRequest, res: Response)
     // Check Organization seat limit
     const organization = await Organization.findById(organizationId);
     if (organization) {
-      const currentCount = await User.countDocuments({ organizationId });
+      const [members, pending] = await Promise.all([
+        User.countDocuments({ organizationId }),
+        TeamInvite.countDocuments({ organizationId, status: 'Invited', expiresAt: { $gt: new Date() } }),
+      ]);
+      const currentCount = members + pending;
       if (currentCount >= organization.maxSeats) {
         res.status(403).json({
           error: `Seat limit reached (${organization.maxSeats} seats on ${organization.plan} plan). Please upgrade your plan.`,

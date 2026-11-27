@@ -34,10 +34,13 @@ import uploadRoutes from './routes/uploadRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+// Needed behind Render/Vercel/nginx so req.protocol and req.ip reflect the real client.
+app.set('trust proxy', 1);
 
 // Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  ...(process.env.CORS_ORIGINS?.split(',').map((item) => item.trim()) ?? []),
   'http://localhost:5173',
   'http://localhost:3000',
 ].filter(Boolean);
@@ -49,9 +52,11 @@ app.use(
       if (!origin) return callback(null, true);
 
       // Check explicit allowed origins or any vercel.app deployment preview
+      // Vercel preview wildcards are on by default for compatibility; set ALLOW_VERCEL_PREVIEWS=false in production
+      // and list real origins in FRONTEND_URL / CORS_ORIGINS instead.
       const isAllowed =
         allowedOrigins.includes(origin) ||
-        origin.endsWith('.vercel.app');
+        (process.env.ALLOW_VERCEL_PREVIEWS !== 'false' && origin.endsWith('.vercel.app'));
 
       callback(null, isAllowed);
     },
@@ -122,6 +127,9 @@ app.use(errorHandler);
 // Start Server and Connect Database
 const start = async () => {
   if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required');
+  for (const name of ['META_VERIFY_TOKEN', 'WHATSAPP_VERIFY_TOKEN', 'META_APP_SECRET', 'GROWME_CONNECTION_KEY']) {
+    if (!process.env[name]) console.warn(`[GrowMe] ${name} is not set: the related webhook/secret feature is disabled.`);
+  }
   await connectDB();
   app.listen(PORT, () => {
     console.log(`[GrowMe CRM Backend] Server running at http://localhost:${PORT}`);

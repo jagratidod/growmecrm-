@@ -52,7 +52,7 @@ export function SignUpForm({ onNavigateLogin }: SignUpFormProps) {
     if (!agencyName.trim()) issues.agencyName = 'Enter a business name.'
     if (!name.trim()) issues.name = 'Enter your full name.'
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) issues.email = 'Enter a valid email address.'
-    if (password.length < 6) issues.password = 'Use at least 6 characters.'
+    if (password.length < 12) issues.password = 'Use at least 12 characters.'
     if (password !== confirmPassword) issues.confirmPassword = 'Passwords do not match.'
     if (!agreeTerms) issues.terms = 'Accept the Terms of Service and Privacy Policy to continue.'
     setErrors(issues)
@@ -82,7 +82,7 @@ export function SignUpForm({ onNavigateLogin }: SignUpFormProps) {
             containerClassName="growme-auth-field" />
           <Input {...fieldProps('phone')} label="Phone (optional)" placeholder="Phone number" type="tel" autoComplete="tel"
             containerClassName="growme-auth-field" />
-          <AuthPasswordField {...fieldProps('password')} label="Password" placeholder="At least 6 characters" autoComplete="new-password" />
+          <AuthPasswordField {...fieldProps('password')} label="Password" placeholder="At least 12 characters" autoComplete="new-password" />
           <AuthPasswordField {...fieldProps('confirmPassword')} label="Confirm password" placeholder="Enter it again" autoComplete="new-password" />
         </div>
         <div className="growme-auth-consent">

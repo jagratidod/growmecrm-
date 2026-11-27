@@ -4,6 +4,34 @@ import { Lead } from '../models/Lead';
 import { Organization } from '../models/Organization';
 import { workspaceAccess } from '../platform/access';
 import { intakeKey, saveIncomingLead } from '../services/leadIntake';
+import { leadsRemaining } from '../utils/quota';
+
+/**
+ * Provider verification handshake (GET ?hub.mode=subscribe&hub.verify_token=...&hub.challenge=...).
+ * Fails closed: with no token configured on the server nothing can pass, and there is no default token.
+ */
+export function verifyHandshake(envName: string, label: string, req: Request, res: Response): void {
+  const expected = process.env[envName];
+  const provided = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (!expected || expected.length < 16) {
+    console.error(`[${label} Webhook] ${envName} is not configured (min 16 characters); rejecting verification.`);
+    res.status(403).json({ error: 'Verification failed' });
+    return;
+  }
+
+  const received = Buffer.from(typeof provided === 'string' ? provided : '');
+  const wanted = Buffer.from(expected);
+  const valid = req.query['hub.mode'] === 'subscribe' && typeof challenge === 'string' &&
+    received.length === wanted.length && timingSafeEqual(received, wanted);
+
+  if (!valid) {
+    res.status(403).json({ error: 'Verification failed' });
+    return;
+  }
+  res.status(200).type('text/plain').send(challenge);
+}
 
 // Helper to format Mongoose Lead doc for response
 const formatLead = (doc: any) => {
@@ -40,7 +68,13 @@ export const ingestLead = async (req: Request, res: Response): Promise<void> => 
 
     const access = await workspaceAccess(org.id);
     if (!access?.enabled.includes('leads')) {
-      res.status(403).json({ error: 'Lead capture is unavailable.' }); return;
+      res.status(403).json({ success: false, error: 'Lead capture is unavailable.' });
+      return;
+    }
+
+    if (await leadsRemaining(org._id) < 1) {
+      res.status(403).json({ success: false, error: 'Lead limit reached for this workspace plan.' });
+      return;
     }
 
     const {
@@ -135,18 +169,7 @@ export const ingestLead = async (req: Request, res: Response): Promise<void> => 
  * POST /api/webhooks/meta (Leadgen payload)
  */
 export const verifyMetaWebhook = (req: Request, res: Response): void => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || 'growme_crm_verify_token';
-
-  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('[Meta Webhook Verified]');
-    res.status(200).send(challenge);
-  } else {
-    res.status(403).json({ error: 'Verification failed' });
-  }
+  verifyHandshake('META_VERIFY_TOKEN', 'Meta', req, res);
 };
 
 async function providerOrganization(req: Request) {
@@ -225,18 +248,7 @@ export const handleMetaWebhook = async (req: Request, res: Response): Promise<vo
  * POST /api/webhooks/whatsapp (Incoming message)
  */
 export const verifyWhatsAppWebhook = (req: Request, res: Response): void => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || 'growme_crm_verify_token';
-
-  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('[WhatsApp Webhook Verified]');
-    res.status(200).send(challenge);
-  } else {
-    res.status(403).json({ error: 'Verification failed' });
-  }
+  verifyHandshake('WHATSAPP_VERIFY_TOKEN', 'WhatsApp', req, res);
 };
 
 export const handleWhatsAppWebhook = async (req: Request, res: Response): Promise<void> => {

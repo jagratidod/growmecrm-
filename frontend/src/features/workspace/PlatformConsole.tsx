@@ -133,8 +133,9 @@ function ClientConsole({ clientId }: { clientId: string }) {
       <h2>Plan and add-ons</h2>
       <div className="gm-grid two">
         <label>Subscription plan<select name="plan" defaultValue={detail.organization.plan}>{['STARTER', 'PRO', 'ENTERPRISE', 'CUSTOM'].map((code) => <option key={code}>{code}</option>)}</select></label>
-        <label>Account status<select defaultValue={detail.organization.status} onChange={(event) => {
+        <label>Account status<select value={detail.organization.status} onChange={(event) => {
           const status = event.target.value
+          if (status === 'SUSPENDED' && !window.confirm(`Suspend ${detail.organization.name}? Everyone in this workspace will be locked out immediately.`)) return
           void run(async () => { await save(`/super-admin/tenants/${clientId}/status`, { status }); return 'Account status updated.' })
         }} disabled={busy}>{['ACTIVE', 'TRIAL', 'SUSPENDED'].map((status) => <option key={status}>{status}</option>)}</select></label>
       </div>
@@ -192,8 +193,12 @@ function ClientConsole({ clientId }: { clientId: string }) {
       </Connection>
     </div>}
     {tab === 'Billing' && <form className="gm-card gm-form" onSubmit={(event) => {
-      const values = read(event)
-      void run(async () => { await save(`${base}/billing`, values); return 'GrowMe billing updated.' })
+      const values = read(event) as Record<string, string>
+      // Only send payment details that changed, so a link-only edit never re-records an old payment.
+      const unchanged = (values.paymentReference || '') === (detail.billing.paymentReference || '') &&
+        (values.paidThrough || '') === (detail.billing.paidThrough?.slice(0, 10) || '')
+      const payload = unchanged ? { checkoutUrl: values.checkoutUrl } : values
+      void run(async () => { await save(`${base}/billing`, payload); return 'GrowMe billing updated.' })
     }}>
       <h2>GrowMe subscription billing</h2>
       <label>GrowMe checkout URL<input name="checkoutUrl" type="url" placeholder="https://" defaultValue={detail.billing.checkoutUrl} /></label>

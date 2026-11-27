@@ -31,7 +31,11 @@ export async function workspaceAccess(organizationId: string) {
   const enabled = new Set([...base, ...(workspace?.addOns ?? [])]);
   const paidThrough = workspace?.billing?.paidThrough;
   const today = new Date(Date.now() + 330 * 60 * 1000).toISOString().slice(0, 10);
-  const expired = Boolean(paidThrough && paidThrough.toISOString().slice(0, 10) < today);
+  const paidExpired = Boolean(paidThrough && paidThrough.toISOString().slice(0, 10) < today);
+  // A trial that has run out locks the workspace unless a payment has been recorded.
+  const trialExpired = organization.status === 'TRIAL' && Boolean(organization.trialEndsAt) &&
+    organization.trialEndsAt!.getTime() < Date.now() && !paidThrough;
+  const expired = paidExpired || trialExpired;
   return {
     organization,
     workspace,

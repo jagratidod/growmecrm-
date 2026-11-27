@@ -77,7 +77,7 @@ export const WebhookHealthPage: React.FC = () => {
                 </div>
               </div>
 
-              <span className="gm-tag">{srv.status.toLowerCase()}</span>
+              <div className="text-right"><span className="gm-tag">{srv.status.toLowerCase()}</span><p className="text-[11px] text-slate-400 mt-1">{srv.lastReceived ? `Last lead ${new Date(srv.lastReceived).toLocaleString()}` : "No leads received yet"}</p></div>
             </div>
 
             {/* Endpoint Bar */}

@@ -13,6 +13,7 @@ export interface IUser extends Document {
   avatarUrl?: string;
   status: 'Active' | 'Inactive';
   lastActive?: Date;
+  passwordChangedAt?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
   createdAt: Date;
   updatedAt: Date;
@@ -67,6 +68,8 @@ const UserSchema = new Schema<IUser>(
       type: Date,
       default: Date.now,
     },
+    // Tokens issued before this moment are rejected (set on password change/reset).
+    passwordChangedAt: { type: Date },
   },
   {
     timestamps: true,

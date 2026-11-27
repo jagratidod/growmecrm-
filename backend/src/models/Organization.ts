@@ -14,6 +14,7 @@ export interface IOrganization extends Document {
   maxLeads: number;
   webhookApiKey: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'TRIAL';
+  trialEndsAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +69,7 @@ const OrganizationSchema = new Schema<IOrganization>(
       enum: ['ACTIVE', 'SUSPENDED', 'TRIAL'],
       default: 'ACTIVE',
     },
+    trialEndsAt: { type: Date },
   },
   {
     timestamps: true,

@@ -8,6 +8,7 @@ import { Booking } from '../models/Booking';
 import { workspaceAccess } from '../platform/access';
 import { leadStageUpdate } from '../services/leadLifecycle';
 import { User } from '../models/User';
+import { leadsRemaining, leadQuotaMessage } from '../utils/quota';
 
 // Helper to format Mongoose document to frontend-compatible Lead object
 const formatLead = (doc: ILead) => {
@@ -167,6 +168,11 @@ export const createLead = async (req: AuthenticatedRequest, res: Response): Prom
     const organizationId = req.user?.organizationId;
     if (!organizationId) { res.status(401).json({ error: 'Tenant context missing.' }); return; }
     const authorName = req.user?.email ? req.user.email.split('@')[0] : 'Agent';
+
+    if (await leadsRemaining(organizationId) < 1) {
+      res.status(403).json({ error: leadQuotaMessage });
+      return;
+    }
 
     const {
       name,
@@ -340,6 +346,13 @@ export const importLeads = async (req: AuthenticatedRequest, res: Response): Pro
     const id = req.user?.organizationId;
     if (!id) { res.status(401).json({ error: 'Tenant context missing.' }); return; }
     const organizationId = new Types.ObjectId(id);
+
+    const remaining = await leadsRemaining(organizationId);
+    if (leads.length > remaining) {
+      res.status(403).json({ error: `${leadQuotaMessage} You can import ${remaining} more lead(s).` });
+      return;
+    }
+
     const now = new Date();
     const author = req.user?.name || 'Importer';
     const batchKey = intakeKey('csv', JSON.stringify(leads));
@@ -375,8 +388,9 @@ export const importLeads = async (req: AuthenticatedRequest, res: Response): Pro
       }
     }
     res.status(result.count ? 201 : 200).json(result);
-  } catch {
-    res.status(500).json({ error: 'Could not import leads.' });
+  } catch (error: any) {
+    console.error('importLeads error:', error);
+    res.status(500).json({ error: error.message || 'Could not import leads.' });
   }
 };
 

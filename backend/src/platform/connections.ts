@@ -1,26 +1,8 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import mongoose, { Connection } from 'mongoose';
+import { open, seal } from '../utils/secrets';
 import { WorkspaceSettings, WebsiteContent } from './models';
 
-export function seal(value: string): string {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', encryptionKey(), iv);
-  const data = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
-  return [iv, cipher.getAuthTag(), data].map((part) => part.toString('base64url')).join('.');
-}
-
-export function open(value: string): string {
-  const [iv, tag, data] = value.split('.').map((part) => Buffer.from(part, 'base64url'));
-  const cipher = createDecipheriv('aes-256-gcm', encryptionKey(), iv);
-  cipher.setAuthTag(tag);
-  return Buffer.concat([cipher.update(data), cipher.final()]).toString('utf8');
-}
-
-function encryptionKey(): Buffer {
-  const key = Buffer.from(process.env.GROWME_CONNECTION_KEY ?? '', 'base64');
-  if (key.length !== 32) throw new Error('Configure a 32-byte GROWME_CONNECTION_KEY on the server.');
-  return key;
-}
+export { seal, open };
 
 export function validateMongoUri(uri: string): string {
   const url = new URL(uri);

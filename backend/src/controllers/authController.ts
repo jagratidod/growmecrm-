@@ -6,6 +6,11 @@ import { User } from '../models/User';
 import { TeamInvite } from '../models/TeamInvite';
 import { PasswordResetOtp } from '../models/PasswordResetOtp';
 import { sendPasswordResetOtpEmail } from '../utils/emailService';
+import { randomInt } from 'node:crypto';
+import { PlatformSetting } from '../models/PlatformSetting';
+import { getPlatformState } from '../utils/platformState';
+
+const MIN_PASSWORD = 12;
 import { AuthenticatedRequest } from '../types';
 
 const generateToken = (payload: {
@@ -24,13 +29,22 @@ export const registerAgency = async (req: Request, res: Response): Promise<void>
   try {
     const { agencyName, name, email, phone, password } = req.body;
 
-    if (!agencyName?.trim() || !name?.trim() || !email?.trim() || !password) {
+    if (!(req as AuthenticatedRequest & { bypassSignupFreeze?: boolean }).bypassSignupFreeze) {
+      const platform = await PlatformSetting.findOne().sort({ updatedAt: -1 }).select('allowNewRegistrations').lean();
+      if (platform && platform.allowNewRegistrations === false) {
+        res.status(403).json({ error: 'New agency sign-ups are currently closed. Please contact support.' });
+        return;
+      }
+    }
+
+    if (typeof agencyName !== 'string' || typeof name !== 'string' || typeof email !== 'string' ||
+        typeof password !== 'string' || !agencyName.trim() || !name.trim() || !email.trim() || !password) {
       res.status(400).json({ error: 'Agency name, your name, email, and password are required.' });
       return;
     }
 
-    if (password.length < 6) {
-      res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+    if (password.length < MIN_PASSWORD) {
+      res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD} characters long.` });
       return;
     }
 
@@ -52,30 +66,41 @@ export const registerAgency = async (req: Request, res: Response): Promise<void>
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const slug = `${baseSlug || 'agency'}-${randomSuffix}`;
 
-    // 1. Create Organization (Tenant)
+    // Self-service sign-ups start a trial when the platform defines one; super-admin onboarding is ACTIVE.
+    const selfService = !(req as AuthenticatedRequest & { bypassSignupFreeze?: boolean }).bypassSignupFreeze;
+    const { defaultTrialDays } = await getPlatformState();
+    const onTrial = selfService && defaultTrialDays > 0;
+
+    // 1. Hash first so a failure here cannot leave an orphan organization.
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 2. Create Organization (Tenant)
     const organization = await Organization.create({
       name: agencyName.trim(),
       slug,
       plan: 'STARTER',
       maxSeats: 2,
       maxLeads: 500,
-      status: 'ACTIVE',
+      status: onTrial ? 'TRIAL' : 'ACTIVE',
+      trialEndsAt: onTrial ? new Date(Date.now() + defaultTrialDays * 86_400_000) : undefined,
     });
 
-    // 2. Hash Password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // 3. Create Owner User
-    const user = await User.create({
-      organizationId: organization._id,
-      name: name.trim(),
-      email: normalizedEmail,
-      phone: phone?.trim() || '',
-      password: hashedPassword,
-      role: 'OWNER',
-      status: 'Active',
-    });
+    // 3. Create Owner User, rolling the organization back if it fails (e.g. duplicate-email race).
+    let user;
+    try {
+      user = await User.create({
+        organizationId: organization._id,
+        name: name.trim(),
+        email: normalizedEmail,
+        phone: phone?.trim() || '',
+        password: hashedPassword,
+        role: 'OWNER',
+        status: 'Active',
+      });
+    } catch (creationError) {
+      await Organization.deleteOne({ _id: organization._id });
+      throw creationError;
+    }
 
     // 4. Issue JWT
     const token = generateToken({
@@ -117,7 +142,12 @@ export const registerAgency = async (req: Request, res: Response): Promise<void>
 const loginFor = (superAdmin: boolean) => async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, email, password } = req.body;
-    const identifier = (email || username || '').toLowerCase().trim();
+    const rawIdentifier = email || username || '';
+    const identifier = typeof rawIdentifier === 'string' ? rawIdentifier.toLowerCase().trim() : '';
+    if (typeof password !== 'string') {
+      res.status(400).json({ error: 'Please enter both your email/username and password.' });
+      return;
+    }
 
     if (!identifier || !password) {
       res.status(400).json({ error: 'Please enter both your email/username and password.' });
@@ -125,9 +155,9 @@ const loginFor = (superAdmin: boolean) => async (req: Request, res: Response): P
     }
 
     const role = superAdmin ? 'SUPER_ADMIN' : { $ne: 'SUPER_ADMIN' };
+    // Display names are not unique across workspaces, so only username or email may identify an account.
     const user = await User.findOne({ role, username: identifier }) ??
-      await User.findOne({ role, email: identifier }) ??
-      await User.findOne({ role, name: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+      await User.findOne({ role, email: identifier });
 
     if (!user) {
       res.status(401).json({ error: 'Invalid username/email or password.' });
@@ -160,6 +190,12 @@ const loginFor = (superAdmin: boolean) => async (req: Request, res: Response): P
 
     if (organization.status === 'SUSPENDED') {
       res.status(403).json({ error: 'This workspace is suspended. Please contact support.' });
+      return;
+    }
+
+    const platform = await getPlatformState();
+    if (platform.maintenanceMode) {
+      res.status(503).json({ error: platform.maintenanceMessage, maintenance: true });
       return;
     }
 
@@ -364,8 +400,8 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response): 
       return;
     }
 
-    if (newPassword.length < 6) {
-      res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    if (typeof newPassword !== 'string' || newPassword.length < MIN_PASSWORD) {
+      res.status(400).json({ error: `New password must be at least ${MIN_PASSWORD} characters long.` });
       return;
     }
 
@@ -384,9 +420,17 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response): 
     // Hash and set new password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
+    // Sign out every other session; hand this one a fresh token so the user stays signed in.
+    user.passwordChangedAt = new Date(Math.floor(Date.now() / 1000) * 1000);
     await user.save();
 
-    res.status(200).json({ message: 'Password changed successfully' });
+    const token = generateToken({
+      userId: user._id.toString(),
+      organizationId: user.organizationId?.toString(),
+      role: user.role,
+      email: user.email,
+    });
+    res.status(200).json({ message: 'Password changed successfully', token });
   } catch (error: any) {
     console.error('changePassword Error:', error);
     res.status(500).json({ error: error.message || 'Error changing password' });
@@ -488,21 +532,28 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
     // Verify user exists in the database
     const user = await User.findOne({ email: normalizedEmail });
+    const genericReply = { message: 'If an account exists for this email, a 6-digit verification code has been sent.' };
     if (!user) {
-      res.status(404).json({ error: 'No user account found with this email address.' });
+      // Same response as success so the endpoint cannot be used to discover accounts.
+      res.status(200).json(genericReply);
       return;
     }
 
-    // Generate secure 6-digit numeric OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // An unexpired code is not replaced for 60 seconds, and failed attempts are never reset by a new request.
+    const existing = await PasswordResetOtp.findOne({ email: normalizedEmail });
+    if (existing && existing.expiresAt.getTime() - Date.now() > 9 * 60 * 1000) {
+      res.status(200).json(genericReply);
+      return;
+    }
+
+    const otp = randomInt(100000, 1000000).toString();
 
     // OTP expires in 10 minutes
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // Save or update OTP in the database
     await PasswordResetOtp.findOneAndUpdate(
       { email: normalizedEmail },
-      { otp, expiresAt, attempts: 0 },
+      { otp, expiresAt, attempts: existing && existing.expiresAt > new Date() ? existing.attempts : 0 },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
@@ -517,9 +568,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    res.status(200).json({
-      message: 'A 6-digit verification code has been sent to your email address.',
-    });
+    res.status(200).json(genericReply);
   } catch (error: any) {
     console.error('[Forgot Password Error]:', error);
     res.status(500).json({ error: error.message || 'Failed to process forgot password request.' });
@@ -536,8 +585,8 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    if (newPassword.length < 6) {
-      res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    if (typeof newPassword !== 'string' || newPassword.length < MIN_PASSWORD) {
+      res.status(400).json({ error: `New password must be at least ${MIN_PASSWORD} characters long.` });
       return;
     }
 
@@ -592,6 +641,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     // Hash the new password with bcrypt
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
+    user.passwordChangedAt = new Date(Math.floor(Date.now() / 1000) * 1000);
     await user.save();
 
     // Remove the OTP record so it cannot be reused

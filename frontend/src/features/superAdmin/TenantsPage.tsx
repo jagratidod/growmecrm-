@@ -28,13 +28,29 @@ export const TenantsPage: React.FC = () => {
 
   const { toast } = useToast();
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => { setDebouncedSearch(search.trim()); setPage(1); }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const loadTenants = async () => {
     setIsLoading(true);
+    setLoadError('');
     try {
-      const data = await superAdminService.getTenants();
-      setTenants(data);
+      const { tenants: rows, pagination } = await superAdminService.getTenants({
+        search: debouncedSearch, status: statusFilter, plan: planFilter, page, limit: 20,
+      });
+      setTenants(rows);
+      setTotalPages(Math.max(1, pagination.totalPages));
+      setTotal(pagination.total);
     } catch (e) {
-      console.error(e);
+      setLoadError((e as Error).message || 'Could not load agencies.');
     } finally {
       setIsLoading(false);
     }
@@ -42,7 +58,8 @@ export const TenantsPage: React.FC = () => {
 
   useEffect(() => {
     loadTenants();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, statusFilter, planFilter, page]);
 
   const handleOpenEdit = (tenant: Tenant) => {
     setSelectedTenant(tenant);
@@ -110,18 +127,8 @@ export const TenantsPage: React.FC = () => {
     }
   };
 
-  const filteredTenants = tenants.filter((t) => {
-    const matchesSearch =
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.slug.toLowerCase().includes(search.toLowerCase()) ||
-      t.owner?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      t.owner?.email?.toLowerCase().includes(search.toLowerCase());
-
-    const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
-    const matchesPlan = planFilter === 'ALL' || t.plan === planFilter;
-
-    return matchesSearch && matchesStatus && matchesPlan;
-  });
+  // Search, filters and paging are applied by the server so every agency is reachable.
+  const filteredTenants = tenants;
 
   return (
     <SuperAdminLayout
@@ -146,7 +153,7 @@ export const TenantsPage: React.FC = () => {
           {/* Status Filter */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
             className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-brand bg-white shadow-2xs"
           >
             <option value="ALL">All Statuses</option>
@@ -158,13 +165,14 @@ export const TenantsPage: React.FC = () => {
           {/* Plan Filter */}
           <select
             value={planFilter}
-            onChange={(e) => setPlanFilter(e.target.value)}
+            onChange={(e) => { setPlanFilter(e.target.value); setPage(1); }}
             className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-brand bg-white shadow-2xs"
           >
             <option value="ALL">All Plans</option>
             <option value="STARTER">Starter Tier</option>
             <option value="PRO">Growth Pro</option>
             <option value="ENTERPRISE">Enterprise Agency</option>
+            <option value="CUSTOM">Custom Tier</option>
           </select>
 
           <button
@@ -177,6 +185,13 @@ export const TenantsPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold px-4 py-3 flex items-center justify-between gap-3">
+          <span>{loadError}</span>
+          <button type="button" onClick={loadTenants} className="underline">Retry</button>
+        </div>
+      )}
 
       {/* Tenants Table Card */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
@@ -327,6 +342,15 @@ export const TenantsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 text-xs">
+          <span className="text-slate-400 font-medium">{total} agencies · Page {page} of {totalPages}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={page <= 1 || isLoading} onClick={() => setPage(page - 1)}
+              className="px-3.5 py-2 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40">Previous</button>
+            <button type="button" disabled={page >= totalPages || isLoading} onClick={() => setPage(page + 1)}
+              className="px-3.5 py-2 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40">Next</button>
+          </div>
+        </div>
       </div>
 
       {/* Edit Tenant Modal */}
@@ -358,9 +382,12 @@ export const TenantsPage: React.FC = () => {
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
                 >
                   <option value="ACTIVE">ACTIVE (Full access)</option>
-                  <option value="TRIAL">TRIAL (14-day evaluation)</option>
+                  <option value="TRIAL">TRIAL (evaluation)</option>
                   <option value="SUSPENDED">SUSPENDED (Access locked)</option>
                 </select>
+                {editStatus === 'SUSPENDED' && selectedTenant.status !== 'SUSPENDED' && (
+                  <p className="text-rose-600 font-bold">Everyone in this workspace will be locked out as soon as you save.</p>
+                )}
               </div>
 
               {/* Plan Tier */}
@@ -371,9 +398,9 @@ export const TenantsPage: React.FC = () => {
                   onChange={(e) => setEditPlan(e.target.value as any)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold focus:border-brand focus:outline-none bg-white"
                 >
-                  <option value="STARTER">Starter Tier (₹1,499/mo)</option>
-                  <option value="PRO">Growth Pro (₹3,999/mo)</option>
-                  <option value="ENTERPRISE">Enterprise Agency (₹9,999/mo)</option>
+                  <option value="STARTER">Starter Tier</option>
+                  <option value="PRO">Growth Pro</option>
+                  <option value="ENTERPRISE">Enterprise Agency</option>
                   <option value="CUSTOM">Custom Tier</option>
                 </select>
               </div>

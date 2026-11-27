@@ -26,9 +26,15 @@ export const profileService = {
 
   // 3. Change password with current password verification
   async changePassword(data: { currentPassword: string; newPassword: string }): Promise<{ message: string }> {
-    return request<{ message: string }>('/auth/change-password', {
+    const result = await request<{ message: string; token?: string }>('/auth/change-password', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+    // The server revokes older tokens on a password change and returns a fresh one for this session.
+    if (result.token) {
+      const store = localStorage.getItem('crm_auth_token') ? localStorage : sessionStorage;
+      store.setItem('crm_auth_token', result.token);
+    }
+    return { message: result.message };
   },
 };
